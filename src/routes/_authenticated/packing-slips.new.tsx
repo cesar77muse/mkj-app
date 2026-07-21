@@ -1,0 +1,192 @@
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { PageHeader } from "@/components/page-header";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
+import { z } from "zod";
+
+const searchSchema = z.object({ po: z.string().optional() });
+
+export const Route = createFileRoute("/_authenticated/packing-slips/new")({
+  head: () => ({ meta: [{ title: "Receive Shipment — MKJ Ops" }] }),
+  validateSearch: searchSchema,
+  component: NewSlip,
+});
+
+type Line = { po_item_id: string | null; product_id: string | null; description: string; qty_ordered: number; qty_already: number; qty_received: number; condition: string };
+
+function NewSlip() {
+  const search = Route.useSearch();
+  const navigate = useNavigate();
+  const [poId, setPoId] = useState<string>(search.po ?? "");
+  const [receivedDate, setReceivedDate] = useState(new Date().toISOString().slice(0, 10));
+  const [carrier, setCarrier] = useState("");
+  const [vendorSlip, setVendorSlip] = useState("");
+  const [notes, setNotes] = useState("");
+  const [lines, setLines] = useState<Line[]>([]);
+
+  const openPOs = useQuery({
+    queryKey: ["pos-open"],
+    queryFn: async () => (await supabase.from("purchase_orders").select("id, po_number, projects:project_id(mkj_number)").in("status", ["approved", "executed", "partially_received"]).order("po_number")).data ?? [],
+  });
+
+  const poDetail = useQuery({
+    queryKey: ["po-detail-for-slip", poId],
+    enabled: !!poId,
+    queryFn: async () => {
+      const [po, items, prior] = await Promise.all([
+        supabase.from("purchase_orders").select("id, po_number, project_id, projects:project_id(mkj_number)").eq("id", poId).maybeSingle(),
+        supabase.from("purchase_order_items").select("id, description, qty, unit, product_id").eq("po_id", poId).order("line_no"),
+        supabase.from("packing_slip_items").select("po_item_id, qty_received").in("po_item_id", []),
+      ]);
+      const itemIds = (items.data ?? []).map((i) => i.id);
+      const { data: priorItems } = await supabase.from("packing_slip_items").select("po_item_id, qty_received").in("po_item_id", itemIds.length ? itemIds : ["00000000-0000-0000-0000-000000000000"]);
+      const priorMap = new Map<string, number>();
+      (priorItems ?? []).forEach((p) => priorMap.set(p.po_item_id!, (priorMap.get(p.po_item_id!) ?? 0) + Number(p.qty_received)));
+      void prior;
+      return { po: po.data, items: items.data ?? [], priorMap };
+    },
+  });
+
+  useEffect(() => {
+    if (poDetail.data) {
+      setLines(poDetail.data.items.map((it) => {
+        const already = poDetail.data!.priorMap.get(it.id) ?? 0;
+        const remaining = Math.max(0, Number(it.qty) - already);
+        return {
+          po_item_id: it.id, product_id: it.product_id, description: it.description,
+          qty_ordered: Number(it.qty), qty_already: already, qty_received: remaining, condition: "ok",
+        };
+      }));
+    }
+  }, [poDetail.data]);
+
+  const create = useMutation({
+    mutationFn: async () => {
+      if (!poDetail.data?.po) throw new Error("Pick a PO");
+      const mkj = poDetail.data.po.projects?.mkj_number as string;
+      const { data: numRow, error: numErr } = await supabase.rpc("gen_ps_number", { _mkj: mkj });
+      if (numErr) throw numErr;
+      const { data: user } = await supabase.auth.getUser();
+      const { data: slip, error } = await supabase.from("packing_slips").insert({
+        slip_number: numRow as unknown as string,
+        po_id: poDetail.data.po.id,
+        project_id: poDetail.data.po.project_id,
+        received_date: receivedDate,
+        received_by: user.user?.id ?? null,
+        carrier: carrier || null,
+        vendor_slip_number: vendorSlip || null,
+        notes: notes || null,
+      }).select("id").single();
+      if (error) throw error;
+      const items = lines.filter((l) => l.qty_received > 0).map((l) => ({
+        slip_id: slip.id, po_item_id: l.po_item_id, product_id: l.product_id,
+        description: l.description, qty_ordered: l.qty_ordered, qty_received: l.qty_received, condition: l.condition,
+      }));
+      if (items.length > 0) {
+        const { error: iErr } = await supabase.from("packing_slip_items").insert(items);
+        if (iErr) throw iErr;
+      }
+      // Inventory ledger: increment project inventory per received product
+      const invRows = lines.filter((l) => l.qty_received > 0 && l.product_id).map((l) => ({
+        project_id: poDetail.data!.po!.project_id,
+        product_id: l.product_id!,
+        delta: l.qty_received,
+        source_type: "packing_slip" as const,
+        source_id: slip.id,
+        reason: `Received on slip ${numRow}`,
+        created_by: user.user?.id ?? null,
+      }));
+      if (invRows.length > 0) {
+        const { error: aErr } = await supabase.from("inventory_adjustments").insert(invRows);
+        if (aErr) throw aErr;
+      }
+      // Update PO status: if any backorder remains, partially_received; else received
+      const anyBackorder = lines.some((l) => l.qty_already + l.qty_received < l.qty_ordered);
+      const newStatus = anyBackorder ? "partially_received" : "received";
+      await supabase.from("purchase_orders").update({ status: newStatus }).eq("id", poDetail.data.po.id);
+      return slip.id as string;
+    },
+    onSuccess: (id) => {
+      toast.success("Packing slip recorded and inventory updated");
+      navigate({ to: "/packing-slips/$id", params: { id } });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <div className="mx-auto max-w-5xl">
+      <PageHeader title="Receive Shipment" description="Log what actually arrived. Inventory updates automatically." />
+      <Card><CardContent className="space-y-4 p-4">
+        <div className="grid gap-3 md:grid-cols-2">
+          <div>
+            <Label>Purchase Order</Label>
+            <Select value={poId} onValueChange={setPoId}>
+              <SelectTrigger><SelectValue placeholder="Choose PO" /></SelectTrigger>
+              <SelectContent>{openPOs.data?.map((p) => <SelectItem key={p.id} value={p.id}>{p.po_number} ({p.projects?.mkj_number})</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div><Label>Received date</Label><Input type="date" value={receivedDate} onChange={(e) => setReceivedDate(e.target.value)} /></div>
+          <div><Label>Carrier</Label><Input value={carrier} onChange={(e) => setCarrier(e.target.value)} /></div>
+          <div><Label>Vendor's slip #</Label><Input value={vendorSlip} onChange={(e) => setVendorSlip(e.target.value)} /></div>
+          <div className="md:col-span-2"><Label>Notes</Label><Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
+        </div>
+
+        <div>
+          <h3 className="mb-2 text-sm font-semibold">Lines</h3>
+          {lines.length > 0 ? (
+            <Table>
+              <TableHeader><TableRow>
+                <TableHead>Description</TableHead>
+                <TableHead className="text-right">Ordered</TableHead>
+                <TableHead className="text-right">Already recv.</TableHead>
+                <TableHead className="text-right">Receiving now</TableHead>
+                <TableHead className="text-right">Backorder</TableHead>
+                <TableHead>Condition</TableHead>
+              </TableRow></TableHeader>
+              <TableBody>
+                {lines.map((l, i) => {
+                  const backorder = Math.max(0, l.qty_ordered - l.qty_already - l.qty_received);
+                  return (
+                    <TableRow key={i}>
+                      <TableCell>{l.description}</TableCell>
+                      <TableCell className="text-right">{l.qty_ordered}</TableCell>
+                      <TableCell className="text-right text-muted-foreground">{l.qty_already}</TableCell>
+                      <TableCell><Input type="number" step="0.01" className="text-right" value={l.qty_received} onChange={(e) => setLines((ls) => ls.map((x, idx) => idx === i ? { ...x, qty_received: Number(e.target.value) } : x))} /></TableCell>
+                      <TableCell className="text-right">{backorder}</TableCell>
+                      <TableCell>
+                        <Select value={l.condition} onValueChange={(v) => setLines((ls) => ls.map((x, idx) => idx === i ? { ...x, condition: v } : x))}>
+                          <SelectTrigger className="h-8 w-32"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="ok">OK</SelectItem>
+                            <SelectItem value="damaged">Damaged</SelectItem>
+                            <SelectItem value="rejected">Rejected</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          ) : (
+            <p className="text-sm text-muted-foreground">Pick a PO to load its lines.</p>
+          )}
+        </div>
+
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" onClick={() => navigate({ to: "/packing-slips" })}>Cancel</Button>
+          <Button disabled={!poId || create.isPending} onClick={() => create.mutate()}>{create.isPending ? "Saving…" : "Record shipment"}</Button>
+        </div>
+      </CardContent></Card>
+    </div>
+  );
+}
