@@ -15,6 +15,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import mkjLogo from "@/assets/mkj-logo.jpg.asset.json";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
@@ -158,11 +159,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen bg-muted/30">
       <aside className="sticky top-0 hidden h-screen w-60 shrink-0 border-r bg-sidebar md:block">
-        <div className="flex h-14 items-center gap-2 border-b px-4">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-            <Package className="h-4 w-4" />
-          </div>
-          <span className="text-sm font-semibold tracking-tight">MKJ Ops</span>
+        <div className="flex h-16 items-center justify-center border-b border-sidebar-border bg-white px-3">
+          <img src={mkjLogo.url} alt="MKJ Communications" className="h-10 w-auto object-contain" />
         </div>
         <NavList />
       </aside>
@@ -176,11 +174,8 @@ export function AppShell({ children }: { children: ReactNode }) {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-64 p-0">
-              <div className="flex h-14 items-center gap-2 border-b px-4">
-                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-                  <Package className="h-4 w-4" />
-                </div>
-                <span className="text-sm font-semibold">MKJ Ops</span>
+              <div className="flex h-16 items-center justify-center border-b bg-white px-3">
+                <img src={mkjLogo.url} alt="MKJ Communications" className="h-10 w-auto object-contain" />
               </div>
               <NavList />
             </SheetContent>
