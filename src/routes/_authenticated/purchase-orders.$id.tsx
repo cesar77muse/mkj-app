@@ -2,9 +2,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/page-header";
+import { POStatusBadge, PO_STATUS_OPTIONS } from "@/components/po-status-badge";
+import { openPOPdf } from "@/lib/po-pdf";
+import { FileText } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
@@ -50,6 +52,35 @@ function POView() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  function viewPdf() {
+    const win = window.open("", "_blank");
+    const d = po.data;
+    if (!d) { win?.close(); return; }
+    openPOPdf({
+      po_number: d.po_number,
+      project_mkj: d.projects?.mkj_number ?? null,
+      project_name: d.projects?.name ?? null,
+      supplier_name: d.suppliers?.name ?? null,
+      supplier_address: d.suppliers?.address ?? null,
+      bill_to: d.bill_to,
+      ship_to: d.ship_to,
+      delivery_date: d.delivery_date,
+      ship_via: d.ship_via,
+      payment_terms: d.payment_terms,
+      description: d.description,
+      status: d.status,
+      additional_freight: d.additional_freight,
+      lines: (items.data ?? []).map((l) => ({
+        line_no: l.line_no,
+        budget_code: l.budget_code,
+        description: l.description,
+        qty: Number(l.qty),
+        unit: l.unit,
+        unit_cost: Number(l.unit_cost),
+      })),
+    }, win);
+  }
+
   if (po.isLoading) return <p className="text-sm text-muted-foreground">Loading…</p>;
   if (!po.data) return <p className="text-sm text-muted-foreground">Not found.</p>;
 
@@ -64,22 +95,19 @@ function POView() {
         }
         actions={
           <div className="flex items-center gap-2">
-            <Badge variant="secondary">{po.data.status}</Badge>
+            <POStatusBadge status={po.data.status} />
             <Select value={po.data.status} onValueChange={(v) => statusMut.mutate(v as POStatus)}>
               <SelectTrigger className="h-8 w-44"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="approved">Approved</SelectItem>
-                <SelectItem value="executed">Executed</SelectItem>
-                <SelectItem value="partially_received">Partially Received</SelectItem>
-                <SelectItem value="received">Received</SelectItem>
-                <SelectItem value="closed">Closed</SelectItem>
+                {PO_STATUS_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
               </SelectContent>
             </Select>
+            <Button size="sm" variant="outline" onClick={viewPdf}><FileText className="mr-1 h-4 w-4" />View PDF</Button>
             <Link to="/packing-slips/new" search={{ po: id }}><Button size="sm">Receive shipment</Button></Link>
           </div>
         }
       />
+
 
       <div className="grid gap-4 md:grid-cols-2">
         <Card><CardContent className="p-4 text-sm">
