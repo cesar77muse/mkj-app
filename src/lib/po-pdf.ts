@@ -47,7 +47,7 @@ export function buildPOPdf(po: POPdfData): jsPDF {
   if (po.status) doc.text(`Status: ${po.status.replace(/_/g, " ")}`, W - M, y + 28, { align: "right" });
 
   y += 44;
-  doc.setDrawColor(180).line(M, y, W - M, y);
+  doc.setDrawColor(180, 180, 180).line(M, y, W - M, y);
   y += 18;
 
   doc.setFontSize(9).setFont("helvetica", "bold");
@@ -132,7 +132,7 @@ export function buildPOPdf(po: POPdfData): jsPDF {
       doc.text(v, cellX(i), y + 12, { align: cols[i].align });
     });
     doc.text(desc, cellX(2), y + 12);
-    doc.setDrawColor(225).line(M, y + h, W - M, y + h);
+    doc.setDrawColor(225, 225, 225).line(M, y + h, W - M, y + h);
     y += h;
   }
 
@@ -148,7 +148,7 @@ export function buildPOPdf(po: POPdfData): jsPDF {
   if (freight) rightLabel("Additional freight", money(freight));
   rightLabel("Grand total", money(subtotal + freight), true);
 
-  doc.setFont("helvetica", "normal").setFontSize(8).setTextColor(120);
+  doc.setFont("helvetica", "normal").setFontSize(8).setTextColor(120, 120, 120);
   doc.text(
     `Generated ${new Date().toLocaleString("en-US")} — MKJ Operations`,
     M,
