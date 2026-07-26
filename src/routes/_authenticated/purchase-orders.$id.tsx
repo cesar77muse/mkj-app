@@ -2,9 +2,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/page-header";
+import { POStatusBadge, PO_STATUS_OPTIONS } from "@/components/po-status-badge";
+import { openPOPdf } from "@/lib/po-pdf";
+import { FileText } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
@@ -49,6 +51,34 @@ function POView() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  function viewPdf() {
+    const d = po.data;
+    if (!d) return;
+    openPOPdf({
+      po_number: d.po_number,
+      project_mkj: d.projects?.mkj_number ?? null,
+      project_name: d.projects?.name ?? null,
+      supplier_name: d.suppliers?.name ?? null,
+      supplier_address: d.suppliers?.address ?? null,
+      bill_to: d.bill_to,
+      ship_to: d.ship_to,
+      delivery_date: d.delivery_date,
+      ship_via: d.ship_via,
+      payment_terms: d.payment_terms,
+      description: d.description,
+      status: d.status,
+      additional_freight: d.additional_freight,
+      lines: (items.data ?? []).map((l) => ({
+        line_no: l.line_no,
+        budget_code: l.budget_code,
+        description: l.description,
+        qty: Number(l.qty),
+        unit: l.unit,
+        unit_cost: Number(l.unit_cost),
+      })),
+    });
+  }
 
   if (po.isLoading) return <p className="text-sm text-muted-foreground">Loading…</p>;
   if (!po.data) return <p className="text-sm text-muted-foreground">Not found.</p>;
