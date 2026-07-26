@@ -44,7 +44,7 @@ export function buildPOPdf(po: POPdfData): jsPDF {
   doc.text("PURCHASE ORDER", W - M, y, { align: "right" });
   doc.setFont("helvetica", "normal").setFontSize(10);
   doc.text(po.po_number, W - M, y + 15, { align: "right" });
-  if (po.status) doc.text(`Status: ${po.status.replace(/_/g, " ")}`, W - M, y + 28, { align: "right" });
+  if (po.status) doc.text(`Status: ${po.status.replace(/_/g, " ").replace(/\b\w/g, (m) => m.toUpperCase())}`, W - M, y + 28, { align: "right" });
 
   y += 44;
   doc.setDrawColor(180, 180, 180).line(M, y, W - M, y);
@@ -88,12 +88,12 @@ export function buildPOPdf(po: POPdfData): jsPDF {
 
   // Table
   const cols = [
-    { x: M, w: 22, label: "#", align: "left" as const },
-    { x: M + 22, w: 80, label: "Budget code", align: "left" as const },
-    { x: M + 102, w: 210, label: "Description", align: "left" as const },
-    { x: M + 312, w: 46, label: "Qty", align: "right" as const },
-    { x: M + 358, w: 40, label: "Unit", align: "left" as const },
-    { x: M + 398, w: 62, label: "Unit cost", align: "right" as const },
+    { x: M, w: 20, label: "#", align: "left" as const },
+    { x: M + 20, w: 130, label: "Budget code", align: "left" as const },
+    { x: M + 150, w: 180, label: "Description", align: "left" as const },
+    { x: M + 330, w: 42, label: "Qty", align: "right" as const },
+    { x: M + 372, w: 32, label: "Unit", align: "left" as const },
+    { x: M + 404, w: 56, label: "Unit cost", align: "right" as const },
     { x: M + 460, w: 68, label: "Amount", align: "right" as const },
   ];
   const cellX = (i: number) => (cols[i].align === "right" ? cols[i].x + cols[i].w - 4 : cols[i].x + 2);
@@ -112,7 +112,8 @@ export function buildPOPdf(po: POPdfData): jsPDF {
     const amount = Number(l.qty) * Number(l.unit_cost);
     subtotal += amount;
     const desc = doc.splitTextToSize(l.description || "", cols[2].w - 6);
-    const h = Math.max(18, desc.length * 11 + 7);
+    const code = doc.splitTextToSize(l.budget_code || "", cols[1].w - 6);
+    const h = Math.max(18, Math.max(desc.length, code.length) * 11 + 7);
     if (y + h > doc.internal.pageSize.getHeight() - 70) {
       doc.addPage();
       y = M;
@@ -120,7 +121,7 @@ export function buildPOPdf(po: POPdfData): jsPDF {
     }
     const values = [
       String(l.line_no),
-      l.budget_code || "",
+      "",
       "",
       String(Number(l.qty)),
       l.unit || "",
@@ -128,9 +129,10 @@ export function buildPOPdf(po: POPdfData): jsPDF {
       money(amount),
     ];
     values.forEach((v, i) => {
-      if (i === 2) return;
+      if (i === 1 || i === 2) return;
       doc.text(v, cellX(i), y + 12, { align: cols[i].align });
     });
+    doc.text(code, cellX(1), y + 12);
     doc.text(desc, cellX(2), y + 12);
     doc.setDrawColor(225, 225, 225).line(M, y + h, W - M, y + h);
     y += h;
