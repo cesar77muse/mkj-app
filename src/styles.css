@@ -58,6 +58,16 @@
   --color-sidebar-accent: var(--sidebar-accent);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
+  --color-status-draft: var(--status-draft);
+  --color-status-draft-foreground: var(--status-draft-foreground);
+  --color-status-approved: var(--status-approved);
+  --color-status-approved-foreground: var(--status-approved-foreground);
+  --color-status-executed: var(--status-executed);
+  --color-status-executed-foreground: var(--status-executed-foreground);
+  --color-status-partial: var(--status-partial);
+  --color-status-partial-foreground: var(--status-partial-foreground);
+  --color-status-received: var(--status-received);
+  --color-status-received-foreground: var(--status-received-foreground);
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
@@ -94,6 +104,16 @@
   --sidebar-accent: oklch(0.88 0 0);
   --sidebar-accent-foreground: oklch(0.15 0 0);
   --sidebar-border: oklch(0.68 0 0);
+  --status-draft: oklch(0.93 0 0);
+  --status-draft-foreground: oklch(0.35 0 0);
+  --status-approved: oklch(0.92 0.06 240);
+  --status-approved-foreground: oklch(0.4 0.14 250);
+  --status-executed: oklch(0.93 0.08 285);
+  --status-executed-foreground: oklch(0.42 0.16 288);
+  --status-partial: oklch(0.93 0.09 75);
+  --status-partial-foreground: oklch(0.45 0.15 55);
+  --status-received: oklch(0.92 0.09 150);
+  --status-received-foreground: oklch(0.42 0.13 150);
   --sidebar-ring: oklch(0.4 0 0);
 }
 
@@ -129,6 +149,16 @@
   --sidebar-accent: oklch(0.279 0.041 260.031);
   --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
   --sidebar-border: oklch(1 0 0 / 10%);
+  --status-draft: oklch(0.3 0 0);
+  --status-draft-foreground: oklch(0.85 0 0);
+  --status-approved: oklch(0.32 0.07 250);
+  --status-approved-foreground: oklch(0.85 0.09 245);
+  --status-executed: oklch(0.33 0.09 288);
+  --status-executed-foreground: oklch(0.86 0.09 288);
+  --status-partial: oklch(0.35 0.1 60);
+  --status-partial-foreground: oklch(0.88 0.11 75);
+  --status-received: oklch(0.33 0.09 150);
+  --status-received-foreground: oklch(0.87 0.12 152);
   --sidebar-ring: oklch(0.551 0.027 264.364);
 }
 
