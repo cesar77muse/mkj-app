@@ -99,7 +99,7 @@ export function buildPOPdf(po: POPdfData): jsPDF {
   const cellX = (i: number) => (cols[i].align === "right" ? cols[i].x + cols[i].w - 4 : cols[i].x + 2);
 
   const header = () => {
-    doc.setFillColor(238).rect(M, y, W - 2 * M, 20, "F");
+    doc.setFillColor(238, 238, 238).rect(M, y, W - 2 * M, 20, "F");
     doc.setFont("helvetica", "bold").setFontSize(9);
     cols.forEach((c, i) => doc.text(c.label, cellX(i), y + 14, { align: c.align }));
     y += 20;
