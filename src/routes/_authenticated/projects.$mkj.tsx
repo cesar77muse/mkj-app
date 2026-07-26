@@ -2,6 +2,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/page-header";
+import { POStatusBadge } from "@/components/po-status-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -152,7 +153,7 @@ function ProjectDetail() {
                   {pos.data && pos.data.length > 0 ? pos.data.map((po) => (
                     <TableRow key={po.id}>
                       <TableCell><Link className="font-mono text-primary hover:underline" to="/purchase-orders/$id" params={{ id: po.id }}>{po.po_number}</Link></TableCell>
-                      <TableCell><Badge variant="secondary">{po.status}</Badge></TableCell>
+                      <TableCell><POStatusBadge status={po.status} /></TableCell>
                       <TableCell>{po.delivery_date ?? "—"}</TableCell>
                       <TableCell>{new Date(po.created_at).toLocaleDateString()}</TableCell>
                     </TableRow>

@@ -2,9 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/page-header";
+import { POStatusBadge } from "@/components/po-status-badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 
@@ -44,7 +44,7 @@ function POList() {
                 <TableCell><Link className="font-mono text-primary hover:underline" to="/purchase-orders/$id" params={{ id: po.id }}>{po.po_number}</Link></TableCell>
                 <TableCell><span className="font-mono text-xs">{po.projects?.mkj_number}</span></TableCell>
                 <TableCell>{po.suppliers?.name ?? "—"}</TableCell>
-                <TableCell><Badge variant="secondary">{po.status}</Badge></TableCell>
+                <TableCell><POStatusBadge status={po.status} /></TableCell>
                 <TableCell>{po.delivery_date ?? "—"}</TableCell>
               </TableRow>
             )) : <TableRow><TableCell colSpan={5} className="py-6 text-center text-sm text-muted-foreground">No purchase orders yet.</TableCell></TableRow>}
