@@ -162,7 +162,7 @@ function ProjectDetail() {
                       <TableCell>{po.delivery_date ?? "—"}</TableCell>
                       <TableCell>{new Date(po.created_at).toLocaleDateString()}</TableCell>
                       <TableCell className="text-right">
-                        <Button size="sm" variant="outline" onClick={() => openPOPdfById(po.id).catch((e: Error) => toast.error(e.message))}>
+                        <Button size="sm" variant="outline" onClick={() => { const w = window.open("", "_blank"); openPOPdfById(po.id, w).catch((e: Error) => toast.error(e.message)); }}>
                           <FileText className="mr-1 h-4 w-4" />View PO
                         </Button>
                       </TableCell>

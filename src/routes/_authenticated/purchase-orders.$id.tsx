@@ -53,8 +53,9 @@ function POView() {
   });
 
   function viewPdf() {
+    const win = window.open("", "_blank");
     const d = po.data;
-    if (!d) return;
+    if (!d) { win?.close(); return; }
     openPOPdf({
       po_number: d.po_number,
       project_mkj: d.projects?.mkj_number ?? null,
@@ -77,7 +78,7 @@ function POView() {
         unit: l.unit,
         unit_cost: Number(l.unit_cost),
       })),
-    });
+    }, win);
   }
 
   if (po.isLoading) return <p className="text-sm text-muted-foreground">Loading…</p>;

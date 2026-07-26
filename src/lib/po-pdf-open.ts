@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { POPdfData } from "@/lib/po-pdf";
 
-export async function openPOPdfById(id: string) {
+export async function openPOPdfById(id: string, win?: Window | null) {
   const [{ data: po }, { data: items }] = await Promise.all([
     supabase
       .from("purchase_orders")
@@ -10,7 +10,10 @@ export async function openPOPdfById(id: string) {
       .maybeSingle(),
     supabase.from("purchase_order_items").select("*").eq("po_id", id).order("line_no"),
   ]);
-  if (!po) throw new Error("Purchase order not found");
+  if (!po) {
+    win?.close();
+    throw new Error("Purchase order not found");
+  }
 
   const data: POPdfData = {
     po_number: po.po_number,
@@ -37,5 +40,5 @@ export async function openPOPdfById(id: string) {
   };
 
   const { openPOPdf } = await import("@/lib/po-pdf");
-  openPOPdf(data);
+  openPOPdf(data, win);
 }

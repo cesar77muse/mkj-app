@@ -158,10 +158,12 @@ export function buildPOPdf(po: POPdfData): jsPDF {
   return doc;
 }
 
-export function openPOPdf(po: POPdfData) {
+export function openPOPdf(po: POPdfData, win?: Window | null) {
   const doc = buildPOPdf(po);
-  const url = doc.output("bloburl");
-  window.open(url as unknown as string, "_blank");
+  const url = String(doc.output("bloburl"));
+  const target = win ?? window.open("", "_blank");
+  if (target) target.location.href = url;
+  else window.open(url, "_blank");
 }
 
 export function poPdfDataUrl(po: POPdfData) {
