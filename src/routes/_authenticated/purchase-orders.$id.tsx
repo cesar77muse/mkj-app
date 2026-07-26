@@ -64,22 +64,19 @@ function POView() {
         }
         actions={
           <div className="flex items-center gap-2">
-            <Badge variant="secondary">{po.data.status}</Badge>
+            <POStatusBadge status={po.data.status} />
             <Select value={po.data.status} onValueChange={(v) => statusMut.mutate(v as POStatus)}>
               <SelectTrigger className="h-8 w-44"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="approved">Approved</SelectItem>
-                <SelectItem value="executed">Executed</SelectItem>
-                <SelectItem value="partially_received">Partially Received</SelectItem>
-                <SelectItem value="received">Received</SelectItem>
-                <SelectItem value="closed">Closed</SelectItem>
+                {PO_STATUS_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
               </SelectContent>
             </Select>
+            <Button size="sm" variant="outline" onClick={viewPdf}><FileText className="mr-1 h-4 w-4" />View PDF</Button>
             <Link to="/packing-slips/new" search={{ po: id }}><Button size="sm">Receive shipment</Button></Link>
           </div>
         }
       />
+
 
       <div className="grid gap-4 md:grid-cols-2">
         <Card><CardContent className="p-4 text-sm">
