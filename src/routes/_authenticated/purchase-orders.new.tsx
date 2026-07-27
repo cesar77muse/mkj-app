@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Plus, Trash } from "lucide-react";
+import { FileText, Plus, Trash } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/purchase-orders/new")({
   head: () => ({ meta: [{ title: "New Purchase Order — MKJ Ops" }] }),
@@ -147,7 +147,9 @@ function NewPO() {
 
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={() => navigate({ to: "/purchase-orders" })}>Cancel</Button>
-          
+          <Button variant="outline" onClick={() => toast.info("PDF preview coming soon")}>
+            <FileText className="mr-1 h-4 w-4" />Preview PDF
+          </Button>
           <Button disabled={!projectId || create.isPending} onClick={() => create.mutate()}>{create.isPending ? "Creating…" : "Create PO"}</Button>
         </div>
       </CardContent></Card>
