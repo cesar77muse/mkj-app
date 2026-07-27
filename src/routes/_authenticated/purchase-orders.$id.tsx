@@ -72,7 +72,9 @@ function POView() {
                 {PO_STATUS_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
               </SelectContent>
             </Select>
-            
+            <Button size="sm" variant="outline" onClick={() => toast.info("PDF view coming soon")}>
+              <FileText className="mr-1 h-4 w-4" />View PO
+            </Button>
             <Link to="/packing-slips/new" search={{ po: id }}><Button size="sm">Receive shipment</Button></Link>
           </div>
         }
