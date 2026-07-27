@@ -3,7 +3,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/page-header";
-import { openPOPdf } from "@/lib/po-pdf";
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { FileText, Plus, Trash } from "lucide-react";
+import { Plus, Trash } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/purchase-orders/new")({
   head: () => ({ meta: [{ title: "New Purchase Order — MKJ Ops" }] }),
@@ -74,27 +74,6 @@ function NewPO() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
-
-  function previewPdf() {
-    const project = projects.data?.find((p) => p.id === projectId);
-    const supplier = suppliers.data?.find((s) => s.id === supplierId);
-    openPOPdf({
-      po_number: project ? `${project.mkj_number}-PO (draft preview)` : "PO (draft preview)",
-      project_mkj: project?.mkj_number ?? null,
-      project_name: project?.name ?? null,
-      supplier_name: supplier?.name ?? null,
-      bill_to: billTo,
-      ship_to: shipTo,
-      delivery_date: deliveryDate,
-      ship_via: shipVia,
-      payment_terms: paymentTerms,
-      description: description,
-      status: "draft",
-      lines: lines
-        .filter((l) => l.description.trim())
-        .map((l) => ({ ...l, qty: Number(l.qty || 0), unit_cost: Number(l.unit_cost || 0) })),
-    });
-  }
 
   function updateLine(i: number, patch: Partial<Line>) {
     setLines((ls) => ls.map((l, idx) => (idx === i ? { ...l, ...patch } : l)));
@@ -168,7 +147,7 @@ function NewPO() {
 
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={() => navigate({ to: "/purchase-orders" })}>Cancel</Button>
-          <Button variant="outline" disabled={!projectId} onClick={previewPdf}><FileText className="mr-1 h-4 w-4" />Preview PDF</Button>
+          
           <Button disabled={!projectId || create.isPending} onClick={() => create.mutate()}>{create.isPending ? "Creating…" : "Create PO"}</Button>
         </div>
       </CardContent></Card>

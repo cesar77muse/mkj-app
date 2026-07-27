@@ -3,8 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/page-header";
 import { POStatusBadge } from "@/components/po-status-badge";
-import { openPOPdfById } from "@/lib/po-pdf-open";
-import { FileText } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -151,7 +149,6 @@ function ProjectDetail() {
                     <TableHead>Status</TableHead>
                     <TableHead>Delivery</TableHead>
                     <TableHead>Created</TableHead>
-                    <TableHead className="w-28 text-right">PDF</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -161,13 +158,8 @@ function ProjectDetail() {
                       <TableCell><POStatusBadge status={po.status} /></TableCell>
                       <TableCell>{po.delivery_date ?? "—"}</TableCell>
                       <TableCell>{new Date(po.created_at).toLocaleDateString()}</TableCell>
-                      <TableCell className="text-right">
-                        <Button size="sm" variant="outline" onClick={() => { const w = window.open("", "_blank"); openPOPdfById(po.id, w).catch((e: Error) => toast.error(e.message)); }}>
-                          <FileText className="mr-1 h-4 w-4" />View PO
-                        </Button>
-                      </TableCell>
                     </TableRow>
-                  )) : <TableRow><TableCell colSpan={5} className="py-6 text-center text-sm text-muted-foreground">No POs yet.</TableCell></TableRow>}
+                  )) : <TableRow><TableCell colSpan={4} className="py-6 text-center text-sm text-muted-foreground">No POs yet.</TableCell></TableRow>}
                 </TableBody>
               </Table>
             </CardContent>
