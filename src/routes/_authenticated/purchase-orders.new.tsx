@@ -75,27 +75,6 @@ function NewPO() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  function previewPdf() {
-    const project = projects.data?.find((p) => p.id === projectId);
-    const supplier = suppliers.data?.find((s) => s.id === supplierId);
-    openPOPdf({
-      po_number: project ? `${project.mkj_number}-PO (draft preview)` : "PO (draft preview)",
-      project_mkj: project?.mkj_number ?? null,
-      project_name: project?.name ?? null,
-      supplier_name: supplier?.name ?? null,
-      bill_to: billTo,
-      ship_to: shipTo,
-      delivery_date: deliveryDate,
-      ship_via: shipVia,
-      payment_terms: paymentTerms,
-      description: description,
-      status: "draft",
-      lines: lines
-        .filter((l) => l.description.trim())
-        .map((l) => ({ ...l, qty: Number(l.qty || 0), unit_cost: Number(l.unit_cost || 0) })),
-    });
-  }
-
   function updateLine(i: number, patch: Partial<Line>) {
     setLines((ls) => ls.map((l, idx) => (idx === i ? { ...l, ...patch } : l)));
   }
