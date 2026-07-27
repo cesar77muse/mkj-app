@@ -147,7 +147,9 @@ function NewPO() {
 
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={() => navigate({ to: "/purchase-orders" })}>Cancel</Button>
-          
+          <Button variant="outline" onClick={() => toast.info("PDF preview coming soon")}>
+            <FileText className="mr-1 h-4 w-4" />Preview PDF
+          </Button>
           <Button disabled={!projectId || create.isPending} onClick={() => create.mutate()}>{create.isPending ? "Creating…" : "Create PO"}</Button>
         </div>
       </CardContent></Card>
