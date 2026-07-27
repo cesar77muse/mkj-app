@@ -6,9 +6,7 @@ import { POStatusBadge } from "@/components/po-status-badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { FileText, Plus } from "lucide-react";
-import { openPOPdfById } from "@/lib/po-pdf-open";
-import { toast } from "sonner";
+import { Plus } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/purchase-orders/")({
   head: () => ({ meta: [{ title: "Purchase Orders — MKJ Ops" }] }),
