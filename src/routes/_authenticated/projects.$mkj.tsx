@@ -149,6 +149,7 @@ function ProjectDetail() {
                     <TableHead>Status</TableHead>
                     <TableHead>Delivery</TableHead>
                     <TableHead>Created</TableHead>
+                    <TableHead className="text-right">PDF</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -158,8 +159,11 @@ function ProjectDetail() {
                       <TableCell><POStatusBadge status={po.status} /></TableCell>
                       <TableCell>{po.delivery_date ?? "—"}</TableCell>
                       <TableCell>{new Date(po.created_at).toLocaleDateString()}</TableCell>
+                      <TableCell className="text-right">
+                        <Button size="sm" variant="outline" onClick={() => toast.info("PDF view coming soon")}>View PO</Button>
+                      </TableCell>
                     </TableRow>
-                  )) : <TableRow><TableCell colSpan={4} className="py-6 text-center text-sm text-muted-foreground">No POs yet.</TableCell></TableRow>}
+                  )) : <TableRow><TableCell colSpan={5} className="py-6 text-center text-sm text-muted-foreground">No POs yet.</TableCell></TableRow>}
                 </TableBody>
               </Table>
             </CardContent>
