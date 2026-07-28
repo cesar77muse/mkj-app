@@ -1,9 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useRoles } from "@/hooks/use-session";
+import { canWrite } from "@/lib/roles";
 
 export const Route = createFileRoute("/_authenticated/packing-slips/")({
   head: () => ({ meta: [{ title: "Packing Slips — MKJ Ops" }] }),
@@ -11,6 +15,8 @@ export const Route = createFileRoute("/_authenticated/packing-slips/")({
 });
 
 function PSList() {
+  const roles = useRoles();
+  const writable = canWrite(roles.data ?? []);
   const list = useQuery({
     queryKey: ["packing-slips"],
     queryFn: async () => (await supabase
@@ -21,7 +27,15 @@ function PSList() {
   });
   return (
     <div className="mx-auto max-w-7xl">
-      <PageHeader title="Packing Slips" description="Goods-receipt records against purchase orders." />
+      <PageHeader
+        title="Packing Slips"
+        description="Goods-receipt records against purchase orders."
+        actions={writable ? (
+          <Button asChild>
+            <Link to="/packing-slips/new"><Plus className="mr-1.5 h-4 w-4" />Add Packing Slip</Link>
+          </Button>
+        ) : undefined}
+      />
       <Card><CardContent className="p-0">
         <Table>
           <TableHeader><TableRow>
@@ -36,7 +50,16 @@ function PSList() {
                 <TableCell>{s.vendor_slip_number ?? "—"}</TableCell>
                 <TableCell>{s.received_date}</TableCell>
               </TableRow>
-            )) : <TableRow><TableCell colSpan={5} className="py-6 text-center text-sm text-muted-foreground">No packing slips yet. Receive a shipment from a PO.</TableCell></TableRow>}
+            )) : (
+              <TableRow><TableCell colSpan={5} className="py-8 text-center text-sm text-muted-foreground">
+                No packing slips yet. Receive a shipment from a PO.
+                {writable ? (
+                  <div className="mt-3">
+                    <Button asChild size="sm"><Link to="/packing-slips/new"><Plus className="mr-1.5 h-4 w-4" />Add Packing Slip</Link></Button>
+                  </div>
+                ) : null}
+              </TableCell></TableRow>
+            )}
           </TableBody>
         </Table>
       </CardContent></Card>
