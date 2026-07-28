@@ -28,6 +28,7 @@ function NewPO() {
 
   const [projectId, setProjectId] = useState("");
   const [supplierId, setSupplierId] = useState("");
+  const [otherSupplier, setOtherSupplier] = useState("");
   const [billTo, setBillTo] = useState("MKJ Communications\n850 3rd Ave., #407\nBrooklyn, NY 11232");
   const [shipTo, setShipTo] = useState("MKJ Communications\n850 3rd Ave., #407\nBrooklyn, NY 11232");
   const [deliveryDate, setDeliveryDate] = useState("");
@@ -45,6 +46,14 @@ function NewPO() {
       const { data: numRow, error: numErr } = await supabase.rpc("gen_po_number", { _mkj: project.mkj_number });
       if (numErr) throw numErr;
       const { data: user } = await supabase.auth.getUser();
+      let resolvedSupplierId: string | null = supplierId === "__other__" ? null : supplierId || null;
+      if (supplierId === "__other__") {
+        const name = otherSupplier.trim();
+        if (!name) throw new Error("Enter the supplier name");
+        const { data: newSup, error: supErr } = await supabase.from("suppliers").insert({ name }).select("id").single();
+        if (supErr) throw supErr;
+        resolvedSupplierId = newSup.id;
+      }
       const { data: poRow, error: insErr } = await supabase.from("purchase_orders").insert({
         po_number: numRow as unknown as string,
         project_id: projectId,
