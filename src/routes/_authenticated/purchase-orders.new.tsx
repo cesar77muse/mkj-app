@@ -28,6 +28,7 @@ function NewPO() {
 
   const [projectId, setProjectId] = useState("");
   const [supplierId, setSupplierId] = useState("");
+  const [otherSupplier, setOtherSupplier] = useState("");
   const [billTo, setBillTo] = useState("MKJ Communications\n850 3rd Ave., #407\nBrooklyn, NY 11232");
   const [shipTo, setShipTo] = useState("MKJ Communications\n850 3rd Ave., #407\nBrooklyn, NY 11232");
   const [deliveryDate, setDeliveryDate] = useState("");
@@ -45,10 +46,18 @@ function NewPO() {
       const { data: numRow, error: numErr } = await supabase.rpc("gen_po_number", { _mkj: project.mkj_number });
       if (numErr) throw numErr;
       const { data: user } = await supabase.auth.getUser();
+      let resolvedSupplierId: string | null = supplierId === "__other__" ? null : supplierId || null;
+      if (supplierId === "__other__") {
+        const name = otherSupplier.trim();
+        if (!name) throw new Error("Enter the supplier name");
+        const { data: newSup, error: supErr } = await supabase.from("suppliers").insert({ name }).select("id").single();
+        if (supErr) throw supErr;
+        resolvedSupplierId = newSup.id;
+      }
       const { data: poRow, error: insErr } = await supabase.from("purchase_orders").insert({
         po_number: numRow as unknown as string,
         project_id: projectId,
-        supplier_id: supplierId || null,
+        supplier_id: resolvedSupplierId,
         bill_to: billTo || null,
         ship_to: shipTo || null,
         delivery_date: deliveryDate || null,
@@ -101,8 +110,14 @@ function NewPO() {
             <Label>Supplier</Label>
             <Select value={supplierId} onValueChange={setSupplierId}>
               <SelectTrigger><SelectValue placeholder="Choose supplier" /></SelectTrigger>
-              <SelectContent>{suppliers.data?.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
+              <SelectContent>
+                {suppliers.data?.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                <SelectItem value="__other__">Other…</SelectItem>
+              </SelectContent>
             </Select>
+            {supplierId === "__other__" && (
+              <Input className="mt-2" placeholder="Supplier name" value={otherSupplier} onChange={(e) => setOtherSupplier(e.target.value)} />
+            )}
           </div>
           <div><Label>Bill to</Label><Textarea rows={3} value={billTo} onChange={(e) => setBillTo(e.target.value)} /></div>
           <div><Label>Ship to</Label><Textarea rows={3} value={shipTo} onChange={(e) => setShipTo(e.target.value)} /></div>
