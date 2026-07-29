@@ -136,7 +136,7 @@ function BorrowPage() {
                   ) : null}
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><Label>Qty</Label><Input type="number" min={1} value={qty} onChange={(e) => setQty(Number(e.target.value))} /></div>
+                  <div><Label>Qty</Label><Input type="number" min={1} step={1} inputMode="numeric" value={qty} onChange={(e) => setQty(Math.max(1, Math.trunc(Number(e.target.value) || 1)))} /></div>
                   <div><Label>Needed by</Label><Input type="date" value={neededBy} onChange={(e) => setNeededBy(e.target.value)} /></div>
                 </div>
                 <div><Label>Reason</Label><Textarea value={reason} onChange={(e) => setReason(e.target.value)} /></div>

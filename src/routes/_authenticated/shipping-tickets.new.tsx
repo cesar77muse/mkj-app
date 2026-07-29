@@ -114,8 +114,8 @@ function NewTicket() {
                     </Select>
                   </TableCell>
                   <TableCell><Input value={l.description} onChange={(e) => setLines((ls) => ls.map((x, idx) => idx === i ? { ...x, description: e.target.value } : x))} /></TableCell>
-                  <TableCell><Input type="number" step="0.01" className="text-right" value={l.qty_shipped} onChange={(e) => setLines((ls) => ls.map((x, idx) => idx === i ? { ...x, qty_shipped: Number(e.target.value) } : x))} /></TableCell>
-                  <TableCell><Input type="number" step="0.01" className="text-right" value={l.qty_backordered} onChange={(e) => setLines((ls) => ls.map((x, idx) => idx === i ? { ...x, qty_backordered: Number(e.target.value) } : x))} /></TableCell>
+                  <TableCell><Input type="number" step={1} min={0} inputMode="numeric" className="text-right" value={l.qty_shipped} onChange={(e) => setLines((ls) => ls.map((x, idx) => idx === i ? { ...x, qty_shipped: Math.max(0, Math.trunc(Number(e.target.value) || 0)) } : x))} /></TableCell>
+                  <TableCell><Input type="number" step={1} min={0} inputMode="numeric" className="text-right" value={l.qty_backordered} onChange={(e) => setLines((ls) => ls.map((x, idx) => idx === i ? { ...x, qty_backordered: Math.max(0, Math.trunc(Number(e.target.value) || 0)) } : x))} /></TableCell>
                   <TableCell><Button variant="ghost" size="icon" onClick={() => setLines((ls) => ls.filter((_, idx) => idx !== i))}><Trash className="h-4 w-4" /></Button></TableCell>
                 </TableRow>
               ))}
