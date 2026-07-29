@@ -25,6 +25,8 @@ function NewTicket() {
   const projects = useQuery({ queryKey: ["projects", "active"], queryFn: async () => (await supabase.from("projects").select("id, mkj_number, name").eq("status", "active").order("mkj_number")).data ?? [] });
   const products = useQuery({ queryKey: ["products"], queryFn: async () => (await supabase.from("products").select("id, part_number, description").order("part_number")).data ?? [] });
 
+  const [projectId, setProjectId] = useState("");
+
   const stock = useQuery({
     queryKey: ["inventory", "project", projectId],
     enabled: !!projectId,
@@ -40,7 +42,6 @@ function NewTicket() {
     },
   });
 
-  const [projectId, setProjectId] = useState("");
   const [shipDate, setShipDate] = useState(new Date().toISOString().slice(0, 10));
   const [deliverTo, setDeliverTo] = useState("");
   const [address, setAddress] = useState("");
