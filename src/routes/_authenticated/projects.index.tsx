@@ -73,12 +73,12 @@ function ProjectsList() {
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>New project</DialogTitle>
-                  <DialogDescription>Use the MKJ job number (e.g. MKJ2403).</DialogDescription>
+                  <DialogDescription>Use the job number (e.g. 2403).</DialogDescription>
                 </DialogHeader>
                 <div className="space-y-3">
                   <div>
-                    <Label htmlFor="mkj">MKJ number</Label>
-                    <Input id="mkj" value={mkj} onChange={(e) => setMkj(e.target.value)} placeholder="MKJ2403" />
+                    <Label htmlFor="mkj">Job #</Label>
+                    <Input id="mkj" value={mkj} onChange={(e) => setMkj(e.target.value)} placeholder="2403" />
                   </div>
                   <div>
                     <Label htmlFor="pname">Name</Label>
