@@ -26,13 +26,28 @@ function NewTicket() {
   const products = useQuery({ queryKey: ["products"], queryFn: async () => (await supabase.from("products").select("id, part_number, description").order("part_number")).data ?? [] });
 
   const [projectId, setProjectId] = useState("");
+
+  const stock = useQuery({
+    queryKey: ["inventory", "project", projectId],
+    enabled: !!projectId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("v_project_inventory")
+        .select("product_id, on_hand")
+        .eq("project_id", projectId);
+      if (error) throw error;
+      const map = new Map<string, number>();
+      for (const r of data ?? []) map.set(r.product_id as string, Number(r.on_hand));
+      return map;
+    },
+  });
+
   const [shipDate, setShipDate] = useState(new Date().toISOString().slice(0, 10));
   const [deliverTo, setDeliverTo] = useState("");
   const [address, setAddress] = useState("");
   const [contact, setContact] = useState("");
   const [phone, setPhone] = useState("");
   const [shipBy, setShipBy] = useState("Van");
-  const [poRef, setPoRef] = useState("");
   const [contractNum, setContractNum] = useState("");
   const [lines, setLines] = useState<Line[]>([{ product_id: "", description: "", qty_shipped: 1, qty_backordered: 0 }]);
 
@@ -50,7 +65,6 @@ function NewTicket() {
         contact_name: contact || null,
         contact_phone: phone || null,
         ship_by: shipBy || null,
-        po_reference: poRef || null,
         contract_number: contractNum || null,
         status: "ready",
         created_by: user.user?.id ?? null,
@@ -91,7 +105,6 @@ function NewTicket() {
           <div className="md:col-span-2"><Label>Delivery address</Label><Textarea rows={2} value={address} onChange={(e) => setAddress(e.target.value)} /></div>
           <div><Label>On-site contact</Label><Input value={contact} onChange={(e) => setContact(e.target.value)} /></div>
           <div><Label>Contact phone</Label><Input value={phone} onChange={(e) => setPhone(e.target.value)} /></div>
-          <div><Label>PO reference</Label><Input value={poRef} onChange={(e) => setPoRef(e.target.value)} /></div>
           <div><Label>Contract #</Label><Input value={contractNum} onChange={(e) => setContractNum(e.target.value)} /></div>
         </div>
 
@@ -102,7 +115,7 @@ function NewTicket() {
           </div>
           <Table>
             <TableHeader><TableRow>
-              <TableHead>Product</TableHead><TableHead>Description</TableHead><TableHead className="text-right">Shipped</TableHead><TableHead className="text-right">Backordered</TableHead><TableHead className="w-10" />
+              <TableHead>Product</TableHead><TableHead className="text-right">In stock</TableHead><TableHead>Description</TableHead><TableHead className="text-right">Shipped</TableHead><TableHead className="text-right">Backordered</TableHead><TableHead className="w-10" />
             </TableRow></TableHeader>
             <TableBody>
               {lines.map((l, i) => (
@@ -112,6 +125,18 @@ function NewTicket() {
                       <SelectTrigger className="h-8 w-52"><SelectValue placeholder="Select part" /></SelectTrigger>
                       <SelectContent>{products.data?.map((p) => <SelectItem key={p.id} value={p.id}>{p.part_number}</SelectItem>)}</SelectContent>
                     </Select>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {l.product_id ? (() => {
+                      const onHand = stock.data?.get(l.product_id) ?? 0;
+                      const remaining = onHand - l.qty_shipped;
+                      return (
+                        <div className="inline-flex flex-col items-end rounded-md border px-2 py-1">
+                          <span className={`text-sm font-semibold ${remaining < 0 ? "text-destructive" : ""}`}>{onHand}</span>
+                          <span className="text-[10px] text-muted-foreground">{remaining < 0 ? `short ${Math.abs(remaining)}` : `${remaining} left`}</span>
+                        </div>
+                      );
+                    })() : <span className="text-muted-foreground">—</span>}
                   </TableCell>
                   <TableCell><Input value={l.description} onChange={(e) => setLines((ls) => ls.map((x, idx) => idx === i ? { ...x, description: e.target.value } : x))} /></TableCell>
                   <TableCell><Input type="number" step={1} min={0} inputMode="numeric" className="text-right" value={l.qty_shipped} onChange={(e) => setLines((ls) => ls.map((x, idx) => idx === i ? { ...x, qty_shipped: Math.max(0, Math.trunc(Number(e.target.value) || 0)) } : x))} /></TableCell>

@@ -89,7 +89,7 @@ function TicketView() {
           <div>Ship by: {t.ship_by ?? "—"}</div>
           <div className="md:col-span-2 whitespace-pre-wrap text-muted-foreground">{t.deliver_to_address}</div>
           <div>Contact: {t.contact_name ?? "—"} {t.contact_phone ? `(${t.contact_phone})` : ""}</div>
-          <div>PO ref: {t.po_reference ?? "—"}</div>
+          
           <div>Contract: {t.contract_number ?? "—"}</div>
           <div>Ship date: {t.ship_date}</div>
         </div>
