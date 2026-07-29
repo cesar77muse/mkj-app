@@ -48,7 +48,6 @@ function NewTicket() {
   const [contact, setContact] = useState("");
   const [phone, setPhone] = useState("");
   const [shipBy, setShipBy] = useState("Van");
-  const [contractNum, setContractNum] = useState("");
   const [lines, setLines] = useState<Line[]>([{ product_id: "", description: "", qty_shipped: 1, qty_backordered: 0 }]);
 
   const create = useMutation({
@@ -65,7 +64,6 @@ function NewTicket() {
         contact_name: contact || null,
         contact_phone: phone || null,
         ship_by: shipBy || null,
-        contract_number: contractNum || null,
         status: "ready",
         created_by: user.user?.id ?? null,
       }).select("id").single();
@@ -105,7 +103,6 @@ function NewTicket() {
           <div className="md:col-span-2"><Label>Delivery address</Label><Textarea rows={2} value={address} onChange={(e) => setAddress(e.target.value)} /></div>
           <div><Label>On-site contact</Label><Input value={contact} onChange={(e) => setContact(e.target.value)} /></div>
           <div><Label>Contact phone</Label><Input value={phone} onChange={(e) => setPhone(e.target.value)} /></div>
-          <div><Label>Contract #</Label><Input value={contractNum} onChange={(e) => setContractNum(e.target.value)} /></div>
         </div>
 
         <div>
