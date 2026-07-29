@@ -88,7 +88,7 @@ function ProjectDetail() {
             <Card>
               <CardHeader><CardTitle>Summary</CardTitle></CardHeader>
               <CardContent className="space-y-2 text-sm">
-                <div><span className="text-muted-foreground">MKJ #: </span><span className="font-mono">{p.mkj_number}</span></div>
+                <div><span className="text-muted-foreground">Job #: </span><span className="font-mono">{p.mkj_number}</span></div>
                 <div><span className="text-muted-foreground">Contract: </span>{p.contract_number ?? "—"}</div>
                 <div><span className="text-muted-foreground">Status: </span>{p.status}</div>
                 <div><span className="text-muted-foreground">Created: </span>{new Date(p.created_at).toLocaleDateString()}</div>
