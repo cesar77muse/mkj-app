@@ -144,7 +144,7 @@ function NewPO() {
                   <TableCell>{l.line_no}</TableCell>
                   <TableCell><Input value={l.budget_code} onChange={(e) => updateLine(i, { budget_code: e.target.value })} /></TableCell>
                   <TableCell><Input value={l.description} onChange={(e) => updateLine(i, { description: e.target.value })} /></TableCell>
-                  <TableCell><Input type="number" step="0.01" className="text-right" value={l.qty} onChange={(e) => updateLine(i, { qty: Number(e.target.value) })} /></TableCell>
+                  <TableCell><Input type="number" step={1} min={0} inputMode="numeric" className="text-right" value={l.qty} onChange={(e) => updateLine(i, { qty: Math.max(0, Math.trunc(Number(e.target.value) || 0)) })} /></TableCell>
                   <TableCell><Input value={l.unit} onChange={(e) => updateLine(i, { unit: e.target.value })} /></TableCell>
                   <TableCell><Input type="number" step="0.01" className="text-right" value={l.unit_cost} onChange={(e) => updateLine(i, { unit_cost: Number(e.target.value) })} /></TableCell>
                   <TableCell className="text-right font-mono">${(Number(l.qty || 0) * Number(l.unit_cost || 0)).toFixed(2)}</TableCell>

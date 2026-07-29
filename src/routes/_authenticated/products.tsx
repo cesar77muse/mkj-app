@@ -72,7 +72,7 @@ function ProductsPage() {
                 <div><Label htmlFor="pdesc">Description</Label><Input id="pdesc" value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="2MP OUTDOOR VANDAL DOME CAM" /></div>
                 <div className="grid grid-cols-2 gap-3">
                   <div><Label htmlFor="unit">Unit</Label><Input id="unit" value={unit} onChange={(e) => setUnit(e.target.value)} /></div>
-                  <div><Label htmlFor="rp">Reorder point</Label><Input id="rp" type="number" value={rp} onChange={(e) => setRp(Number(e.target.value) || 0)} /></div>
+                  <div><Label htmlFor="rp">Reorder point</Label><Input id="rp" type="number" min={0} step={1} inputMode="numeric" value={rp} onChange={(e) => setRp(Math.max(0, Math.trunc(Number(e.target.value) || 0)))} /></div>
                 </div>
               </div>
               <DialogFooter>

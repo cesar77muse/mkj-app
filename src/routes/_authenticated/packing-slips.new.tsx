@@ -284,11 +284,12 @@ function NewSlip() {
                           <Input
                             type="number"
                             min={0}
-                            step="0.01"
+                            step={1}
+                            inputMode="numeric"
                             className="w-24 text-right"
                             value={l.qty_received}
                             onChange={(e) => {
-                              const v = Math.max(0, Number(e.target.value) || 0);
+                              const v = Math.max(0, Math.trunc(Number(e.target.value) || 0));
                               setLines((ls) => ls.map((x, idx) => idx === i ? { ...x, qty_received: v } : x));
                             }}
                           />
