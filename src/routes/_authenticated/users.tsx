@@ -81,6 +81,20 @@ function UsersPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const renameMut = useMutation({
+    mutationFn: async ({ userId, fullName }: { userId: string; fullName: string }) => {
+      const { error } = await supabase.from("profiles").update({ full_name: fullName }).eq("id", userId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Name updated");
+      setEditing(null);
+      qc.invalidateQueries({ queryKey: ["all-users"] });
+      qc.invalidateQueries({ queryKey: ["profile"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const toggleAssignmentMut = useMutation({
     mutationFn: async ({ userId, projectId, table, on }: { userId: string; projectId: string; table: "project_managers" | "project_engineers"; on: boolean }) => {
       if (on) {
