@@ -1,0 +1,1 @@
+UPDATE purchase_orders SET po_number = 'MKJ2403EX001' WHERE po_number = 'MKJ2403EX255';
