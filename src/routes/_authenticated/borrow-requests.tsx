@@ -221,7 +221,7 @@ function BorrowPage() {
                     <Label>Borrow from (lending project)</Label>
                     <Select value={sourceId} onValueChange={setSourceId}>
                       <SelectTrigger><SelectValue placeholder="Source project" /></SelectTrigger>
-                      <SelectContent>{projects.data?.map((p) => <SelectItem key={p.id} value={p.id}>{p.mkj_number} — {p.name}</SelectItem>)}</SelectContent>
+                      <SelectContent>{projects.data?.filter((p) => p.id !== targetId && !(myProjects.data ?? []).includes(p.id)).map((p) => <SelectItem key={p.id} value={p.id}>{p.mkj_number} — {p.name}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
                   <div>
