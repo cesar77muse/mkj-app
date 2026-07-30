@@ -55,6 +55,7 @@ function POList() {
                       <FileText className="mr-1 h-4 w-4" />View PO
                     </Button>
                     <POEditDialog poId={po.id} status={po.status} />
+                    <PODeleteButton poId={po.id} poNumber={po.po_number} status={po.status} />
                   </div>
                 </TableCell>
               </TableRow>
