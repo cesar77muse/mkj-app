@@ -138,7 +138,18 @@ function UsersPage() {
               return (
                 <TableRow key={u.id}>
                   <TableCell>
-                    <div className="font-medium">{u.full_name ?? u.email}</div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="font-medium">{u.full_name ?? u.email}</div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        title="Edit name"
+                        onClick={() => setEditing({ id: u.id, name: u.full_name ?? "" })}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
                     <div className="text-xs text-muted-foreground">{u.email}</div>
                   </TableCell>
                   <TableCell>
