@@ -77,13 +77,28 @@ function BorrowPage() {
 
   const list = useQuery({
     queryKey: ["borrow-requests"],
-    queryFn: async () =>
-      ((await supabase
+    queryFn: async () => {
+      const { data, error } = await supabase
         .from("borrow_requests")
         .select(
-          "*, source:source_project_id(mkj_number, name), target:target_project_id(mkj_number, name), product:product_id(part_number, description), requester:requested_by(full_name, email), decider:decided_by(full_name, email)",
+          "*, source:source_project_id(mkj_number, name), target:target_project_id(mkj_number, name), product:product_id(part_number, description)",
         )
-        .order("created_at", { ascending: false })).data ?? []) as unknown as Req[],
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      const reqs = (data ?? []) as unknown as Req[];
+      // requested_by/decided_by reference auth.users, so profile names are fetched separately
+      const ids = Array.from(new Set(reqs.flatMap((r) => [r.requested_by, r.decided_by]).filter(Boolean) as string[]));
+      let byId: Record<string, { full_name: string | null; email: string | null }> = {};
+      if (ids.length > 0) {
+        const { data: profs } = await supabase.from("profiles").select("id, full_name, email").in("id", ids);
+        byId = Object.fromEntries((profs ?? []).map((p) => [p.id, { full_name: p.full_name, email: p.email }]));
+      }
+      return reqs.map((r) => ({
+        ...r,
+        requester: r.requested_by ? byId[r.requested_by] ?? null : null,
+        decider: r.decided_by ? byId[r.decided_by] ?? null : null,
+      }));
+    },
   });
 
   const myProjects = useQuery({
@@ -346,7 +361,7 @@ function BorrowPage() {
       </Dialog>
 
       {/* Detail panel (deep link target from notifications) */}
-      <Dialog open={!!focused} onOpenChange={(o) => { if (!o) navigate({ search: {} }); }}>
+      <Dialog open={!!focused} onOpenChange={(o) => { if (!o) navigate({ search: { request: undefined } }); }}>
         <DialogContent>
           <DialogHeader><DialogTitle>Borrow request</DialogTitle></DialogHeader>
           {focused ? (
@@ -367,7 +382,7 @@ function BorrowPage() {
               <div className="flex gap-2 pt-2">
                 {canDecide(focused) ? (
                   <>
-                    <Button size="sm" onClick={() => { setApproving(focused); setApproveQty(Number(focused.qty_requested)); setNote(""); navigate({ search: {} }); }}>Approve</Button>
+                    <Button size="sm" onClick={() => { setApproving(focused); setApproveQty(Number(focused.qty_requested)); setNote(""); navigate({ search: { request: undefined } }); }}>Approve</Button>
                     <Button size="sm" variant="outline" onClick={() => decide.mutate({ req: focused, status: "denied" })}>Deny</Button>
                   </>
                 ) : null}
