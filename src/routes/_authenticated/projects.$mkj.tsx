@@ -19,6 +19,7 @@ export const Route = createFileRoute("/_authenticated/projects/$mkj")({
 
 function ProjectDetail() {
   const { mkj } = Route.useParams();
+  const { data: managers = [] } = useManagers();
 
   const project = useQuery({
     queryKey: ["project", mkj],
