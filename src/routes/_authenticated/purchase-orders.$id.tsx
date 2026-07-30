@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/page-header";
 import { POStatusBadge, PO_STATUS_OPTIONS } from "@/components/po-status-badge";
+import { POEditDialog } from "@/components/po-edit-dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -76,6 +77,7 @@ function POView() {
             <Button size="sm" variant="outline" onClick={() => toast.info("PDF view coming soon")}>
               <FileText className="mr-1 h-4 w-4" />View PO
             </Button>
+            <POEditDialog poId={id} status={po.data.status} variant="button" />
             <Link to="/packing-slips/new" search={{ po: id }}><Button size="sm">Receive shipment</Button></Link>
           </div>
         }
