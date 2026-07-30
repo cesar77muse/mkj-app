@@ -21,7 +21,7 @@ function PSList() {
     queryKey: ["packing-slips"],
     queryFn: async () => (await supabase
       .from("packing_slips")
-      .select("id, slip_number, received_date, vendor_slip_number, projects:project_id(mkj_number), purchase_orders:po_id(po_number)")
+      .select("id, slip_number, received_date, status, vendor_slip_number, projects:project_id(mkj_number), purchase_orders:po_id(po_number)")
       .order("received_date", { ascending: false })
       .limit(200)).data ?? [],
   });
