@@ -27,7 +27,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { useRoles, useSession } from "@/hooks/use-session";
+import { useProfile, useRoles, useSession } from "@/hooks/use-session";
 import { isAdmin, isWarehouseOrAdmin, highestRole, ROLE_LABELS } from "@/lib/roles";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
@@ -116,10 +116,12 @@ function NotificationsBell() {
 
 function UserMenu() {
   const { email } = useSession();
+  const { data: profile } = useProfile();
   const { data: roles = [] } = useRoles();
   const qc = useQueryClient();
   const navigate = useNavigate();
   const top = highestRole(roles);
+  const displayName = profile?.full_name?.trim() || email || "";
 
   async function signOut() {
     await qc.cancelQueries();
@@ -133,19 +135,20 @@ function UserMenu() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="h-9 gap-2 px-2">
           <div className="hidden text-right sm:block">
-            <div className="text-xs font-medium leading-none">{email}</div>
+            <div className="text-xs font-medium leading-none">{displayName}</div>
             {top ? <div className="mt-0.5 text-[10px] text-muted-foreground">{ROLE_LABELS[top]}</div> : null}
           </div>
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
-            {(email ?? "?").slice(0, 1).toUpperCase()}
+            {(displayName || "?").slice(0, 1).toUpperCase()}
           </div>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel>
-          <div className="text-sm font-medium">{email}</div>
+          <div className="text-sm font-medium">{displayName}</div>
           {top ? <div className="mt-0.5"><Badge variant="secondary">{ROLE_LABELS[top]}</Badge></div> : null}
         </DropdownMenuLabel>
+
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={signOut}>
           <LogOut className="mr-2 h-4 w-4" /> Sign out
