@@ -97,13 +97,13 @@ function TicketEditForm({ ticketId, onDone }: { ticketId: string; onDone: () => 
     mutationFn: async () => {
       if (lines.some((l) => !l.description.trim())) throw new Error("Every line needs a description");
       const { error: upErr } = await supabase.from("shipping_tickets").update({
-        ship_date: shipDate || null,
+        ship_date: shipDate,
         deliver_to_name: deliverTo || null,
         deliver_to_address: address || null,
         contact_name: contact || null,
         contact_phone: phone || null,
         ship_by: shipBy || null,
-        status,
+        status: status as "draft" | "ready" | "shipped" | "delivered",
       }).eq("id", ticketId);
       if (upErr) throw upErr;
 
