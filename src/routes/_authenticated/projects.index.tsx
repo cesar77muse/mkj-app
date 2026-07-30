@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { Plus } from "lucide-react";
 import { useRoles } from "@/hooks/use-session";
 import { isWarehouseOrAdmin } from "@/lib/roles";
+import { ProjectEditDialog } from "@/components/project-edit-dialog";
 
 export const Route = createFileRoute("/_authenticated/projects/")({
   head: () => ({ meta: [{ title: "Projects — MKJ Ops" }] }),
@@ -115,7 +116,10 @@ function ProjectsList() {
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between gap-2">
                     <div className="font-mono text-sm font-semibold text-primary">{p.mkj_number}</div>
-                    <Badge variant={p.status === "active" ? "default" : "secondary"}>{p.status}</Badge>
+                    <div className="flex items-center gap-1">
+                      <Badge variant={p.status === "active" ? "default" : "secondary"}>{p.status}</Badge>
+                      <ProjectEditDialog project={p} />
+                    </div>
                   </div>
                   <div className="mt-1 font-medium">{p.name}</div>
                   {p.contract_number ? <div className="mt-1 text-xs text-muted-foreground">Contract {p.contract_number}</div> : null}
