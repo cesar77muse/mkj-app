@@ -80,6 +80,13 @@ function POView() {
               <FileText className="mr-1 h-4 w-4" />View PO
             </Button>
             <POEditDialog poId={id} status={po.data.status} variant="button" />
+            <PODeleteButton
+              poId={id}
+              poNumber={po.data.po_number}
+              status={po.data.status}
+              variant="button"
+              onDeleted={() => navigate({ to: "/purchase-orders" })}
+            />
             <Link to="/packing-slips/new" search={{ po: id }}><Button size="sm">Receive shipment</Button></Link>
           </div>
         }
