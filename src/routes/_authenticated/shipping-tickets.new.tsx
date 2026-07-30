@@ -78,9 +78,9 @@ function NewTicket() {
       }
       return t.id as string;
     },
-    onSuccess: (id) => {
+    onSuccess: () => {
       toast.success("Ticket created");
-      navigate({ to: "/shipping-tickets/$id", params: { id } });
+      navigate({ to: "/shipping-tickets" });
     },
     onError: (e: Error) => toast.error(e.message),
   });

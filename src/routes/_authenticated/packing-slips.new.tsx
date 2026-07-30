@@ -191,9 +191,9 @@ function NewSlip() {
       await supabase.from("purchase_orders").update({ status: slipStatus }).eq("id", poDetail.data.po.id);
       return slip.id as string;
     },
-    onSuccess: (id) => {
+    onSuccess: () => {
       toast.success("Packing slip recorded and inventory updated");
-      navigate({ to: "/packing-slips/$id", params: { id } });
+      navigate({ to: "/packing-slips" });
     },
     onError: (e: Error) => toast.error(e.message),
   });

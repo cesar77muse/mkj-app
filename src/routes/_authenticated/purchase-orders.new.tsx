@@ -74,9 +74,9 @@ function NewPO() {
       }
       return poRow!.id as string;
     },
-    onSuccess: (id) => {
+    onSuccess: () => {
       toast.success("PO created");
-      navigate({ to: "/purchase-orders/$id", params: { id } });
+      navigate({ to: "/purchase-orders" });
     },
     onError: (e: Error) => toast.error(e.message),
   });
