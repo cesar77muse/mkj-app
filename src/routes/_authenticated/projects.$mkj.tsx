@@ -146,7 +146,9 @@ function ProjectDetail() {
               </Table>
             </CardContent>
           </Card>
+          <BorrowHistory projectId={p.id} />
         </TabsContent>
+
 
         <TabsContent value="pos" className="pt-4">
           <Card>
