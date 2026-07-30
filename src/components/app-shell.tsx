@@ -27,7 +27,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { useRoles, useSession } from "@/hooks/use-session";
+import { useProfile, useRoles, useSession } from "@/hooks/use-session";
 import { isAdmin, isWarehouseOrAdmin, highestRole, ROLE_LABELS } from "@/lib/roles";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
