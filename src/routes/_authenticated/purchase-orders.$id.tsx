@@ -23,6 +23,7 @@ export const Route = createFileRoute("/_authenticated/purchase-orders/$id")({
 function POView() {
   const { id } = Route.useParams();
   const qc = useQueryClient();
+  const navigate = useNavigate();
 
   const po = useQuery({
     queryKey: ["po", id],
