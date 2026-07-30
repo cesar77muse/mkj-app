@@ -241,6 +241,7 @@ export type Database = {
           received_by: string | null
           received_date: string
           slip_number: string
+          status: string
           vendor_slip_number: string | null
         }
         Insert: {
@@ -254,6 +255,7 @@ export type Database = {
           received_by?: string | null
           received_date?: string
           slip_number: string
+          status?: string
           vendor_slip_number?: string | null
         }
         Update: {
@@ -267,6 +269,7 @@ export type Database = {
           received_by?: string | null
           received_date?: string
           slip_number?: string
+          status?: string
           vendor_slip_number?: string | null
         }
         Relationships: [
@@ -765,14 +768,14 @@ export type Database = {
       }
       create_purchase_order: {
         Args: {
-          _bill_to: string | null
-          _delivery_date: string | null
-          _description: string | null
-          _payment_terms: string | null
+          _bill_to: string
+          _delivery_date: string
+          _description: string
+          _payment_terms: string
           _project_id: string
-          _ship_to: string | null
-          _ship_via: string | null
-          _supplier_id: string | null
+          _ship_to: string
+          _ship_via: string
+          _supplier_id: string
         }
         Returns: {
           additional_freight: number | null
@@ -794,6 +797,12 @@ export type Database = {
           supplier_id: string | null
           terms_conditions: string | null
           updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "purchase_orders"
+          isOneToOne: true
+          isSetofReturn: false
         }
       }
       gen_ps_number: { Args: { _mkj: string }; Returns: string }

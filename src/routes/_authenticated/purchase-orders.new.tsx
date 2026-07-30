@@ -62,7 +62,7 @@ function NewPO() {
         _ship_via: shipVia || null,
         _payment_terms: paymentTerms || null,
         _description: description || null,
-      });
+      } as never);
       if (insErr) throw insErr;
       const items = lines.filter((l) => l.description.trim()).map((l) => ({
         po_id: poRow!.id, line_no: l.line_no, budget_code: l.budget_code || null,
