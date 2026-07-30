@@ -193,6 +193,30 @@ function UsersPage() {
       </CardContent></Card>
       <p className="mt-3 text-xs text-muted-foreground">Users appear here once they create an account from the sign-in page.</p>
       <div className="mt-2"><Button variant="outline" size="sm" onClick={() => qc.invalidateQueries({ queryKey: ["all-users"] })}>Refresh</Button></div>
+
+      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader><DialogTitle>Edit user name</DialogTitle></DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="full_name">Full name</Label>
+            <Input
+              id="full_name"
+              value={editing?.name ?? ""}
+              onChange={(e) => setEditing((p) => (p ? { ...p, name: e.target.value } : p))}
+              placeholder="Jane Doe"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditing(null)}>Cancel</Button>
+            <Button
+              disabled={!editing?.name.trim() || renameMut.isPending}
+              onClick={() => editing && renameMut.mutate({ userId: editing.id, fullName: editing.name.trim() })}
+            >
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
