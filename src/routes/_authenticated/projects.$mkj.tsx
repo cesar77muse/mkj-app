@@ -112,7 +112,7 @@ function ProjectDetail() {
           </div>
         </TabsContent>
 
-        <TabsContent value="inventory" className="pt-4">
+        <TabsContent value="inventory" className="space-y-4 pt-4">
           <Card>
             <CardContent className="p-0">
               <Table>
