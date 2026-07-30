@@ -41,14 +41,19 @@ function ProjectsList() {
   const [name, setName] = useState("");
   const [contract, setContract] = useState("");
   const [desc, setDesc] = useState("");
+  const [managerId, setManagerId] = useState<string | null>(null);
+
+  const { data: managers = [] } = useManagers();
 
   const createMut = useMutation({
     mutationFn: async () => {
+      if (!managerId) throw new Error("Select a project manager");
       const { error } = await supabase.from("projects").insert({
         mkj_number: mkj.trim().toUpperCase(),
         name: name.trim(),
         contract_number: contract.trim() || null,
         description: desc.trim() || null,
+        project_manager_id: managerId,
       });
       if (error) throw error;
     },
