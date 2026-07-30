@@ -130,6 +130,9 @@ function ProjectsList() {
                     <Badge variant={p.status === "active" ? "default" : "secondary"}>{p.status}</Badge>
                   </div>
                   <div className="mt-1 font-medium">{p.name}</div>
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    PM: {managerLabel(managers.find((m) => m.id === p.project_manager_id))}
+                  </div>
                   {p.contract_number ? <div className="mt-1 text-xs text-muted-foreground">Contract {p.contract_number}</div> : null}
                   {p.description ? <div className="mt-2 line-clamp-2 text-sm text-muted-foreground">{p.description}</div> : null}
                 </CardContent>
