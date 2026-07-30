@@ -768,6 +768,10 @@ export type Database = {
       }
     }
     Functions: {
+      borrow_notify_recipients: {
+        Args: { _project_id: string }
+        Returns: string[]
+      }
       can_see_project: {
         Args: { _project_id: string; _user_id: string }
         Returns: boolean
