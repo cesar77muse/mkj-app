@@ -241,6 +241,7 @@ export type Database = {
           received_by: string | null
           received_date: string
           slip_number: string
+          status: string
           vendor_slip_number: string | null
         }
         Insert: {
@@ -254,6 +255,7 @@ export type Database = {
           received_by?: string | null
           received_date?: string
           slip_number: string
+          status?: string
           vendor_slip_number?: string | null
         }
         Update: {
@@ -267,6 +269,7 @@ export type Database = {
           received_by?: string | null
           received_date?: string
           slip_number?: string
+          status?: string
           vendor_slip_number?: string | null
         }
         Relationships: [
