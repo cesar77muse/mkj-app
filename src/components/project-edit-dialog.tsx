@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Pencil } from "lucide-react";
 import { useRoles } from "@/hooks/use-session";
 import { isAdmin } from "@/lib/roles";
+import { ProjectManagerSelect } from "@/components/project-manager-select";
 
 type Project = {
   id: string;
@@ -19,6 +20,7 @@ type Project = {
   contract_number: string | null;
   description: string | null;
   status: string;
+  project_manager_id?: string | null;
 };
 
 type ProjectStatus = "active" | "closed" | "on_hold";
