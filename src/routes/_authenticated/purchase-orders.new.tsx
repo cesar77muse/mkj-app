@@ -43,9 +43,6 @@ function NewPO() {
     mutationFn: async () => {
       const project = projects.data?.find((p) => p.id === projectId);
       if (!project) throw new Error("Choose a project");
-      const { data: numRow, error: numErr } = await supabase.rpc("gen_po_number", { _mkj: project.mkj_number });
-      if (numErr) throw numErr;
-      const { data: user } = await supabase.auth.getUser();
       let resolvedSupplierId: string | null = supplierId === "__other__" ? null : supplierId || null;
       if (supplierId === "__other__") {
         const name = otherSupplier.trim();
@@ -54,28 +51,28 @@ function NewPO() {
         if (supErr) throw supErr;
         resolvedSupplierId = newSup.id;
       }
-      const { data: poRow, error: insErr } = await supabase.from("purchase_orders").insert({
-        po_number: numRow as unknown as string,
-        project_id: projectId,
-        supplier_id: resolvedSupplierId,
-        bill_to: billTo || null,
-        ship_to: shipTo || null,
-        delivery_date: deliveryDate || null,
-        ship_via: shipVia || null,
-        payment_terms: paymentTerms || null,
-        description: description || null,
-        created_by: user.user?.id ?? null,
-      }).select("id").single();
+      // create_purchase_order mints the per-project MKJ<project>EX<seq> number
+      // and inserts the PO row atomically (see migration for details).
+      const { data: poRow, error: insErr } = await supabase.rpc("create_purchase_order", {
+        _project_id: projectId,
+        _supplier_id: resolvedSupplierId,
+        _bill_to: billTo || null,
+        _ship_to: shipTo || null,
+        _delivery_date: deliveryDate || null,
+        _ship_via: shipVia || null,
+        _payment_terms: paymentTerms || null,
+        _description: description || null,
+      });
       if (insErr) throw insErr;
       const items = lines.filter((l) => l.description.trim()).map((l) => ({
-        po_id: poRow.id, line_no: l.line_no, budget_code: l.budget_code || null,
+        po_id: poRow!.id, line_no: l.line_no, budget_code: l.budget_code || null,
         description: l.description, qty: l.qty, unit: l.unit || "ea", unit_cost: l.unit_cost,
       }));
       if (items.length > 0) {
         const { error: iErr } = await supabase.from("purchase_order_items").insert(items);
         if (iErr) throw iErr;
       }
-      return poRow.id as string;
+      return poRow!.id as string;
     },
     onSuccess: (id) => {
       toast.success("PO created");

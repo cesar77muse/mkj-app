@@ -485,7 +485,9 @@ export type Database = {
           id: string
           payment_terms: string | null
           po_number: string
+          po_sequence: number
           project_id: string
+          project_number: string
           ship_to: string | null
           ship_via: string | null
           status: Database["public"]["Enums"]["po_status"]
@@ -504,7 +506,9 @@ export type Database = {
           id?: string
           payment_terms?: string | null
           po_number: string
+          po_sequence: number
           project_id: string
+          project_number: string
           ship_to?: string | null
           ship_via?: string | null
           status?: Database["public"]["Enums"]["po_status"]
@@ -523,7 +527,9 @@ export type Database = {
           id?: string
           payment_terms?: string | null
           po_number?: string
+          po_sequence?: number
           project_id?: string
+          project_number?: string
           ship_to?: string | null
           ship_via?: string | null
           status?: Database["public"]["Enums"]["po_status"]
@@ -757,7 +763,39 @@ export type Database = {
         Args: { _project_id: string; _user_id: string }
         Returns: boolean
       }
-      gen_po_number: { Args: { _mkj: string }; Returns: string }
+      create_purchase_order: {
+        Args: {
+          _bill_to: string | null
+          _delivery_date: string | null
+          _description: string | null
+          _payment_terms: string | null
+          _project_id: string
+          _ship_to: string | null
+          _ship_via: string | null
+          _supplier_id: string | null
+        }
+        Returns: {
+          additional_freight: number | null
+          assignee: string | null
+          bill_to: string | null
+          created_at: string
+          created_by: string | null
+          delivery_date: string | null
+          description: string | null
+          id: string
+          payment_terms: string | null
+          po_number: string
+          po_sequence: number
+          project_id: string
+          project_number: string
+          ship_to: string | null
+          ship_via: string | null
+          status: Database["public"]["Enums"]["po_status"]
+          supplier_id: string | null
+          terms_conditions: string | null
+          updated_at: string
+        }
+      }
       gen_ps_number: { Args: { _mkj: string }; Returns: string }
       gen_ticket_number: { Args: never; Returns: string }
       has_role: {
