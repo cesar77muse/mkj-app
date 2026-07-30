@@ -361,7 +361,7 @@ function BorrowPage() {
       </Dialog>
 
       {/* Detail panel (deep link target from notifications) */}
-      <Dialog open={!!focused} onOpenChange={(o) => { if (!o) navigate({ search: {} }); }}>
+      <Dialog open={!!focused} onOpenChange={(o) => { if (!o) navigate({ search: { request: undefined } }); }}>
         <DialogContent>
           <DialogHeader><DialogTitle>Borrow request</DialogTitle></DialogHeader>
           {focused ? (
@@ -382,7 +382,7 @@ function BorrowPage() {
               <div className="flex gap-2 pt-2">
                 {canDecide(focused) ? (
                   <>
-                    <Button size="sm" onClick={() => { setApproving(focused); setApproveQty(Number(focused.qty_requested)); setNote(""); navigate({ search: {} }); }}>Approve</Button>
+                    <Button size="sm" onClick={() => { setApproving(focused); setApproveQty(Number(focused.qty_requested)); setNote(""); navigate({ search: { request: undefined } }); }}>Approve</Button>
                     <Button size="sm" variant="outline" onClick={() => decide.mutate({ req: focused, status: "denied" })}>Deny</Button>
                   </>
                 ) : null}
