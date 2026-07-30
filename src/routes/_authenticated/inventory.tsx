@@ -138,6 +138,9 @@ function InventoryPage() {
           </TableBody>
         </Table>
       </CardContent></Card>
+
+      <BorrowHistory title="Recent borrow movements" />
     </div>
+
   );
 }
