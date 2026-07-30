@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,30 +11,103 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
-import { useSession } from "@/hooks/use-session";
+import { useRoles, useSession } from "@/hooks/use-session";
+import { isWarehouseOrAdmin } from "@/lib/roles";
+import { BorrowHistory } from "@/components/borrow-history";
 
 export const Route = createFileRoute("/_authenticated/borrow-requests")({
   head: () => ({ meta: [{ title: "Borrow Requests — MKJ Ops" }] }),
+  validateSearch: (s: Record<string, unknown>) => ({ request: typeof s.request === "string" ? s.request : undefined }),
   component: BorrowPage,
 });
 
+type Req = {
+  id: string;
+  source_project_id: string;
+  target_project_id: string;
+  product_id: string;
+  qty_requested: number;
+  qty_approved: number | null;
+  status: string;
+  reason: string | null;
+  decision_note: string | null;
+  needed_by: string | null;
+  requested_by: string | null;
+  decided_by: string | null;
+  created_at: string;
+  decided_at: string | null;
+  source: { mkj_number: string; name: string } | null;
+  target: { mkj_number: string; name: string } | null;
+  product: { part_number: string; description: string } | null;
+  requester: { full_name: string | null; email: string | null } | null;
+  decider: { full_name: string | null; email: string | null } | null;
+};
+
+function statusVariant(s: string) {
+  if (s === "fulfilled" || s === "approved") return "default" as const;
+  if (s === "denied") return "destructive" as const;
+  return "secondary" as const;
+}
+const STATUS_LABEL: Record<string, string> = {
+  pending: "Pending",
+  approved: "Approved",
+  partially_approved: "Partially approved",
+  denied: "Denied",
+  fulfilled: "Fulfilled",
+  returned: "Returned",
+  cancelled: "Cancelled",
+};
+
+function personLabel(p?: { full_name: string | null; email: string | null } | null) {
+  return p?.full_name?.trim() || p?.email || "—";
+}
+
 function BorrowPage() {
   const { userId } = useSession();
+  const { data: roles = [] } = useRoles();
+  const navigate = useNavigate({ from: "/borrow-requests" });
+  const { request: focusedId } = Route.useSearch();
   const qc = useQueryClient();
+  const oversight = isWarehouseOrAdmin(roles);
+  const isEngineer = roles.length > 0 && !roles.some((r) => r !== "engineer");
 
   const list = useQuery({
     queryKey: ["borrow-requests"],
-    queryFn: async () => (await supabase
-      .from("borrow_requests")
-      .select("*, source:source_project_id(mkj_number, name), target:target_project_id(mkj_number, name), product:product_id(part_number, description)")
-      .order("created_at", { ascending: false })).data ?? [],
+    queryFn: async () =>
+      ((await supabase
+        .from("borrow_requests")
+        .select(
+          "*, source:source_project_id(mkj_number, name), target:target_project_id(mkj_number, name), product:product_id(part_number, description), requester:requested_by(full_name, email), decider:decided_by(full_name, email)",
+        )
+        .order("created_at", { ascending: false })).data ?? []) as unknown as Req[],
+  });
+
+  const myProjects = useQuery({
+    queryKey: ["my-managed-projects", userId],
+    enabled: !!userId,
+    queryFn: async () => (await supabase.from("project_managers").select("project_id").eq("user_id", userId!)).data?.map((r) => r.project_id) ?? [],
   });
 
   const projects = useQuery({ queryKey: ["projects"], queryFn: async () => (await supabase.from("projects").select("id, mkj_number, name").order("mkj_number")).data ?? [] });
   const products = useQuery({ queryKey: ["products"], queryFn: async () => (await supabase.from("products").select("id, part_number, description").order("part_number")).data ?? [] });
+
+  const canDecide = (r: Req) => r.status === "pending" && (oversight || (myProjects.data ?? []).includes(r.source_project_id));
+  const canCancel = (r: Req) => r.status === "pending" && r.requested_by === userId;
+
+  const [tab, setTab] = useState("all");
+  const rows = useMemo(() => {
+    const all = list.data ?? [];
+    if (tab === "mine") return all.filter((r) => r.requested_by === userId);
+    if (tab === "approval") return all.filter(canDecide);
+    return all;
+  }, [list.data, tab, userId, oversight, myProjects.data]);
+
+  const pendingForMe = (list.data ?? []).filter(canDecide).length;
+  const focused = (list.data ?? []).find((r) => r.id === focusedId) ?? null;
 
   const [open, setOpen] = useState(false);
   const [sourceId, setSourceId] = useState("");
@@ -44,11 +117,24 @@ function BorrowPage() {
   const [reason, setReason] = useState("");
   const [neededBy, setNeededBy] = useState("");
 
+  const [approving, setApproving] = useState<Req | null>(null);
+  const [approveQty, setApproveQty] = useState(1);
+  const [note, setNote] = useState("");
+
   const onHand = useQuery({
     queryKey: ["onhand", sourceId, productId],
     enabled: !!sourceId && !!productId,
     queryFn: async () => {
       const { data } = await supabase.from("v_project_inventory").select("on_hand").eq("project_id", sourceId).eq("product_id", productId).maybeSingle();
+      return Number(data?.on_hand ?? 0);
+    },
+  });
+
+  const approveOnHand = useQuery({
+    queryKey: ["onhand", approving?.source_project_id, approving?.product_id],
+    enabled: !!approving,
+    queryFn: async () => {
+      const { data } = await supabase.from("v_project_inventory").select("on_hand").eq("project_id", approving!.source_project_id).eq("product_id", approving!.product_id).maybeSingle();
       return Number(data?.on_hand ?? 0);
     },
   });
@@ -63,92 +149,123 @@ function BorrowPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Borrow request submitted");
+      toast.success("Borrow request submitted — the lending project's manager has been notified");
       setOpen(false);
       setSourceId(""); setTargetId(""); setProductId(""); setQty(1); setReason(""); setNeededBy("");
       qc.invalidateQueries({ queryKey: ["borrow-requests"] });
+      qc.invalidateQueries({ queryKey: ["notifications"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
   const decide = useMutation({
-    mutationFn: async ({ id, status, qty_approved, note }: { id: string; status: "approved" | "denied" | "partially_approved"; qty_approved?: number; note?: string }) => {
-      const { error: uErr } = await supabase.from("borrow_requests").update({
-        status, qty_approved: qty_approved ?? null, decision_note: note ?? null, decided_by: userId, decided_at: new Date().toISOString(),
-      }).eq("id", id);
-      if (uErr) throw uErr;
-      // If (partially) approved, perform the transfer immediately.
+    mutationFn: async ({ req, status, qty_approved, note }: { req: Req; status: "approved" | "denied" | "partially_approved"; qty_approved?: number; note?: string }) => {
       if (status !== "denied") {
-        const req = list.data?.find((r) => r.id === id);
-        if (!req) return;
+        const { data: inv } = await supabase.from("v_project_inventory").select("on_hand").eq("project_id", req.source_project_id).eq("product_id", req.product_id).maybeSingle();
+        const available = Number(inv?.on_hand ?? 0);
         const q = qty_approved ?? Number(req.qty_requested);
-        const { data: user } = await supabase.auth.getUser();
+        if (q > available) throw new Error(`Only ${available} on hand at ${req.source?.mkj_number}. Approve ${available} or less.`);
+      }
+      const { error: uErr } = await supabase.from("borrow_requests").update({
+        status, qty_approved: qty_approved ?? null, decision_note: note || null, decided_by: userId, decided_at: new Date().toISOString(),
+      }).eq("id", req.id);
+      if (uErr) throw uErr;
+      if (status !== "denied") {
+        const q = qty_approved ?? Number(req.qty_requested);
         const rows = [
-          { project_id: req.source_project_id, product_id: req.product_id, delta: -q, source_type: "borrow_out" as const, source_id: id, reason: `Borrow to ${req.target?.mkj_number}`, created_by: user.user?.id ?? null },
-          { project_id: req.target_project_id, product_id: req.product_id, delta: q, source_type: "borrow_in" as const, source_id: id, reason: `Borrow from ${req.source?.mkj_number}`, created_by: user.user?.id ?? null },
+          { project_id: req.source_project_id, product_id: req.product_id, delta: -q, source_type: "borrow_out" as const, source_id: req.id, reason: `Borrow to ${req.target?.mkj_number}`, created_by: userId },
+          { project_id: req.target_project_id, product_id: req.product_id, delta: q, source_type: "borrow_in" as const, source_id: req.id, reason: `Borrow from ${req.source?.mkj_number}`, created_by: userId },
         ];
         const { error: aErr } = await supabase.from("inventory_adjustments").insert(rows);
         if (aErr) throw aErr;
-        await supabase.from("borrow_requests").update({ status: "fulfilled", fulfilled_at: new Date().toISOString() }).eq("id", id);
+        await supabase.from("borrow_requests").update({ status: "fulfilled", fulfilled_at: new Date().toISOString() }).eq("id", req.id);
       }
     },
     onSuccess: () => {
-      toast.success("Decision recorded");
+      toast.success("Decision recorded — both projects have been notified");
+      setApproving(null); setNote("");
       qc.invalidateQueries({ queryKey: ["borrow-requests"] });
       qc.invalidateQueries({ queryKey: ["inventory"] });
+      qc.invalidateQueries({ queryKey: ["borrow-history"] });
+      qc.invalidateQueries({ queryKey: ["notifications"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const cancel = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("borrow_requests").update({ status: "cancelled" }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Request withdrawn");
+      qc.invalidateQueries({ queryKey: ["borrow-requests"] });
+      qc.invalidateQueries({ queryKey: ["notifications"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
   return (
-    <div className="mx-auto max-w-7xl">
+    <div className="mx-auto max-w-7xl space-y-6">
       <PageHeader
         title="Borrow Requests"
-        description="Move stock between projects. Requires approval from the source project's manager."
+        description="Move stock between projects. Requires approval from the lending project's manager."
         actions={
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild><Button><Plus className="mr-1 h-4 w-4" />New Request</Button></DialogTrigger>
-            <DialogContent>
-              <DialogHeader><DialogTitle>Request to borrow</DialogTitle></DialogHeader>
-              <div className="space-y-3">
-                <div>
-                  <Label>Borrow from (source project)</Label>
-                  <Select value={sourceId} onValueChange={setSourceId}>
-                    <SelectTrigger><SelectValue placeholder="Source project" /></SelectTrigger>
-                    <SelectContent>{projects.data?.map((p) => <SelectItem key={p.id} value={p.id}>{p.mkj_number} — {p.name}</SelectItem>)}</SelectContent>
-                  </Select>
+          isEngineer ? null : (
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild><Button><Plus className="mr-1 h-4 w-4" />New Request</Button></DialogTrigger>
+              <DialogContent>
+                <DialogHeader><DialogTitle>Request to borrow</DialogTitle></DialogHeader>
+                <div className="space-y-3">
+                  <div>
+                    <Label>Borrow from (lending project)</Label>
+                    <Select value={sourceId} onValueChange={setSourceId}>
+                      <SelectTrigger><SelectValue placeholder="Source project" /></SelectTrigger>
+                      <SelectContent>{projects.data?.map((p) => <SelectItem key={p.id} value={p.id}>{p.mkj_number} — {p.name}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>For (my project)</Label>
+                    <Select value={targetId} onValueChange={setTargetId}>
+                      <SelectTrigger><SelectValue placeholder="Target project" /></SelectTrigger>
+                      <SelectContent>{projects.data?.filter((p) => p.id !== sourceId && (oversight || (myProjects.data ?? []).includes(p.id))).map((p) => <SelectItem key={p.id} value={p.id}>{p.mkj_number} — {p.name}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Product</Label>
+                    <Select value={productId} onValueChange={setProductId}>
+                      <SelectTrigger><SelectValue placeholder="Choose product" /></SelectTrigger>
+                      <SelectContent>{products.data?.map((p) => <SelectItem key={p.id} value={p.id}>{p.part_number} — {p.description}</SelectItem>)}</SelectContent>
+                    </Select>
+                    {sourceId && productId ? (
+                      <p className="mt-1 text-xs text-muted-foreground">Source on-hand: <span className="font-mono font-semibold">{onHand.data ?? 0}</span></p>
+                    ) : null}
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div><Label>Qty</Label><Input type="number" min={1} step={1} inputMode="numeric" value={qty} onChange={(e) => setQty(Math.max(1, Math.trunc(Number(e.target.value) || 1)))} /></div>
+                    <div><Label>Needed by</Label><Input type="date" value={neededBy} onChange={(e) => setNeededBy(e.target.value)} /></div>
+                  </div>
+                  <div><Label>Reason</Label><Textarea value={reason} onChange={(e) => setReason(e.target.value)} /></div>
                 </div>
-                <div>
-                  <Label>For (target project)</Label>
-                  <Select value={targetId} onValueChange={setTargetId}>
-                    <SelectTrigger><SelectValue placeholder="Target project" /></SelectTrigger>
-                    <SelectContent>{projects.data?.filter((p) => p.id !== sourceId).map((p) => <SelectItem key={p.id} value={p.id}>{p.mkj_number} — {p.name}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Product</Label>
-                  <Select value={productId} onValueChange={setProductId}>
-                    <SelectTrigger><SelectValue placeholder="Choose product" /></SelectTrigger>
-                    <SelectContent>{products.data?.map((p) => <SelectItem key={p.id} value={p.id}>{p.part_number} — {p.description}</SelectItem>)}</SelectContent>
-                  </Select>
-                  {sourceId && productId ? (
-                    <p className="mt-1 text-xs text-muted-foreground">Source on-hand: <span className="font-mono font-semibold">{onHand.data ?? 0}</span></p>
-                  ) : null}
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div><Label>Qty</Label><Input type="number" min={1} step={1} inputMode="numeric" value={qty} onChange={(e) => setQty(Math.max(1, Math.trunc(Number(e.target.value) || 1)))} /></div>
-                  <div><Label>Needed by</Label><Input type="date" value={neededBy} onChange={(e) => setNeededBy(e.target.value)} /></div>
-                </div>
-                <div><Label>Reason</Label><Textarea value={reason} onChange={(e) => setReason(e.target.value)} /></div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-                <Button onClick={() => create.mutate()} disabled={!sourceId || !targetId || !productId || create.isPending}>{create.isPending ? "Submitting…" : "Submit"}</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                  <Button onClick={() => create.mutate()} disabled={!sourceId || !targetId || !productId || create.isPending}>{create.isPending ? "Submitting…" : "Submit"}</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )
         }
       />
+
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList>
+          <TabsTrigger value="approval">
+            Needs my approval{pendingForMe > 0 ? <Badge variant="destructive" className="ml-2">{pendingForMe}</Badge> : null}
+          </TabsTrigger>
+          <TabsTrigger value="mine">My requests</TabsTrigger>
+          <TabsTrigger value="all">All</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       <Card><CardContent className="p-0">
         <Table>
@@ -157,27 +274,109 @@ function BorrowPage() {
             <TableHead className="text-right">Qty</TableHead><TableHead>Needed by</TableHead><TableHead>Status</TableHead><TableHead />
           </TableRow></TableHeader>
           <TableBody>
-            {list.data && list.data.length > 0 ? list.data.map((r) => (
-              <TableRow key={r.id}>
-                <TableCell><div className="font-mono">{r.product?.part_number}</div><div className="text-xs text-muted-foreground">{r.product?.description}</div></TableCell>
+            {rows.length > 0 ? rows.map((r) => (
+              <TableRow key={r.id} className={r.id === focusedId ? "bg-accent/40" : undefined}>
+                <TableCell>
+                  <button className="text-left" onClick={() => navigate({ search: { request: r.id } })}>
+                    <div className="font-mono text-primary hover:underline">{r.product?.part_number}</div>
+                    <div className="text-xs text-muted-foreground">{r.product?.description}</div>
+                  </button>
+                </TableCell>
                 <TableCell className="font-mono text-xs">{r.source?.mkj_number}</TableCell>
                 <TableCell className="font-mono text-xs">{r.target?.mkj_number}</TableCell>
                 <TableCell className="text-right">{Number(r.qty_requested)}{r.qty_approved != null ? ` (approved ${Number(r.qty_approved)})` : ""}</TableCell>
                 <TableCell>{r.needed_by ?? "—"}</TableCell>
-                <TableCell><Badge variant={r.status === "fulfilled" ? "default" : r.status === "denied" ? "destructive" : "secondary"}>{r.status}</Badge></TableCell>
+                <TableCell><Badge variant={statusVariant(r.status)}>{STATUS_LABEL[r.status] ?? r.status}</Badge></TableCell>
                 <TableCell className="space-x-1 text-right">
-                  {r.status === "pending" ? (
+                  {canDecide(r) ? (
                     <>
-                      <Button size="sm" onClick={() => decide.mutate({ id: r.id, status: "approved", qty_approved: Number(r.qty_requested) })}>Approve</Button>
-                      <Button size="sm" variant="outline" onClick={() => decide.mutate({ id: r.id, status: "denied" })}>Deny</Button>
+                      <Button size="sm" onClick={() => { setApproving(r); setApproveQty(Number(r.qty_requested)); setNote(""); }}>Approve</Button>
+                      <Button size="sm" variant="outline" onClick={() => decide.mutate({ req: r, status: "denied" })}>Deny</Button>
                     </>
+                  ) : null}
+                  {canCancel(r) ? (
+                    <Button size="sm" variant="ghost" onClick={() => cancel.mutate(r.id)}>Cancel</Button>
                   ) : null}
                 </TableCell>
               </TableRow>
-            )) : <TableRow><TableCell colSpan={7} className="py-6 text-center text-sm text-muted-foreground">No borrow requests yet.</TableCell></TableRow>}
+            )) : <TableRow><TableCell colSpan={7} className="py-6 text-center text-sm text-muted-foreground">
+              {tab === "approval" ? "Nothing waiting on you." : tab === "mine" ? "You haven't requested anything yet." : "No borrow requests yet."}
+            </TableCell></TableRow>}
           </TableBody>
         </Table>
       </CardContent></Card>
+
+      <BorrowHistory />
+
+      {/* Approve dialog — supports partial approval */}
+      <Dialog open={!!approving} onOpenChange={(o) => { if (!o) setApproving(null); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Approve borrow request</DialogTitle></DialogHeader>
+          {approving ? (
+            <div className="space-y-3 text-sm">
+              <div className="text-muted-foreground">
+                {approving.target?.mkj_number} requested <span className="font-semibold text-foreground">{Number(approving.qty_requested)}</span> x{" "}
+                <span className="font-mono text-foreground">{approving.product?.part_number}</span> from {approving.source?.mkj_number}.
+              </div>
+              <div>
+                <Label>Approved quantity</Label>
+                <Input type="number" min={1} step={1} inputMode="numeric" value={approveQty}
+                  onChange={(e) => setApproveQty(Math.max(1, Math.trunc(Number(e.target.value) || 1)))} />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  On hand at {approving.source?.mkj_number}: <span className="font-mono font-semibold">{approveOnHand.data ?? 0}</span>
+                  {approveQty < Number(approving.qty_requested) ? " — this will be recorded as a partial approval." : ""}
+                </p>
+              </div>
+              <div><Label>Note (optional)</Label><Textarea value={note} onChange={(e) => setNote(e.target.value)} /></div>
+            </div>
+          ) : null}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setApproving(null)}>Cancel</Button>
+            <Button
+              disabled={decide.isPending || !approving || approveQty > (approveOnHand.data ?? 0)}
+              onClick={() => approving && decide.mutate({
+                req: approving,
+                status: approveQty < Number(approving.qty_requested) ? "partially_approved" : "approved",
+                qty_approved: approveQty,
+                note,
+              })}
+            >{decide.isPending ? "Saving…" : "Approve & transfer"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Detail panel (deep link target from notifications) */}
+      <Dialog open={!!focused} onOpenChange={(o) => { if (!o) navigate({ search: {} }); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Borrow request</DialogTitle></DialogHeader>
+          {focused ? (
+            <div className="space-y-2 text-sm">
+              <div><span className="text-muted-foreground">Product: </span><span className="font-mono">{focused.product?.part_number}</span> — {focused.product?.description}</div>
+              <div><span className="text-muted-foreground">From: </span>{focused.source?.mkj_number} — {focused.source?.name}</div>
+              <div><span className="text-muted-foreground">To: </span>{focused.target?.mkj_number} — {focused.target?.name}</div>
+              <div><span className="text-muted-foreground">Quantity requested: </span>{Number(focused.qty_requested)}</div>
+              {focused.qty_approved != null ? <div><span className="text-muted-foreground">Quantity approved: </span>{Number(focused.qty_approved)}</div> : null}
+              <div><span className="text-muted-foreground">Status: </span><Badge variant={statusVariant(focused.status)}>{STATUS_LABEL[focused.status] ?? focused.status}</Badge></div>
+              <div><span className="text-muted-foreground">Requested by: </span>{personLabel(focused.requester)} on {new Date(focused.created_at).toLocaleString()}</div>
+              <div><span className="text-muted-foreground">Needed by: </span>{focused.needed_by ?? "—"}</div>
+              <div><span className="text-muted-foreground">Reason: </span>{focused.reason ?? "—"}</div>
+              {focused.decided_at ? (
+                <div><span className="text-muted-foreground">Decision: </span>{personLabel(focused.decider)} on {new Date(focused.decided_at).toLocaleString()}</div>
+              ) : null}
+              {focused.decision_note ? <div><span className="text-muted-foreground">Note: </span>{focused.decision_note}</div> : null}
+              <div className="flex gap-2 pt-2">
+                {canDecide(focused) ? (
+                  <>
+                    <Button size="sm" onClick={() => { setApproving(focused); setApproveQty(Number(focused.qty_requested)); setNote(""); navigate({ search: {} }); }}>Approve</Button>
+                    <Button size="sm" variant="outline" onClick={() => decide.mutate({ req: focused, status: "denied" })}>Deny</Button>
+                  </>
+                ) : null}
+                {canCancel(focused) ? <Button size="sm" variant="ghost" onClick={() => cancel.mutate(focused.id)}>Withdraw request</Button> : null}
+              </div>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

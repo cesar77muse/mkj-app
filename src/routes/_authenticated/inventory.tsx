@@ -8,6 +8,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
+import { BorrowHistory } from "@/components/borrow-history";
+
 
 export const Route = createFileRoute("/_authenticated/inventory")({
   head: () => ({ meta: [{ title: "Inventory — MKJ Ops" }] }),
@@ -138,6 +140,9 @@ function InventoryPage() {
           </TableBody>
         </Table>
       </CardContent></Card>
+
+      <BorrowHistory title="Recent borrow movements" />
     </div>
+
   );
 }

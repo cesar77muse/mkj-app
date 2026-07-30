@@ -1,4 +1,6 @@
+import { useEffect } from "react";
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
+
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   LayoutDashboard,
@@ -93,6 +95,21 @@ function NotificationsBell() {
       return count ?? 0;
     },
   });
+
+  // Live updates: refresh the badge as soon as a notification row lands.
+  useEffect(() => {
+    if (!userId) return;
+    const channel = supabase
+      .channel(`notifications-${userId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` }, () => {
+        qc.invalidateQueries({ queryKey: ["notifications"] });
+      })
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId, qc]);
+
   return (
     <Button
       variant="ghost"

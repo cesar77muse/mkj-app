@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ProjectEditDialog } from "@/components/project-edit-dialog";
+import { BorrowHistory } from "@/components/borrow-history";
+
 import { managerLabel, useManagers } from "@/components/project-manager-select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -112,7 +114,7 @@ function ProjectDetail() {
           </div>
         </TabsContent>
 
-        <TabsContent value="inventory" className="pt-4">
+        <TabsContent value="inventory" className="space-y-4 pt-4">
           <Card>
             <CardContent className="p-0">
               <Table>
@@ -146,7 +148,9 @@ function ProjectDetail() {
               </Table>
             </CardContent>
           </Card>
+          <BorrowHistory projectId={p.id} />
         </TabsContent>
+
 
         <TabsContent value="pos" className="pt-4">
           <Card>
