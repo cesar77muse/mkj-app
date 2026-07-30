@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { ShippingTicketEditDialog } from "@/components/shipping-ticket-edit-dialog";
 
 export const Route = createFileRoute("/_authenticated/shipping-tickets/")({
   head: () => ({ meta: [{ title: "Shipping Tickets — MKJ Ops" }] }),
@@ -32,7 +33,7 @@ function STList() {
       <Card><CardContent className="p-0">
         <Table>
           <TableHeader><TableRow>
-            <TableHead>Ticket #</TableHead><TableHead>Project</TableHead><TableHead>Deliver to</TableHead><TableHead>Date</TableHead><TableHead>Status</TableHead>
+            <TableHead>Ticket #</TableHead><TableHead>Project</TableHead><TableHead>Deliver to</TableHead><TableHead>Date</TableHead><TableHead>Status</TableHead><TableHead className="w-10" />
           </TableRow></TableHeader>
           <TableBody>
             {list.data && list.data.length > 0 ? list.data.map((t) => (
@@ -42,8 +43,9 @@ function STList() {
                 <TableCell>{t.deliver_to_name ?? "—"}</TableCell>
                 <TableCell>{t.ship_date}</TableCell>
                 <TableCell><Badge variant="secondary">{t.status}</Badge></TableCell>
+                <TableCell><ShippingTicketEditDialog ticketId={t.id} status={t.status} /></TableCell>
               </TableRow>
-            )) : <TableRow><TableCell colSpan={5} className="py-6 text-center text-sm text-muted-foreground">No tickets yet.</TableCell></TableRow>}
+            )) : <TableRow><TableCell colSpan={6} className="py-6 text-center text-sm text-muted-foreground">No tickets yet.</TableCell></TableRow>}
           </TableBody>
         </Table>
       </CardContent></Card>

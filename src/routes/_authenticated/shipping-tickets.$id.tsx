@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { ShippingTicketEditDialog } from "@/components/shipping-ticket-edit-dialog";
 
 export const Route = createFileRoute("/_authenticated/shipping-tickets/$id")({
   head: () => ({ meta: [{ title: "Shipping Ticket — MKJ Ops" }] }),
@@ -74,6 +75,7 @@ function TicketView() {
         actions={
           <div className="flex items-center gap-2">
             <Badge variant="secondary">{t.status}</Badge>
+            <ShippingTicketEditDialog ticketId={t.id} status={t.status} variant="button" />
             {t.status === "draft" || t.status === "ready" ? (
               <Button size="sm" onClick={() => shipMut.mutate()}>Mark shipped</Button>
             ) : null}
