@@ -5,6 +5,8 @@ import { PageHeader } from "@/components/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { POStatusBadge } from "@/components/po-status-badge";
+import { PackingSlipEditDialog } from "@/components/packing-slip-edit-dialog";
 
 export const Route = createFileRoute("/_authenticated/packing-slips/$id")({
   head: () => ({ meta: [{ title: "Packing Slip — MKJ Ops" }] }),
@@ -29,6 +31,22 @@ function SlipView() {
       <PageHeader
         title={`Packing Slip ${slip.data.slip_number}`}
         description={`Received ${slip.data.received_date}`}
+        actions={
+          <div className="flex items-center gap-2">
+            <POStatusBadge status={slip.data.status} />
+            <PackingSlipEditDialog
+              slip={slip.data}
+              items={(items.data ?? []).map((l) => ({
+                id: l.id,
+                product_id: l.product_id,
+                description: l.description,
+                qty_ordered: Number(l.qty_ordered),
+                qty_received: Number(l.qty_received),
+                condition: l.condition,
+              }))}
+            />
+          </div>
+        }
       />
       <Card><CardContent className="p-4 text-sm">
         <div className="grid gap-2 md:grid-cols-2">
@@ -39,6 +57,7 @@ function SlipView() {
         </div>
         {slip.data.notes ? <div className="mt-3 whitespace-pre-wrap text-muted-foreground">{slip.data.notes}</div> : null}
       </CardContent></Card>
+
 
       <Card className="mt-4"><CardContent className="p-0">
         <Table>
