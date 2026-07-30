@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useRoles } from "@/hooks/use-session";
 import { canWrite } from "@/lib/roles";
+import { POStatusBadge } from "@/components/po-status-badge";
 
 export const Route = createFileRoute("/_authenticated/packing-slips/")({
   head: () => ({ meta: [{ title: "Packing Slips — MKJ Ops" }] }),
