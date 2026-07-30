@@ -96,13 +96,18 @@ function ProjectsList() {
                     <Input id="contract" value={contract} onChange={(e) => setContract(e.target.value)} placeholder="E-34054" />
                   </div>
                   <div>
+                    <Label htmlFor="pm">Project manager</Label>
+                    <ProjectManagerSelect id="pm" value={managerId} onChange={setManagerId} />
+                  </div>
+                  <div>
                     <Label htmlFor="pdesc">Description</Label>
                     <Textarea id="pdesc" value={desc} onChange={(e) => setDesc(e.target.value)} />
                   </div>
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-                  <Button onClick={() => createMut.mutate()} disabled={!mkj || !name || createMut.isPending}>
+                  <Button onClick={() => createMut.mutate()} disabled={!mkj || !name || !managerId || createMut.isPending}>
+
                     {createMut.isPending ? "Creating…" : "Create"}
                   </Button>
                 </DialogFooter>
