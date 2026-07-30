@@ -841,6 +841,7 @@ export type Database = {
         | "denied"
         | "fulfilled"
         | "returned"
+        | "cancelled"
       ledger_source:
         | "packing_slip"
         | "shipping_ticket"
@@ -994,6 +995,7 @@ export const Constants = {
         "denied",
         "fulfilled",
         "returned",
+        "cancelled",
       ],
       ledger_source: [
         "packing_slip",
