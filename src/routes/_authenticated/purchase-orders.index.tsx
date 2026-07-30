@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/page-header";
 import { POStatusBadge } from "@/components/po-status-badge";
 import { POEditDialog } from "@/components/po-edit-dialog";
+import { PODeleteButton } from "@/components/po-delete-button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -54,6 +55,7 @@ function POList() {
                       <FileText className="mr-1 h-4 w-4" />View PO
                     </Button>
                     <POEditDialog poId={po.id} status={po.status} />
+                    <PODeleteButton poId={po.id} poNumber={po.po_number} status={po.status} />
                   </div>
                 </TableCell>
               </TableRow>

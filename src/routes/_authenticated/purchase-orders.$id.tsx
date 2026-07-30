@@ -1,9 +1,10 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/page-header";
 import { POStatusBadge, PO_STATUS_OPTIONS } from "@/components/po-status-badge";
 import { POEditDialog } from "@/components/po-edit-dialog";
+import { PODeleteButton } from "@/components/po-delete-button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ export const Route = createFileRoute("/_authenticated/purchase-orders/$id")({
 function POView() {
   const { id } = Route.useParams();
   const qc = useQueryClient();
+  const navigate = useNavigate();
 
   const po = useQuery({
     queryKey: ["po", id],
@@ -78,6 +80,13 @@ function POView() {
               <FileText className="mr-1 h-4 w-4" />View PO
             </Button>
             <POEditDialog poId={id} status={po.data.status} variant="button" />
+            <PODeleteButton
+              poId={id}
+              poNumber={po.data.po_number}
+              status={po.data.status}
+              variant="button"
+              onDeleted={() => navigate({ to: "/purchase-orders" })}
+            />
             <Link to="/packing-slips/new" search={{ po: id }}><Button size="sm">Receive shipment</Button></Link>
           </div>
         }
