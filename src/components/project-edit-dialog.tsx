@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Pencil } from "lucide-react";
 import { useRoles } from "@/hooks/use-session";
 import { isAdmin } from "@/lib/roles";
+import { ProjectManagerSelect } from "@/components/project-manager-select";
 
 type Project = {
   id: string;
@@ -19,6 +20,7 @@ type Project = {
   contract_number: string | null;
   description: string | null;
   status: string;
+  project_manager_id?: string | null;
 };
 
 type ProjectStatus = "active" | "closed" | "on_hold";
@@ -60,6 +62,7 @@ function ProjectEditForm({ project, onDone }: { project: Project; onDone: () => 
   const [contract, setContract] = useState(project.contract_number ?? "");
   const [desc, setDesc] = useState(project.description ?? "");
   const [status, setStatus] = useState(project.status);
+  const [managerId, setManagerId] = useState<string | null>(project.project_manager_id ?? null);
 
   useEffect(() => {
     setMkj(project.mkj_number);
@@ -67,6 +70,7 @@ function ProjectEditForm({ project, onDone }: { project: Project; onDone: () => 
     setContract(project.contract_number ?? "");
     setDesc(project.description ?? "");
     setStatus(project.status);
+    setManagerId(project.project_manager_id ?? null);
   }, [project]);
 
   const save = useMutation({
@@ -79,6 +83,7 @@ function ProjectEditForm({ project, onDone }: { project: Project; onDone: () => 
           contract_number: contract.trim() || null,
           description: desc.trim() || null,
           status: status as ProjectStatus,
+          project_manager_id: managerId,
         })
         .eq("id", project.id);
       if (error) throw error;
@@ -109,6 +114,10 @@ function ProjectEditForm({ project, onDone }: { project: Project; onDone: () => 
         <div>
           <Label htmlFor="e-contract">Contract number</Label>
           <Input id="e-contract" value={contract} onChange={(e) => setContract(e.target.value)} />
+        </div>
+        <div>
+          <Label htmlFor="e-pm">Project manager</Label>
+          <ProjectManagerSelect id="e-pm" value={managerId} onChange={setManagerId} />
         </div>
         <div>
           <Label htmlFor="e-status">Status</Label>

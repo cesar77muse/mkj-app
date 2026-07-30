@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ProjectEditDialog } from "@/components/project-edit-dialog";
+import { managerLabel, useManagers } from "@/components/project-manager-select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
@@ -18,6 +19,7 @@ export const Route = createFileRoute("/_authenticated/projects/$mkj")({
 
 function ProjectDetail() {
   const { mkj } = Route.useParams();
+  const { data: managers = [] } = useManagers();
 
   const project = useQuery({
     queryKey: ["project", mkj],
@@ -96,6 +98,7 @@ function ProjectDetail() {
               <CardContent className="space-y-2 text-sm">
                 <div><span className="text-muted-foreground">Job #: </span><span className="font-mono">{p.mkj_number}</span></div>
                 <div><span className="text-muted-foreground">Contract: </span>{p.contract_number ?? "—"}</div>
+                <div><span className="text-muted-foreground">Project manager: </span>{managerLabel(managers.find((m) => m.id === p.project_manager_id))}</div>
                 <div><span className="text-muted-foreground">Status: </span>{p.status}</div>
                 <div><span className="text-muted-foreground">Created: </span>{new Date(p.created_at).toLocaleDateString()}</div>
               </CardContent>

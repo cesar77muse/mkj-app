@@ -398,6 +398,7 @@ export type Database = {
           id: string
           mkj_number: string
           name: string
+          project_manager_id: string | null
           status: Database["public"]["Enums"]["project_status"]
           updated_at: string
         }
@@ -409,6 +410,7 @@ export type Database = {
           id?: string
           mkj_number: string
           name: string
+          project_manager_id?: string | null
           status?: Database["public"]["Enums"]["project_status"]
           updated_at?: string
         }
@@ -420,10 +422,19 @@ export type Database = {
           id?: string
           mkj_number?: string
           name?: string
+          project_manager_id?: string | null
           status?: Database["public"]["Enums"]["project_status"]
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "projects_project_manager_id_fkey"
+            columns: ["project_manager_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       purchase_order_items: {
         Row: {

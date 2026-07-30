@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { Plus } from "lucide-react";
 import { useRoles } from "@/hooks/use-session";
 import { isWarehouseOrAdmin } from "@/lib/roles";
+import { ProjectManagerSelect, managerLabel, useManagers } from "@/components/project-manager-select";
 
 
 export const Route = createFileRoute("/_authenticated/projects/")({
@@ -40,21 +41,26 @@ function ProjectsList() {
   const [name, setName] = useState("");
   const [contract, setContract] = useState("");
   const [desc, setDesc] = useState("");
+  const [managerId, setManagerId] = useState<string | null>(null);
+
+  const { data: managers = [] } = useManagers();
 
   const createMut = useMutation({
     mutationFn: async () => {
+      if (!managerId) throw new Error("Select a project manager");
       const { error } = await supabase.from("projects").insert({
         mkj_number: mkj.trim().toUpperCase(),
         name: name.trim(),
         contract_number: contract.trim() || null,
         description: desc.trim() || null,
+        project_manager_id: managerId,
       });
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Project created");
       setOpen(false);
-      setMkj(""); setName(""); setContract(""); setDesc("");
+      setMkj(""); setName(""); setContract(""); setDesc(""); setManagerId(null);
       qc.invalidateQueries({ queryKey: ["projects"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -90,13 +96,18 @@ function ProjectsList() {
                     <Input id="contract" value={contract} onChange={(e) => setContract(e.target.value)} placeholder="E-34054" />
                   </div>
                   <div>
+                    <Label htmlFor="pm">Project manager</Label>
+                    <ProjectManagerSelect id="pm" value={managerId} onChange={setManagerId} />
+                  </div>
+                  <div>
                     <Label htmlFor="pdesc">Description</Label>
                     <Textarea id="pdesc" value={desc} onChange={(e) => setDesc(e.target.value)} />
                   </div>
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-                  <Button onClick={() => createMut.mutate()} disabled={!mkj || !name || createMut.isPending}>
+                  <Button onClick={() => createMut.mutate()} disabled={!mkj || !name || !managerId || createMut.isPending}>
+
                     {createMut.isPending ? "Creating…" : "Create"}
                   </Button>
                 </DialogFooter>
@@ -119,6 +130,9 @@ function ProjectsList() {
                     <Badge variant={p.status === "active" ? "default" : "secondary"}>{p.status}</Badge>
                   </div>
                   <div className="mt-1 font-medium">{p.name}</div>
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    PM: {managerLabel(managers.find((m) => m.id === p.project_manager_id))}
+                  </div>
                   {p.contract_number ? <div className="mt-1 text-xs text-muted-foreground">Contract {p.contract_number}</div> : null}
                   {p.description ? <div className="mt-2 line-clamp-2 text-sm text-muted-foreground">{p.description}</div> : null}
                 </CardContent>
