@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { Plus } from "lucide-react";
 import { useRoles } from "@/hooks/use-session";
 import { isWarehouseOrAdmin } from "@/lib/roles";
+import { ProjectManagerSelect, managerLabel, useManagers } from "@/components/project-manager-select";
 
 
 export const Route = createFileRoute("/_authenticated/projects/")({
