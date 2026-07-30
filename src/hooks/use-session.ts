@@ -19,6 +19,23 @@ export function useSession() {
   return { session, ready, userId: session?.user.id ?? null, email: session?.user.email ?? null };
 }
 
+export function useProfile() {
+  const { userId } = useSession();
+  return useQuery({
+    queryKey: ["profile", userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("full_name, email")
+        .eq("id", userId!)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
 export function useRoles() {
   const { userId } = useSession();
   return useQuery({
