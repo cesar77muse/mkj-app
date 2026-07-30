@@ -116,6 +116,10 @@ function ProjectEditForm({ project, onDone }: { project: Project; onDone: () => 
           <Input id="e-contract" value={contract} onChange={(e) => setContract(e.target.value)} />
         </div>
         <div>
+          <Label htmlFor="e-pm">Project manager</Label>
+          <ProjectManagerSelect id="e-pm" value={managerId} onChange={setManagerId} />
+        </div>
+        <div>
           <Label htmlFor="e-status">Status</Label>
           <Select value={status} onValueChange={setStatus}>
             <SelectTrigger id="e-status"><SelectValue /></SelectTrigger>
