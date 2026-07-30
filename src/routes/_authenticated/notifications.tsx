@@ -62,7 +62,7 @@ function NotificationsPage() {
                     {n.body ? <div className="mt-1 text-sm text-muted-foreground">{n.body}</div> : null}
                     <div className="mt-1 text-xs text-muted-foreground">{new Date(n.created_at).toLocaleString()}</div>
                   </div>
-                  {n.link ? <Link to={n.link} className="text-sm text-primary hover:underline">Open</Link> : null}
+                  {n.link ? <Button variant="outline" size="sm" onClick={() => open(n)}>Open</Button> : null}
                 </div>
               </li>
             ))}
