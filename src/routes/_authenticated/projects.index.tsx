@@ -60,7 +60,7 @@ function ProjectsList() {
     onSuccess: () => {
       toast.success("Project created");
       setOpen(false);
-      setMkj(""); setName(""); setContract(""); setDesc("");
+      setMkj(""); setName(""); setContract(""); setDesc(""); setManagerId(null);
       qc.invalidateQueries({ queryKey: ["projects"] });
     },
     onError: (e: Error) => toast.error(e.message),
