@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ProjectEditDialog } from "@/components/project-edit-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
@@ -72,7 +73,12 @@ function ProjectDetail() {
       <PageHeader
         title={`${p.mkj_number} — ${p.name}`}
         description={p.contract_number ? `Contract ${p.contract_number}` : undefined}
-        actions={<Badge variant={p.status === "active" ? "default" : "secondary"}>{p.status}</Badge>}
+        actions={
+          <div className="flex items-center gap-2">
+            <Badge variant={p.status === "active" ? "default" : "secondary"}>{p.status}</Badge>
+            <ProjectEditDialog project={p} variant="button" />
+          </div>
+        }
       />
 
       <Tabs defaultValue="overview">
