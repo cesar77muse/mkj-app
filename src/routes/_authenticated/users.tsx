@@ -27,6 +27,9 @@ const ALL_ROLES: AppRole[] = ["admin", "warehouse_manager", "manager", "engineer
 
 function UsersPage() {
   const qc = useQueryClient();
+  const [editing, setEditing] = useState<{ id: string; name: string } | null>(null);
+
+
 
   const users = useQuery({
     queryKey: ["all-users"],
