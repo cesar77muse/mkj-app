@@ -21,6 +21,8 @@ type Project = {
   status: string;
 };
 
+type ProjectStatus = "active" | "closed" | "on_hold";
+
 /** Only admins can edit project details. */
 export function ProjectEditDialog({ project, variant = "icon" }: { project: Project; variant?: "icon" | "button" }) {
   const { data: roles = [] } = useRoles();
@@ -76,7 +78,7 @@ function ProjectEditForm({ project, onDone }: { project: Project; onDone: () => 
           name: name.trim(),
           contract_number: contract.trim() || null,
           description: desc.trim() || null,
-          status,
+          status: status as ProjectStatus,
         })
         .eq("id", project.id);
       if (error) throw error;
@@ -114,6 +116,7 @@ function ProjectEditForm({ project, onDone }: { project: Project; onDone: () => 
             <SelectTrigger id="e-status"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="active">active</SelectItem>
+              <SelectItem value="on_hold">on_hold</SelectItem>
               <SelectItem value="closed">closed</SelectItem>
             </SelectContent>
           </Select>
