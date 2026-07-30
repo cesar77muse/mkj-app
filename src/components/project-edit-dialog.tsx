@@ -62,6 +62,7 @@ function ProjectEditForm({ project, onDone }: { project: Project; onDone: () => 
   const [contract, setContract] = useState(project.contract_number ?? "");
   const [desc, setDesc] = useState(project.description ?? "");
   const [status, setStatus] = useState(project.status);
+  const [managerId, setManagerId] = useState<string | null>(project.project_manager_id ?? null);
 
   useEffect(() => {
     setMkj(project.mkj_number);
@@ -69,6 +70,7 @@ function ProjectEditForm({ project, onDone }: { project: Project; onDone: () => 
     setContract(project.contract_number ?? "");
     setDesc(project.description ?? "");
     setStatus(project.status);
+    setManagerId(project.project_manager_id ?? null);
   }, [project]);
 
   const save = useMutation({
@@ -81,6 +83,7 @@ function ProjectEditForm({ project, onDone }: { project: Project; onDone: () => 
           contract_number: contract.trim() || null,
           description: desc.trim() || null,
           status: status as ProjectStatus,
+          project_manager_id: managerId,
         })
         .eq("id", project.id);
       if (error) throw error;
