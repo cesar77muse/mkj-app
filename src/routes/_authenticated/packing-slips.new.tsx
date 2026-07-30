@@ -140,6 +140,8 @@ function NewSlip() {
       const { data: numRow, error: numErr } = await supabase.rpc("gen_ps_number", { _mkj: mkj });
       if (numErr) throw numErr;
       const { data: user } = await supabase.auth.getUser();
+      const anyBackorder = lines.some((l) => l.qty_already + l.qty_received < l.qty_ordered);
+      const slipStatus = anyBackorder ? "partially_received" : "received";
       const { data: slip, error } = await supabase.from("packing_slips").insert({
         slip_number: numRow as unknown as string,
         po_id: poDetail.data.po.id,
@@ -149,32 +151,43 @@ function NewSlip() {
         carrier: carrier || null,
         vendor_slip_number: vendorSlip || null,
         notes: notes || null,
+        status: slipStatus,
       }).select("id").single();
       if (error) throw error;
-      const items = lines.filter((l) => l.qty_received > 0).map((l) => ({
-        slip_id: slip.id, po_item_id: l.po_item_id, product_id: l.product_id,
+
+      // Resolve (or create) catalog products so received qty always hits inventory,
+      // even when the PO line was typed free-hand without a product link.
+      const received = lines.filter((l) => l.qty_received > 0);
+      const resolved = [] as { line: Line; product_id: string | null }[];
+      for (const l of received) {
+        resolved.push({
+          line: l,
+          product_id: await resolveProductId({
+            productId: l.product_id,
+            partNumber: l.part_number,
+            description: l.description,
+          }),
+        });
+      }
+
+      const items = resolved.map(({ line: l, product_id }) => ({
+        slip_id: slip.id, po_item_id: l.po_item_id, product_id,
         description: l.description, qty_ordered: l.qty_ordered, qty_received: l.qty_received, condition: l.condition,
       }));
       if (items.length > 0) {
         const { error: iErr } = await supabase.from("packing_slip_items").insert(items);
         if (iErr) throw iErr;
       }
-      const invRows = lines.filter((l) => l.qty_received > 0 && l.product_id).map((l) => ({
-        project_id: poDetail.data!.po!.project_id,
-        product_id: l.product_id!,
-        delta: l.qty_received,
-        source_type: "packing_slip" as const,
-        source_id: slip.id,
-        reason: `Received on slip ${numRow}`,
-        created_by: user.user?.id ?? null,
-      }));
-      if (invRows.length > 0) {
-        const { error: aErr } = await supabase.from("inventory_adjustments").insert(invRows);
-        if (aErr) throw aErr;
-      }
-      const anyBackorder = lines.some((l) => l.qty_already + l.qty_received < l.qty_ordered);
-      const newStatus = anyBackorder ? "partially_received" : "received";
-      await supabase.from("purchase_orders").update({ status: newStatus }).eq("id", poDetail.data.po.id);
+
+      await syncSlipInventory({
+        slipId: slip.id,
+        slipNumber: numRow as unknown as string,
+        projectId: poDetail.data.po.project_id,
+        lines: resolved.map(({ line, product_id }) => ({ product_id, qty_received: line.qty_received })),
+        userId: user.user?.id ?? null,
+      });
+
+      await supabase.from("purchase_orders").update({ status: slipStatus }).eq("id", poDetail.data.po.id);
       return slip.id as string;
     },
     onSuccess: (id) => {
