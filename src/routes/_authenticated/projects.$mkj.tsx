@@ -98,6 +98,7 @@ function ProjectDetail() {
               <CardContent className="space-y-2 text-sm">
                 <div><span className="text-muted-foreground">Job #: </span><span className="font-mono">{p.mkj_number}</span></div>
                 <div><span className="text-muted-foreground">Contract: </span>{p.contract_number ?? "—"}</div>
+                <div><span className="text-muted-foreground">Project manager: </span>{managerLabel(managers.find((m) => m.id === p.project_manager_id))}</div>
                 <div><span className="text-muted-foreground">Status: </span>{p.status}</div>
                 <div><span className="text-muted-foreground">Created: </span>{new Date(p.created_at).toLocaleDateString()}</div>
               </CardContent>
