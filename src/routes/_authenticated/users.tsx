@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +11,10 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { ROLE_LABELS, type AppRole } from "@/lib/roles";
+import { Pencil } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/users")({
   head: () => ({ meta: [{ title: "Users & Roles — MKJ Ops" }] }),
@@ -27,6 +32,9 @@ const ALL_ROLES: AppRole[] = ["admin", "warehouse_manager", "manager", "engineer
 
 function UsersPage() {
   const qc = useQueryClient();
+  const [editing, setEditing] = useState<{ id: string; name: string } | null>(null);
+
+
 
   const users = useQuery({
     queryKey: ["all-users"],
@@ -81,6 +89,20 @@ function UsersPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const renameMut = useMutation({
+    mutationFn: async ({ userId, fullName }: { userId: string; fullName: string }) => {
+      const { error } = await supabase.from("profiles").update({ full_name: fullName }).eq("id", userId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Name updated");
+      setEditing(null);
+      qc.invalidateQueries({ queryKey: ["all-users"] });
+      qc.invalidateQueries({ queryKey: ["profile"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const toggleAssignmentMut = useMutation({
     mutationFn: async ({ userId, projectId, table, on }: { userId: string; projectId: string; table: "project_managers" | "project_engineers"; on: boolean }) => {
       if (on) {
@@ -120,7 +142,18 @@ function UsersPage() {
               return (
                 <TableRow key={u.id}>
                   <TableCell>
-                    <div className="font-medium">{u.full_name ?? u.email}</div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="font-medium">{u.full_name ?? u.email}</div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        title="Edit name"
+                        onClick={() => setEditing({ id: u.id, name: u.full_name ?? "" })}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
                     <div className="text-xs text-muted-foreground">{u.email}</div>
                   </TableCell>
                   <TableCell>
@@ -160,6 +193,30 @@ function UsersPage() {
       </CardContent></Card>
       <p className="mt-3 text-xs text-muted-foreground">Users appear here once they create an account from the sign-in page.</p>
       <div className="mt-2"><Button variant="outline" size="sm" onClick={() => qc.invalidateQueries({ queryKey: ["all-users"] })}>Refresh</Button></div>
+
+      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader><DialogTitle>Edit user name</DialogTitle></DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="full_name">Full name</Label>
+            <Input
+              id="full_name"
+              value={editing?.name ?? ""}
+              onChange={(e) => setEditing((p) => (p ? { ...p, name: e.target.value } : p))}
+              placeholder="Jane Doe"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditing(null)}>Cancel</Button>
+            <Button
+              disabled={!editing?.name.trim() || renameMut.isPending}
+              onClick={() => editing && renameMut.mutate({ userId: editing.id, fullName: editing.name.trim() })}
+            >
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
