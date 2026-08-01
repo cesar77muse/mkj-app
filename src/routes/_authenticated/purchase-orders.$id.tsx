@@ -107,7 +107,7 @@ function POView() {
           <div className="font-medium">{po.data.suppliers?.name ?? "—"}</div>
           <div className="whitespace-pre-wrap text-muted-foreground">{po.data.suppliers?.address ?? ""}</div>
           <div className="mt-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Assignee</div>
-          <div>{assigneeLabel(assignableUsers.find((u) => u.id === po.data.assignee))}</div>
+          <div>{assigneeLabel(assignableUsers.find((u) => u.id === assigneeUserId))}</div>
         </CardContent></Card>
         <Card><CardContent className="p-4 text-sm">
           <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Delivery</div>
