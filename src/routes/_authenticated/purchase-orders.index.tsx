@@ -30,6 +30,24 @@ function POList() {
     },
   });
 
+  const poIds = (pos.data ?? []).map((p) => p.id);
+  const receipts = useQuery({
+    enabled: poIds.length > 0,
+    queryKey: ["po-last-receipt", poIds],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("packing_slips")
+        .select("po_id, received_date")
+        .in("po_id", poIds);
+      const map: Record<string, string> = {};
+      (data ?? []).forEach((s) => {
+        if (!s.po_id || !s.received_date) return;
+        if (!map[s.po_id] || s.received_date > map[s.po_id]) map[s.po_id] = s.received_date;
+      });
+      return map;
+    },
+  });
+
   const pdfMut = useMutation({
     mutationFn: (poId: string) => openPurchaseOrderPdf(poId),
     onError: (e: Error) => toast.error(e.message),
@@ -45,7 +63,7 @@ function POList() {
       <Card><CardContent className="p-0">
         <Table>
           <TableHeader><TableRow>
-            <TableHead>PO #</TableHead><TableHead>Project</TableHead><TableHead>Supplier</TableHead><TableHead>Status</TableHead><TableHead>Delivery</TableHead><TableHead className="text-right">Actions</TableHead>
+            <TableHead>PO #</TableHead><TableHead>Project</TableHead><TableHead>Supplier</TableHead><TableHead>Status</TableHead><TableHead>Expected</TableHead><TableHead>Received</TableHead><TableHead className="text-right">Actions</TableHead>
           </TableRow></TableHeader>
           <TableBody>
             {pos.data && pos.data.length > 0 ? pos.data.map((po) => (
@@ -55,6 +73,7 @@ function POList() {
                 <TableCell>{po.suppliers?.name ?? "—"}</TableCell>
                 <TableCell><POStatusBadge status={po.status} /></TableCell>
                 <TableCell>{po.delivery_date ?? "—"}</TableCell>
+                <TableCell>{receipts.data?.[po.id] ?? "—"}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-1">
                     <Button
@@ -71,7 +90,7 @@ function POList() {
                   </div>
                 </TableCell>
               </TableRow>
-            )) : <TableRow><TableCell colSpan={6} className="py-6 text-center text-sm text-muted-foreground">No purchase orders yet.</TableCell></TableRow>}
+            )) : <TableRow><TableCell colSpan={7} className="py-6 text-center text-sm text-muted-foreground">No purchase orders yet.</TableCell></TableRow>}
           </TableBody>
         </Table>
       </CardContent></Card>
