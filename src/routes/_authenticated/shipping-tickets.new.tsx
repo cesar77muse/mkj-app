@@ -170,7 +170,9 @@ function NewTicket() {
 
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={() => navigate({ to: "/shipping-tickets" })}>Cancel</Button>
-          <Button variant="outline"><FileText className="mr-1 h-4 w-4" />Preview Ticket</Button>
+          <Button variant="outline" onClick={() => preview.mutate()} disabled={preview.isPending}>
+            <FileText className="mr-1 h-4 w-4" />{preview.isPending ? "Rendering…" : "Preview Ticket"}
+          </Button>
           <Button disabled={!projectId || create.isPending} onClick={() => create.mutate()}>{create.isPending ? "Creating…" : "Create ticket"}</Button>
         </div>
       </CardContent></Card>
