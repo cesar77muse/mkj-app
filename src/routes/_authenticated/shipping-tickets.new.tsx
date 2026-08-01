@@ -82,6 +82,32 @@ function NewTicket() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const preview = useMutation({
+    mutationFn: async () => {
+      const project = projects.data?.find((p) => p.id === projectId);
+      await previewDraftShippingTicketPdf({
+        jobNumber: project ? `MKJ${project.mkj_number}EX` : null,
+        contractNumber: project?.contract_number ?? null,
+        deliverToName: deliverTo || null,
+        deliverToAddress: address || null,
+        contactName: contact || null,
+        contactPhone: phone || null,
+        shipBy: shipBy || null,
+        items: lines
+          .filter((l) => l.product_id && (l.qty_shipped > 0 || l.qty_backordered > 0))
+          .map((l) => ({
+            part_number: products.data?.find((p) => p.id === l.product_id)?.part_number ?? null,
+            description: l.description || products.data?.find((p) => p.id === l.product_id)?.description || "",
+            qty_shipped: l.qty_shipped,
+            qty_backordered: l.qty_backordered,
+          })),
+      });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+
+
   return (
     <div className="mx-auto max-w-5xl">
       <PageHeader title="New Shipping Ticket" description="Create a ticket to send items to a job site. Inventory is deducted when you mark it Shipped." />
