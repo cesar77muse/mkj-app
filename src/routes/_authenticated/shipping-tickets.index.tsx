@@ -19,7 +19,7 @@ function STList() {
     queryKey: ["tickets"],
     queryFn: async () => (await supabase
       .from("shipping_tickets")
-      .select("id, ticket_number, ship_date, status, deliver_to_name, projects:project_id(mkj_number)")
+      .select("id, ticket_number, ship_date, created_at, status, deliver_to_name, projects:project_id(mkj_number)")
       .order("ship_date", { ascending: false })
       .limit(200)).data ?? [],
   });
