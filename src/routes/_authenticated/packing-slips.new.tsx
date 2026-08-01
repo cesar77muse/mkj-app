@@ -71,7 +71,7 @@ function NewSlip() {
       .from("purchase_orders")
       .select("id, po_number, description, status, suppliers:supplier_id(name)")
       .eq("project_id", projectId)
-      .in("status", ["approved", "executed", "partially_received"])
+      .in("status", ["executed", "partially_received", "received"])
       .order("po_number")).data ?? [],
   });
 
