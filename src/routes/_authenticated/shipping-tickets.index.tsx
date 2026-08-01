@@ -25,6 +25,12 @@ function STList() {
       .order("ship_date", { ascending: false })
       .limit(200)).data ?? [],
   });
+
+  const pdfMut = useMutation({
+    mutationFn: (ticketId: string) => openShippingTicketPdf(ticketId),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   return (
     <div className="mx-auto max-w-7xl">
       <PageHeader
