@@ -96,7 +96,13 @@ function TicketEditForm({ ticketId, onDone }: { ticketId: string; onDone: () => 
   const save = useMutation({
     mutationFn: async () => {
       if (lines.some((l) => !l.description.trim())) throw new Error("Every line needs a description");
+      if (status === "draft") {
+        // Reverting to draft un-ships the ticket: put any shipped quantities back.
+        const { error: revErr } = await supabase.rpc("reverse_shipping_ticket_inventory", { _ticket_id: ticketId } as never);
+        if (revErr) throw revErr;
+      }
       const { error: upErr } = await supabase.from("shipping_tickets").update({
+
         ship_date: shipDate,
         deliver_to_name: deliverTo || null,
         deliver_to_address: address || null,
