@@ -168,6 +168,10 @@ function POEditForm({ poId, onDone }: { poId: string; onDone: () => void }) {
             <SelectContent>{suppliers.data?.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
           </Select>
         </div>
+        <div>
+          <Label htmlFor="po-edit-assignee">Assignee</Label>
+          <AssigneeSelect id="po-edit-assignee" value={assigneeId} onChange={setAssigneeId} />
+        </div>
         <div><Label>Delivery date</Label><Input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} /></div>
         <div><Label>Ship via</Label><Input value={shipVia} onChange={(e) => setShipVia(e.target.value)} /></div>
         <div><Label>Payment terms</Label><Input value={paymentTerms} onChange={(e) => setPaymentTerms(e.target.value)} /></div>
