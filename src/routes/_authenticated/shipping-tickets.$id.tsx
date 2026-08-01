@@ -66,6 +66,13 @@ function TicketView() {
     },
   });
 
+  const pdfMut = useMutation({
+    mutationFn: () => openShippingTicketPdf(id),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+
+
   if (!ticket.data) return <p className="text-sm text-muted-foreground">Loading…</p>;
   const t = ticket.data;
 
