@@ -35,20 +35,8 @@ function TicketView() {
   const shipMut = useMutation({
     mutationFn: async () => {
       if (!ticket.data || !items.data) return;
-      const { data: user } = await supabase.auth.getUser();
-      const adjRows = items.data.filter((l) => l.product_id && Number(l.qty_shipped) > 0).map((l) => ({
-        project_id: ticket.data!.project_id,
-        product_id: l.product_id!,
-        delta: -Number(l.qty_shipped),
-        source_type: "shipping_ticket" as const,
-        source_id: ticket.data!.id,
-        reason: `Shipped on ticket ${ticket.data!.ticket_number}`,
-        created_by: user.user?.id ?? null,
-      }));
-      if (adjRows.length > 0) {
-        const { error: aErr } = await supabase.from("inventory_adjustments").insert(adjRows);
-        if (aErr) throw aErr;
-      }
+      const { error: rpcErr } = await supabase.rpc("ship_shipping_ticket_inventory", { _ticket_id: id });
+      if (rpcErr) throw rpcErr;
       const { error } = await supabase.from("shipping_tickets").update({ status: "shipped" }).eq("id", id);
       if (error) throw error;
     },
@@ -93,7 +81,7 @@ function TicketView() {
             </Button>
             <ShippingTicketEditDialog ticketId={t.id} status={t.status} variant="button" />
             {t.status === "draft" || t.status === "ready" ? (
-              <Button size="sm" onClick={() => shipMut.mutate()}>Mark shipped</Button>
+              <Button size="sm" disabled={shipMut.isPending} onClick={() => shipMut.mutate()}>{shipMut.isPending ? "Marking shipped…" : "Mark shipped"}</Button>
             ) : null}
             {t.status === "shipped" ? (
               <Button size="sm" variant="outline" onClick={() => deliveredMut.mutate()}>Mark delivered</Button>

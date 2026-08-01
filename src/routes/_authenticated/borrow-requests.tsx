@@ -107,7 +107,7 @@ function BorrowPage() {
     queryFn: async () => (await supabase.from("project_managers").select("project_id").eq("user_id", userId!)).data?.map((r) => r.project_id) ?? [],
   });
 
-  const projects = useQuery({ queryKey: ["projects"], queryFn: async () => (await supabase.from("projects").select("id, mkj_number, name").order("mkj_number")).data ?? [] });
+  const projects = useQuery({ queryKey: ["projects"], queryFn: async () => (await supabase.from("v_borrow_project_options").select("id, mkj_number, name").order("mkj_number")).data ?? [] });
   const products = useQuery({ queryKey: ["products"], queryFn: async () => (await supabase.from("products").select("id, part_number, description").order("part_number")).data ?? [] });
 
   const canDecide = (r: Req) => r.status === "pending" && (oversight || (myProjects.data ?? []).includes(r.source_project_id));
@@ -175,26 +175,13 @@ function BorrowPage() {
 
   const decide = useMutation({
     mutationFn: async ({ req, status, qty_approved, note }: { req: Req; status: "approved" | "denied" | "partially_approved"; qty_approved?: number; note?: string }) => {
-      if (status !== "denied") {
-        const { data: inv } = await supabase.from("v_project_inventory").select("on_hand").eq("project_id", req.source_project_id).eq("product_id", req.product_id).maybeSingle();
-        const available = Number(inv?.on_hand ?? 0);
-        const q = qty_approved ?? Number(req.qty_requested);
-        if (q > available) throw new Error(`Only ${available} on hand at ${req.source?.mkj_number}. Approve ${available} or less.`);
-      }
-      const { error: uErr } = await supabase.from("borrow_requests").update({
-        status, qty_approved: qty_approved ?? null, decision_note: note || null, decided_by: userId, decided_at: new Date().toISOString(),
-      }).eq("id", req.id);
-      if (uErr) throw uErr;
-      if (status !== "denied") {
-        const q = qty_approved ?? Number(req.qty_requested);
-        const rows = [
-          { project_id: req.source_project_id, product_id: req.product_id, delta: -q, source_type: "borrow_out" as const, source_id: req.id, reason: `Borrow to ${req.target?.mkj_number}`, created_by: userId },
-          { project_id: req.target_project_id, product_id: req.product_id, delta: q, source_type: "borrow_in" as const, source_id: req.id, reason: `Borrow from ${req.source?.mkj_number}`, created_by: userId },
-        ];
-        const { error: aErr } = await supabase.from("inventory_adjustments").insert(rows);
-        if (aErr) throw aErr;
-        await supabase.from("borrow_requests").update({ status: "fulfilled", fulfilled_at: new Date().toISOString() }).eq("id", req.id);
-      }
+      const { error } = await supabase.rpc("decide_borrow_request", {
+        _request_id: req.id,
+        _status: status,
+        _qty_approved: qty_approved ?? null,
+        _note: note || null,
+      });
+      if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Decision recorded — both projects have been notified");

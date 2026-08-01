@@ -33,9 +33,7 @@ export function PODeleteButton({
 
   const del = useMutation({
     mutationFn: async () => {
-      const { error: itemsErr } = await supabase.from("purchase_order_items").delete().eq("po_id", poId);
-      if (itemsErr) throw itemsErr;
-      const { error } = await supabase.from("purchase_orders").delete().eq("id", poId);
+      const { error } = await supabase.rpc("delete_purchase_order", { _po_id: poId });
       if (error) throw error;
     },
     onSuccess: () => {

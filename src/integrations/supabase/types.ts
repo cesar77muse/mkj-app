@@ -842,6 +842,14 @@ export type Database = {
       }
     }
     Views: {
+      v_borrow_project_options: {
+        Row: {
+          id: string
+          mkj_number: string
+          name: string
+        }
+        Relationships: []
+      }
       v_project_inventory: {
         Row: {
           on_hand: number | null
@@ -871,6 +879,13 @@ export type Database = {
         Args: { _project_id: string }
         Returns: string[]
       }
+      can_modify_po: {
+        Args: {
+          _status: Database["public"]["Enums"]["po_status"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       can_see_project: {
         Args: { _project_id: string; _user_id: string }
         Returns: boolean
@@ -882,6 +897,7 @@ export type Database = {
       }
       create_purchase_order: {
         Args: {
+          _assignee?: string
           _bill_to: string
           _delivery_date: string
           _description: string
@@ -961,6 +977,19 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      decide_borrow_request: {
+        Args: {
+          _note: string | null
+          _qty_approved: number | null
+          _request_id: string
+          _status: string
+        }
+        Returns: undefined
+      }
+      delete_purchase_order: {
+        Args: { _po_id: string }
+        Returns: undefined
+      }
       delete_shipping_ticket: {
         Args: { _ticket_id: string }
         Returns: undefined
@@ -986,6 +1015,10 @@ export type Database = {
       }
       ship_shipping_ticket_inventory: {
         Args: { _ticket_id: string }
+        Returns: undefined
+      }
+      sync_packing_slip_inventory: {
+        Args: { _slip_id: string }
         Returns: undefined
       }
     }
