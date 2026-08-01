@@ -28,6 +28,7 @@ function SuppliersPage() {
   const canWrite = canWriteRoles(roles);
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
   const [form, setForm] = useState<SupplierForm>(emptyForm);
   const [editId, setEditId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<SupplierForm>(emptyForm);
