@@ -67,6 +67,11 @@ function STList() {
                       {pdfMut.isPending && pdfMut.variables === t.id ? "Opening…" : "View Ticket"}
                     </Button>
                     <ShippingTicketEditDialog ticketId={t.id} status={t.status} />
+                    {isWarehouseOrAdmin(roles) ? (
+                      <Button size="icon" variant="ghost" aria-label="Delete shipping ticket" className="text-destructive hover:text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    ) : null}
                   </div>
                 </TableCell>
               </TableRow>
