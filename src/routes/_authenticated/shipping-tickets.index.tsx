@@ -6,12 +6,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Plus, FileText, Trash2 } from "lucide-react";
+import { Plus, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { openShippingTicketPdf } from "@/lib/shipping-ticket-pdf";
 import { ShippingTicketEditDialog } from "@/components/shipping-ticket-edit-dialog";
-import { useRoles } from "@/hooks/use-session";
-import { isWarehouseOrAdmin } from "@/lib/roles";
+import { ShippingTicketDeleteButton } from "@/components/shipping-ticket-delete-button";
+
 
 export const Route = createFileRoute("/_authenticated/shipping-tickets/")({
   head: () => ({ meta: [{ title: "Shipping Tickets — MKJ Ops" }] }),
@@ -19,9 +19,9 @@ export const Route = createFileRoute("/_authenticated/shipping-tickets/")({
 });
 
 function STList() {
-  const roles = useRoles().data ?? [];
   const list = useQuery({
     queryKey: ["tickets"],
+
     queryFn: async () => (await supabase
       .from("shipping_tickets")
       .select("id, ticket_number, ship_date, created_at, status, deliver_to_name, projects:project_id(mkj_number)")
@@ -67,11 +67,8 @@ function STList() {
                       {pdfMut.isPending && pdfMut.variables === t.id ? "Opening…" : "View Ticket"}
                     </Button>
                     <ShippingTicketEditDialog ticketId={t.id} status={t.status} />
-                    {isWarehouseOrAdmin(roles) ? (
-                      <Button size="icon" variant="ghost" aria-label="Delete shipping ticket" className="text-destructive hover:text-destructive">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    ) : null}
+                    <ShippingTicketDeleteButton ticketId={t.id} ticketNumber={t.ticket_number} status={t.status} />
+
                   </div>
                 </TableCell>
               </TableRow>

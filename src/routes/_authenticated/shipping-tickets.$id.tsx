@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/page-header";
@@ -10,6 +10,8 @@ import { toast } from "sonner";
 import { FileText } from "lucide-react";
 import { openShippingTicketPdf } from "@/lib/shipping-ticket-pdf";
 import { ShippingTicketEditDialog } from "@/components/shipping-ticket-edit-dialog";
+import { ShippingTicketDeleteButton } from "@/components/shipping-ticket-delete-button";
+
 
 export const Route = createFileRoute("/_authenticated/shipping-tickets/$id")({
   head: () => ({ meta: [{ title: "Shipping Ticket — MKJ Ops" }] }),
@@ -19,9 +21,11 @@ export const Route = createFileRoute("/_authenticated/shipping-tickets/$id")({
 function TicketView() {
   const { id } = Route.useParams();
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const ticket = useQuery({
     queryKey: ["ticket", id],
-    queryFn: async () => (await supabase.from("shipping_tickets").select("*, projects:project_id(mkj_number, name)").eq("id", id).maybeSingle()).data,
+    queryFn: async () => (await supabase.from("shipping_tickets").select("*, projects:project_id(mkj_number, name, contract_number)").eq("id", id).maybeSingle()).data,
+
   });
   const items = useQuery({
     queryKey: ["ticket-items", id],
@@ -94,7 +98,15 @@ function TicketView() {
             {t.status === "shipped" ? (
               <Button size="sm" variant="outline" onClick={() => deliveredMut.mutate()}>Mark delivered</Button>
             ) : null}
+            <ShippingTicketDeleteButton
+              ticketId={id}
+              ticketNumber={t.ticket_number}
+              status={t.status}
+              variant="button"
+              onDeleted={() => navigate({ to: "/shipping-tickets" })}
+            />
           </div>
+
         }
       />
       <Card><CardContent className="p-4 text-sm">
@@ -104,7 +116,7 @@ function TicketView() {
           <div className="md:col-span-2 whitespace-pre-wrap text-muted-foreground">{t.deliver_to_address}</div>
           <div>Contact: {t.contact_name ?? "—"} {t.contact_phone ? `(${t.contact_phone})` : ""}</div>
           
-          <div>Contract: {t.contract_number ?? "—"}</div>
+          <div>Contract: {t.projects?.contract_number ?? "—"}</div>
           <div>Ship date: {t.ship_date}</div>
         </div>
       </CardContent></Card>
