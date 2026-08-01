@@ -19,7 +19,7 @@ function STList() {
     queryKey: ["tickets"],
     queryFn: async () => (await supabase
       .from("shipping_tickets")
-      .select("id, ticket_number, ship_date, status, deliver_to_name, projects:project_id(mkj_number)")
+      .select("id, ticket_number, ship_date, created_at, status, deliver_to_name, projects:project_id(mkj_number)")
       .order("ship_date", { ascending: false })
       .limit(200)).data ?? [],
   });
@@ -33,7 +33,7 @@ function STList() {
       <Card><CardContent className="p-0">
         <Table>
           <TableHeader><TableRow>
-            <TableHead>Ticket #</TableHead><TableHead>Project</TableHead><TableHead>Deliver to</TableHead><TableHead>Date</TableHead><TableHead>Status</TableHead><TableHead className="w-10" />
+            <TableHead>Ticket #</TableHead><TableHead>Project</TableHead><TableHead>Deliver to</TableHead><TableHead>Delivery date</TableHead><TableHead>Created date</TableHead><TableHead>Status</TableHead><TableHead className="w-10" />
           </TableRow></TableHeader>
           <TableBody>
             {list.data && list.data.length > 0 ? list.data.map((t) => (
@@ -42,6 +42,7 @@ function STList() {
                 <TableCell className="font-mono text-xs">{t.projects?.mkj_number}</TableCell>
                 <TableCell>{t.deliver_to_name ?? "—"}</TableCell>
                 <TableCell>{t.ship_date}</TableCell>
+                <TableCell className="text-muted-foreground">{t.created_at ? new Date(t.created_at).toLocaleDateString() : "—"}</TableCell>
                 <TableCell><Badge variant="secondary">{t.status}</Badge></TableCell>
                 <TableCell>
                   <div className="flex items-center justify-end gap-1">
@@ -50,7 +51,7 @@ function STList() {
                   </div>
                 </TableCell>
               </TableRow>
-            )) : <TableRow><TableCell colSpan={6} className="py-6 text-center text-sm text-muted-foreground">No tickets yet.</TableCell></TableRow>}
+            )) : <TableRow><TableCell colSpan={7} className="py-6 text-center text-sm text-muted-foreground">No tickets yet.</TableCell></TableRow>}
           </TableBody>
         </Table>
       </CardContent></Card>
