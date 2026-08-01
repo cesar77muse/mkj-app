@@ -19,8 +19,8 @@ export const Route = createFileRoute("/_authenticated/shipping-tickets/")({
 });
 
 function STList() {
-  const roles = useRoles().data ?? [];
   const list = useQuery({
+
     queryKey: ["tickets"],
     queryFn: async () => (await supabase
       .from("shipping_tickets")
