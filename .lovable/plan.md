@@ -27,7 +27,7 @@ Deleting a packing slip currently does not recompute the PO status at all — it
 
 - Migration: drop `closed` from the `po_status` enum (rebuild the enum type, no rows currently use it — verified), and add a nullable `pre_receipt_status po_status` column to `purchase_orders`.
 - `src/lib/receiving.ts` — `refreshPoStatus()` becomes the single source of truth: recompute received vs ordered across all slips; if no receipts remain, restore `pre_receipt_status` (fallback `executed`) and clear it; on the first receipt, save the current status into `pre_receipt_status` before overwriting.
-- `src/routes/_authenticated/packing-slips.new.tsx` — call `refreshPoStatus()` instead of writing the PO status inline; filter the PO list to exclude `draft`.
+- `src/routes/_authenticated/packing-slips.new.tsx` — call `refreshPoStatus()` instead of writing the PO status inline; filter the PO list to `executed`, `partially_received`, `received`.
 - Packing slip delete path — call `refreshPoStatus()` after deletion.
 - `src/components/po-status-badge.tsx` — no visual changes; `PO_STATUS_OPTIONS` already omits `closed`.
 - Edit/delete permission rules (warehouse manager blocked once `received`, admin always allowed) stay unchanged.
