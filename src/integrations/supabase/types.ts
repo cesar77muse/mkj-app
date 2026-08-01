@@ -532,6 +532,7 @@ export type Database = {
           payment_terms: string | null
           po_number: string
           po_sequence: number
+          pre_receipt_status: Database["public"]["Enums"]["po_status"] | null
           project_id: string
           project_number: string
           ship_to: string | null
@@ -553,6 +554,7 @@ export type Database = {
           payment_terms?: string | null
           po_number: string
           po_sequence: number
+          pre_receipt_status?: Database["public"]["Enums"]["po_status"] | null
           project_id: string
           project_number: string
           ship_to?: string | null
@@ -574,6 +576,7 @@ export type Database = {
           payment_terms?: string | null
           po_number?: string
           po_sequence?: number
+          pre_receipt_status?: Database["public"]["Enums"]["po_status"] | null
           project_id?: string
           project_number?: string
           ship_to?: string | null
@@ -862,6 +865,7 @@ export type Database = {
           payment_terms: string | null
           po_number: string
           po_sequence: number
+          pre_receipt_status: Database["public"]["Enums"]["po_status"] | null
           project_id: string
           project_number: string
           ship_to: string | null
@@ -919,7 +923,6 @@ export type Database = {
         | "executed"
         | "partially_received"
         | "received"
-        | "closed"
       project_status: "active" | "on_hold" | "closed"
       ticket_status: "draft" | "ready" | "shipped" | "delivered"
     }
@@ -1075,7 +1078,6 @@ export const Constants = {
         "executed",
         "partially_received",
         "received",
-        "closed",
       ],
       project_status: ["active", "on_hold", "closed"],
       ticket_status: ["draft", "ready", "shipped", "delivered"],
