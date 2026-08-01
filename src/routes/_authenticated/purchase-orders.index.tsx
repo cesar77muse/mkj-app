@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/page-header";
 import { POStatusBadge } from "@/components/po-status-badge";
@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { FileText, Plus } from "lucide-react";
+import { openPurchaseOrderPdf } from "@/lib/po-pdf";
 
 export const Route = createFileRoute("/_authenticated/purchase-orders/")({
   head: () => ({ meta: [{ title: "Purchase Orders — MKJ Ops" }] }),
@@ -27,6 +28,11 @@ function POList() {
         .limit(200);
       return data ?? [];
     },
+  });
+
+  const pdfMut = useMutation({
+    mutationFn: (poId: string) => openPurchaseOrderPdf(poId),
+    onError: (e: Error) => toast.error(e.message),
   });
 
   return (
@@ -51,8 +57,14 @@ function POList() {
                 <TableCell>{po.delivery_date ?? "—"}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-1">
-                    <Button size="sm" variant="outline" onClick={() => toast.info("PDF view coming soon")}>
-                      <FileText className="mr-1 h-4 w-4" />View PO
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => pdfMut.mutate(po.id)}
+                      disabled={pdfMut.isPending && pdfMut.variables === po.id}
+                    >
+                      <FileText className="mr-1 h-4 w-4" />
+                      {pdfMut.isPending && pdfMut.variables === po.id ? "Opening…" : "View PO"}
                     </Button>
                     <POEditDialog poId={po.id} status={po.status} />
                     <PODeleteButton poId={po.id} poNumber={po.po_number} status={po.status} />
