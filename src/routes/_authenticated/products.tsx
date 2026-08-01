@@ -39,6 +39,16 @@ function ProductsPage() {
     },
   });
 
+  const term = q.trim().toLowerCase();
+  const filtered = useMemo(() => {
+    if (!products.data) return [];
+    if (!term) return products.data;
+    return products.data.filter((p) => {
+      const hay = [p.part_number, p.description].filter(Boolean).join(" ").toLowerCase();
+      return hay.includes(term);
+    });
+  }, [products.data, term]);
+
   const createMut = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("products").insert({
