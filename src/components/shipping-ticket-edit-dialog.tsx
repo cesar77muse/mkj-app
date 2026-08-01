@@ -101,8 +101,12 @@ function TicketEditForm({ ticketId, onDone }: { ticketId: string; onDone: () => 
         const { error: revErr } = await supabase.rpc("reverse_shipping_ticket_inventory", { _ticket_id: ticketId } as never);
         if (revErr) throw revErr;
       }
+      if (status === "shipped" || status === "delivered") {
+        // Deduct inventory for the current line items when the ticket is shipped/delivered.
+        const { error: shipErr } = await supabase.rpc("ship_shipping_ticket_inventory", { _ticket_id: ticketId } as never);
+        if (shipErr) throw shipErr;
+      }
       const { error: upErr } = await supabase.from("shipping_tickets").update({
-
         ship_date: shipDate,
         deliver_to_name: deliverTo || null,
         deliver_to_address: address || null,
