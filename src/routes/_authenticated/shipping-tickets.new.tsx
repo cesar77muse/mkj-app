@@ -53,31 +53,27 @@ function NewTicket() {
 
   const create = useMutation({
     mutationFn: async () => {
-      const { data: numRow, error: numErr } = await supabase.rpc("gen_ticket_number");
-      if (numErr) throw numErr;
-      const { data: user } = await supabase.auth.getUser();
-      const { data: t, error } = await supabase.from("shipping_tickets").insert({
-        ticket_number: numRow as unknown as string,
-        project_id: projectId,
-        ship_date: shipDate,
-        deliver_to_name: deliverTo || null,
-        deliver_to_address: address || null,
-        contact_name: contact || null,
-        contact_phone: phone || null,
-        ship_by: shipBy || null,
-        status: "ready",
-        created_by: user.user?.id ?? null,
-      }).select("id").single();
+      // create_shipping_ticket mints the per-project S<project>-<seq> number
+      // and inserts the ticket row atomically (see migration for details).
+      const { data: t, error } = await supabase.rpc("create_shipping_ticket", {
+        _project_id: projectId,
+        _ship_date: shipDate,
+        _deliver_to_name: deliverTo || null,
+        _deliver_to_address: address || null,
+        _contact_name: contact || null,
+        _contact_phone: phone || null,
+        _ship_by: shipBy || null,
+      } as never);
       if (error) throw error;
       const items = lines.filter((l) => l.product_id && (l.qty_shipped > 0 || l.qty_backordered > 0)).map((l) => ({
-        ticket_id: t.id, product_id: l.product_id, description: l.description || products.data?.find((p) => p.id === l.product_id)?.description || "",
+        ticket_id: t!.id, product_id: l.product_id, description: l.description || products.data?.find((p) => p.id === l.product_id)?.description || "",
         qty_shipped: l.qty_shipped, qty_backordered: l.qty_backordered,
       }));
       if (items.length > 0) {
         const { error: iErr } = await supabase.from("shipping_ticket_items").insert(items);
         if (iErr) throw iErr;
       }
-      return t.id as string;
+      return t!.id as string;
     },
     onSuccess: () => {
       toast.success("Ticket created");
