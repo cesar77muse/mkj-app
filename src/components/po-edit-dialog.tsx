@@ -76,6 +76,7 @@ function POEditForm({ poId, onDone }: { poId: string; onDone: () => void }) {
   useEffect(() => {
     if (!po.data) return;
     setSupplierId(po.data.supplier_id ?? "");
+    setAssigneeId(po.data.assignee ?? null);
     setDeliveryDate(po.data.delivery_date ?? "");
     setShipVia(po.data.ship_via ?? "");
     setPaymentTerms(po.data.payment_terms ?? "");
