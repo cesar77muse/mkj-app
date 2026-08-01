@@ -54,7 +54,15 @@ function STList() {
                 <TableCell><Badge variant="secondary">{t.status}</Badge></TableCell>
                 <TableCell>
                   <div className="flex items-center justify-end gap-1">
-                    <Button size="sm" variant="outline"><FileText className="mr-1 h-4 w-4" />View Ticket</Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => pdfMut.mutate(t.id)}
+                      disabled={pdfMut.isPending && pdfMut.variables === t.id}
+                    >
+                      <FileText className="mr-1 h-4 w-4" />
+                      {pdfMut.isPending && pdfMut.variables === t.id ? "Opening…" : "View Ticket"}
+                    </Button>
                     <ShippingTicketEditDialog ticketId={t.id} status={t.status} />
                   </div>
                 </TableCell>

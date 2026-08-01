@@ -7,6 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { FileText } from "lucide-react";
+import { openShippingTicketPdf } from "@/lib/shipping-ticket-pdf";
 import { ShippingTicketEditDialog } from "@/components/shipping-ticket-edit-dialog";
 
 export const Route = createFileRoute("/_authenticated/shipping-tickets/$id")({
