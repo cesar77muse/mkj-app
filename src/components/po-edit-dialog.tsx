@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { Pencil, Plus, Trash } from "lucide-react";
 import { useRoles } from "@/hooks/use-session";
 import { isAdmin, isWarehouseOrAdmin, type AppRole } from "@/lib/roles";
+import { AssigneeSelect } from "@/components/assignee-select";
 
 type Line = { id?: string; line_no: number; budget_code: string; description: string; qty: number; unit: string; unit_cost: number };
 
@@ -62,6 +63,7 @@ function POEditForm({ poId, onDone }: { poId: string; onDone: () => void }) {
   });
 
   const [supplierId, setSupplierId] = useState("");
+  const [assigneeId, setAssigneeId] = useState<string | null>(null);
   const [deliveryDate, setDeliveryDate] = useState("");
   const [shipVia, setShipVia] = useState("");
   const [paymentTerms, setPaymentTerms] = useState("");
