@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Plus, Trash } from "lucide-react";
+import { FileText, Plus, Trash } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/shipping-tickets/new")({
   head: () => ({ meta: [{ title: "New Shipping Ticket — MKJ Ops" }] }),
@@ -147,6 +147,7 @@ function NewTicket() {
 
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={() => navigate({ to: "/shipping-tickets" })}>Cancel</Button>
+          <Button variant="outline"><FileText className="mr-1 h-4 w-4" />Preview Ticket</Button>
           <Button disabled={!projectId || create.isPending} onClick={() => create.mutate()}>{create.isPending ? "Creating…" : "Create ticket"}</Button>
         </div>
       </CardContent></Card>

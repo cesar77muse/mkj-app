@@ -46,7 +46,6 @@ function STList() {
                 <TableCell>
                   <div className="flex items-center justify-end gap-1">
                     <Button size="sm" variant="outline"><FileText className="mr-1 h-4 w-4" />View Ticket</Button>
-                    <Button size="sm" variant="outline"><FileText className="mr-1 h-4 w-4" />Preview Ticket</Button>
                     <ShippingTicketEditDialog ticketId={t.id} status={t.status} />
                   </div>
                 </TableCell>
