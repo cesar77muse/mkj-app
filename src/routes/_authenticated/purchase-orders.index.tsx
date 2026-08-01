@@ -30,6 +30,24 @@ function POList() {
     },
   });
 
+  const poIds = (pos.data ?? []).map((p) => p.id);
+  const receipts = useQuery({
+    enabled: poIds.length > 0,
+    queryKey: ["po-last-receipt", poIds],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("packing_slips")
+        .select("po_id, received_date")
+        .in("po_id", poIds);
+      const map: Record<string, string> = {};
+      (data ?? []).forEach((s) => {
+        if (!s.po_id || !s.received_date) return;
+        if (!map[s.po_id] || s.received_date > map[s.po_id]) map[s.po_id] = s.received_date;
+      });
+      return map;
+    },
+  });
+
   const pdfMut = useMutation({
     mutationFn: (poId: string) => openPurchaseOrderPdf(poId),
     onError: (e: Error) => toast.error(e.message),
