@@ -645,6 +645,38 @@ export type Database = {
           },
         ]
       }
+      shipping_ticket_pdfs: {
+        Row: {
+          content_hash: string
+          generated_at: string
+          generated_by: string | null
+          storage_path: string
+          ticket_id: string
+        }
+        Insert: {
+          content_hash: string
+          generated_at?: string
+          generated_by?: string | null
+          storage_path: string
+          ticket_id: string
+        }
+        Update: {
+          content_hash?: string
+          generated_at?: string
+          generated_by?: string | null
+          storage_path?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shipping_ticket_pdfs_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: true
+            referencedRelation: "shipping_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shipping_tickets: {
         Row: {
           contact_name: string | null
@@ -659,6 +691,7 @@ export type Database = {
           pass_number: string | null
           po_reference: string | null
           project_id: string
+          project_number: string
           received_by: string | null
           received_date: string | null
           ship_by: string | null
@@ -666,6 +699,7 @@ export type Database = {
           signature_url: string | null
           status: Database["public"]["Enums"]["ticket_status"]
           ticket_number: string
+          ticket_sequence: number
           updated_at: string
         }
         Insert: {
@@ -681,6 +715,7 @@ export type Database = {
           pass_number?: string | null
           po_reference?: string | null
           project_id: string
+          project_number: string
           received_by?: string | null
           received_date?: string | null
           ship_by?: string | null
@@ -688,6 +723,7 @@ export type Database = {
           signature_url?: string | null
           status?: Database["public"]["Enums"]["ticket_status"]
           ticket_number: string
+          ticket_sequence: number
           updated_at?: string
         }
         Update: {
@@ -703,6 +739,7 @@ export type Database = {
           pass_number?: string | null
           po_reference?: string | null
           project_id?: string
+          project_number?: string
           received_by?: string | null
           received_date?: string | null
           ship_by?: string | null
@@ -710,6 +747,7 @@ export type Database = {
           signature_url?: string | null
           status?: Database["public"]["Enums"]["ticket_status"]
           ticket_number?: string
+          ticket_sequence?: number
           updated_at?: string
         }
         Relationships: [
@@ -878,6 +916,47 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "purchase_orders"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      create_shipping_ticket: {
+        Args: {
+          _contact_name: string
+          _contact_phone: string
+          _deliver_to_address: string
+          _deliver_to_name: string
+          _project_id: string
+          _ship_by: string
+          _ship_date: string
+        }
+        Returns: {
+          contact_name: string | null
+          contact_phone: string | null
+          contract_number: string | null
+          created_at: string
+          created_by: string | null
+          deliver_to_address: string | null
+          deliver_to_name: string | null
+          delivered_by: string | null
+          id: string
+          pass_number: string | null
+          po_reference: string | null
+          project_id: string
+          project_number: string
+          received_by: string | null
+          received_date: string | null
+          ship_by: string | null
+          ship_date: string
+          signature_url: string | null
+          status: Database["public"]["Enums"]["ticket_status"]
+          ticket_number: string
+          ticket_sequence: number
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "shipping_tickets"
           isOneToOne: true
           isSetofReturn: false
         }
