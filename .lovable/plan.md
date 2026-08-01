@@ -16,7 +16,7 @@ Nothing in the app will ever set Approved or Executed automatically.
 `closed` is unreachable in the UI but still exists in the database. Remove it so Received / Partially Received are the only end states.
 
 ### 2. Receiving guard
-A packing slip can only be recorded against a PO that is **Approved**, **Executed**, **Partially Received**, or **Received**. Draft POs are excluded from the PO picker on the new-packing-slip form, with an explanatory note so the user knows why a PO is missing. Receiving never changes a PO to Approved or Executed — it only sets Partially Received or Received.
+A packing slip can only be recorded against a PO that is **Executed**, **Partially Received**, or **Received**. Draft and Approved POs simply don't appear in the PO picker on the new-packing-slip form — no explanatory note. Receiving never changes a PO to Approved or Executed — it only sets Partially Received or Received.
 
 ### 3. Revert to pre-receipt status when receipts are removed
 Store the PO's status from just before its first packing slip. When the last packing slip on a PO is deleted (or all received quantities are edited down to zero), the PO returns to that stored status (e.g. back to Executed) instead of staying stuck on Received.
