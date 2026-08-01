@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import { FileText, Plus, Trash } from "lucide-react";
+import { previewDraftPurchaseOrderPdf } from "@/lib/po-pdf";
 
 export const Route = createFileRoute("/_authenticated/purchase-orders/new")({
   head: () => ({ meta: [{ title: "New Purchase Order — MKJ Ops" }] }),
@@ -23,8 +24,8 @@ type Line = { line_no: number; budget_code: string; description: string; qty: nu
 
 function NewPO() {
   const navigate = useNavigate();
-  const projects = useQuery({ queryKey: ["projects", "active"], queryFn: async () => (await supabase.from("projects").select("id, mkj_number, name").eq("status", "active").order("mkj_number")).data ?? [] });
-  const suppliers = useQuery({ queryKey: ["suppliers"], queryFn: async () => (await supabase.from("suppliers").select("id, name").order("name")).data ?? [] });
+  const projects = useQuery({ queryKey: ["projects", "active"], queryFn: async () => (await supabase.from("projects").select("id, mkj_number, name, description").eq("status", "active").order("mkj_number")).data ?? [] });
+  const suppliers = useQuery({ queryKey: ["suppliers"], queryFn: async () => (await supabase.from("suppliers").select("id, name, address, phone").order("name")).data ?? [] });
 
   const [projectId, setProjectId] = useState("");
   const [supplierId, setSupplierId] = useState("");
@@ -77,6 +78,29 @@ function NewPO() {
     onSuccess: () => {
       toast.success("PO created");
       navigate({ to: "/purchase-orders" });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const preview = useMutation({
+    mutationFn: async () => {
+      const project = projects.data?.find((p) => p.id === projectId);
+      const supplier = suppliers.data?.find((s) => s.id === supplierId);
+      const supplierName = supplierId === "__other__" ? otherSupplier.trim() || null : supplier?.name ?? null;
+      await previewDraftPurchaseOrderPdf({
+        projectLine1: project ? `${project.mkj_number} — ${project.name}` : null,
+        projectLine2: project?.description ?? null,
+        supplierName,
+        supplierAddress: supplierId === "__other__" ? null : supplier?.address ?? null,
+        supplierPhone: supplierId === "__other__" ? null : supplier?.phone ?? null,
+        billTo,
+        shipTo,
+        deliveryDate: deliveryDate || null,
+        shipVia,
+        paymentTerms,
+        description,
+        items: lines.filter((l) => l.description.trim()),
+      });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -159,8 +183,8 @@ function NewPO() {
 
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={() => navigate({ to: "/purchase-orders" })}>Cancel</Button>
-          <Button variant="outline" onClick={() => toast.info("PDF preview coming soon")}>
-            <FileText className="mr-1 h-4 w-4" />Preview PDF
+          <Button variant="outline" onClick={() => preview.mutate()} disabled={preview.isPending}>
+            <FileText className="mr-1 h-4 w-4" />{preview.isPending ? "Rendering…" : "Preview PDF"}
           </Button>
           <Button disabled={!projectId || create.isPending} onClick={() => create.mutate()}>{create.isPending ? "Creating…" : "Create PO"}</Button>
         </div>

@@ -1,9 +1,10 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/page-header";
 import { POStatusBadge } from "@/components/po-status-badge";
 import { toast } from "sonner";
+import { openPurchaseOrderPdf } from "@/lib/po-pdf";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +23,11 @@ export const Route = createFileRoute("/_authenticated/projects/$mkj")({
 function ProjectDetail() {
   const { mkj } = Route.useParams();
   const { data: managers = [] } = useManagers();
+
+  const pdfMut = useMutation({
+    mutationFn: (poId: string) => openPurchaseOrderPdf(poId),
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   const project = useQuery({
     queryKey: ["project", mkj],
@@ -173,7 +179,14 @@ function ProjectDetail() {
                       <TableCell>{po.delivery_date ?? "—"}</TableCell>
                       <TableCell>{new Date(po.created_at).toLocaleDateString()}</TableCell>
                       <TableCell className="text-right">
-                        <Button size="sm" variant="outline" onClick={() => toast.info("PDF view coming soon")}>View PO</Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => pdfMut.mutate(po.id)}
+                          disabled={pdfMut.isPending && pdfMut.variables === po.id}
+                        >
+                          {pdfMut.isPending && pdfMut.variables === po.id ? "Opening…" : "View PO"}
+                        </Button>
                       </TableCell>
                     </TableRow>
                   )) : <TableRow><TableCell colSpan={5} className="py-6 text-center text-sm text-muted-foreground">No POs yet.</TableCell></TableRow>}

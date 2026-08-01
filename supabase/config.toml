@@ -1,1 +1,4 @@
 project_id = "beoggpwowmwzqmtuidvl"
+
+[functions.po-pdf]
+verify_jwt = true

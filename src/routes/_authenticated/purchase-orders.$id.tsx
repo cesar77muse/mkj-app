@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { FileText } from "lucide-react";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
+import { openPurchaseOrderPdf } from "@/lib/po-pdf";
 
 type POStatus = Database["public"]["Enums"]["po_status"];
 
@@ -54,6 +55,10 @@ function POView() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const pdfMut = useMutation({
+    mutationFn: () => openPurchaseOrderPdf(id),
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   if (po.isLoading) return <p className="text-sm text-muted-foreground">Loading…</p>;
   if (!po.data) return <p className="text-sm text-muted-foreground">Not found.</p>;
@@ -76,8 +81,8 @@ function POView() {
                 {PO_STATUS_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Button size="sm" variant="outline" onClick={() => toast.info("PDF view coming soon")}>
-              <FileText className="mr-1 h-4 w-4" />View PO
+            <Button size="sm" variant="outline" onClick={() => pdfMut.mutate()} disabled={pdfMut.isPending}>
+              <FileText className="mr-1 h-4 w-4" />{pdfMut.isPending ? "Opening…" : "View PO"}
             </Button>
             <POEditDialog poId={id} status={po.data.status} variant="button" />
             <PODeleteButton
