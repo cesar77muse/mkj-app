@@ -24,6 +24,7 @@ function ProductsPage() {
   const canWrite = isWarehouseOrAdmin(roles);
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
   const [pn, setPn] = useState("");
   const [desc, setDesc] = useState("");
   const [unit, setUnit] = useState("ea");
