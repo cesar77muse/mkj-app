@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import { FileText, Plus, Trash } from "lucide-react";
+import { previewDraftShippingTicketPdf } from "@/lib/shipping-ticket-pdf";
 
 export const Route = createFileRoute("/_authenticated/shipping-tickets/new")({
   head: () => ({ meta: [{ title: "New Shipping Ticket — MKJ Ops" }] }),
@@ -22,7 +23,7 @@ type Line = { product_id: string; description: string; qty_shipped: number; qty_
 
 function NewTicket() {
   const navigate = useNavigate();
-  const projects = useQuery({ queryKey: ["projects", "active"], queryFn: async () => (await supabase.from("projects").select("id, mkj_number, name").eq("status", "active").order("mkj_number")).data ?? [] });
+  const projects = useQuery({ queryKey: ["projects", "active"], queryFn: async () => (await supabase.from("projects").select("id, mkj_number, name, contract_number").eq("status", "active").order("mkj_number")).data ?? [] });
   const products = useQuery({ queryKey: ["products"], queryFn: async () => (await supabase.from("products").select("id, part_number, description").order("part_number")).data ?? [] });
 
   const [projectId, setProjectId] = useState("");
@@ -52,31 +53,27 @@ function NewTicket() {
 
   const create = useMutation({
     mutationFn: async () => {
-      const { data: numRow, error: numErr } = await supabase.rpc("gen_ticket_number");
-      if (numErr) throw numErr;
-      const { data: user } = await supabase.auth.getUser();
-      const { data: t, error } = await supabase.from("shipping_tickets").insert({
-        ticket_number: numRow as unknown as string,
-        project_id: projectId,
-        ship_date: shipDate,
-        deliver_to_name: deliverTo || null,
-        deliver_to_address: address || null,
-        contact_name: contact || null,
-        contact_phone: phone || null,
-        ship_by: shipBy || null,
-        status: "ready",
-        created_by: user.user?.id ?? null,
-      }).select("id").single();
+      // create_shipping_ticket mints the per-project S<project>-<seq> number
+      // and inserts the ticket row atomically (see migration for details).
+      const { data: t, error } = await supabase.rpc("create_shipping_ticket", {
+        _project_id: projectId,
+        _ship_date: shipDate,
+        _deliver_to_name: deliverTo || null,
+        _deliver_to_address: address || null,
+        _contact_name: contact || null,
+        _contact_phone: phone || null,
+        _ship_by: shipBy || null,
+      } as never);
       if (error) throw error;
       const items = lines.filter((l) => l.product_id && (l.qty_shipped > 0 || l.qty_backordered > 0)).map((l) => ({
-        ticket_id: t.id, product_id: l.product_id, description: l.description || products.data?.find((p) => p.id === l.product_id)?.description || "",
+        ticket_id: t!.id, product_id: l.product_id, description: l.description || products.data?.find((p) => p.id === l.product_id)?.description || "",
         qty_shipped: l.qty_shipped, qty_backordered: l.qty_backordered,
       }));
       if (items.length > 0) {
         const { error: iErr } = await supabase.from("shipping_ticket_items").insert(items);
         if (iErr) throw iErr;
       }
-      return t.id as string;
+      return t!.id as string;
     },
     onSuccess: () => {
       toast.success("Ticket created");
@@ -84,6 +81,32 @@ function NewTicket() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const preview = useMutation({
+    mutationFn: async () => {
+      const project = projects.data?.find((p) => p.id === projectId);
+      await previewDraftShippingTicketPdf({
+        jobNumber: project ? `MKJ${project.mkj_number}EX` : null,
+        contractNumber: project?.contract_number ?? null,
+        deliverToName: deliverTo || null,
+        deliverToAddress: address || null,
+        contactName: contact || null,
+        contactPhone: phone || null,
+        shipBy: shipBy || null,
+        items: lines
+          .filter((l) => l.product_id && (l.qty_shipped > 0 || l.qty_backordered > 0))
+          .map((l) => ({
+            part_number: products.data?.find((p) => p.id === l.product_id)?.part_number ?? null,
+            description: l.description || products.data?.find((p) => p.id === l.product_id)?.description || "",
+            qty_shipped: l.qty_shipped,
+            qty_backordered: l.qty_backordered,
+          })),
+      });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -147,7 +170,9 @@ function NewTicket() {
 
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={() => navigate({ to: "/shipping-tickets" })}>Cancel</Button>
-          <Button variant="outline"><FileText className="mr-1 h-4 w-4" />Preview Ticket</Button>
+          <Button variant="outline" onClick={() => preview.mutate()} disabled={preview.isPending}>
+            <FileText className="mr-1 h-4 w-4" />{preview.isPending ? "Rendering…" : "Preview Ticket"}
+          </Button>
           <Button disabled={!projectId || create.isPending} onClick={() => create.mutate()}>{create.isPending ? "Creating…" : "Create ticket"}</Button>
         </div>
       </CardContent></Card>

@@ -7,6 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { FileText } from "lucide-react";
+import { openShippingTicketPdf } from "@/lib/shipping-ticket-pdf";
 import { ShippingTicketEditDialog } from "@/components/shipping-ticket-edit-dialog";
 
 export const Route = createFileRoute("/_authenticated/shipping-tickets/$id")({
@@ -64,6 +66,13 @@ function TicketView() {
     },
   });
 
+  const pdfMut = useMutation({
+    mutationFn: () => openShippingTicketPdf(id),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+
+
   if (!ticket.data) return <p className="text-sm text-muted-foreground">Loading…</p>;
   const t = ticket.data;
 
@@ -75,6 +84,9 @@ function TicketView() {
         actions={
           <div className="flex items-center gap-2">
             <Badge variant="secondary">{t.status}</Badge>
+            <Button size="sm" variant="outline" onClick={() => pdfMut.mutate()} disabled={pdfMut.isPending}>
+              <FileText className="mr-1 h-4 w-4" />{pdfMut.isPending ? "Opening…" : "View Ticket"}
+            </Button>
             <ShippingTicketEditDialog ticketId={t.id} status={t.status} variant="button" />
             {t.status === "draft" || t.status === "ready" ? (
               <Button size="sm" onClick={() => shipMut.mutate()}>Mark shipped</Button>

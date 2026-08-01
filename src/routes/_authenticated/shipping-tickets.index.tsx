@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,6 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Plus, FileText } from "lucide-react";
+import { toast } from "sonner";
+import { openShippingTicketPdf } from "@/lib/shipping-ticket-pdf";
 import { ShippingTicketEditDialog } from "@/components/shipping-ticket-edit-dialog";
 
 export const Route = createFileRoute("/_authenticated/shipping-tickets/")({
@@ -23,6 +25,12 @@ function STList() {
       .order("ship_date", { ascending: false })
       .limit(200)).data ?? [],
   });
+
+  const pdfMut = useMutation({
+    mutationFn: (ticketId: string) => openShippingTicketPdf(ticketId),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   return (
     <div className="mx-auto max-w-7xl">
       <PageHeader
@@ -46,7 +54,15 @@ function STList() {
                 <TableCell><Badge variant="secondary">{t.status}</Badge></TableCell>
                 <TableCell>
                   <div className="flex items-center justify-end gap-1">
-                    <Button size="sm" variant="outline"><FileText className="mr-1 h-4 w-4" />View Ticket</Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => pdfMut.mutate(t.id)}
+                      disabled={pdfMut.isPending && pdfMut.variables === t.id}
+                    >
+                      <FileText className="mr-1 h-4 w-4" />
+                      {pdfMut.isPending && pdfMut.variables === t.id ? "Opening…" : "View Ticket"}
+                    </Button>
                     <ShippingTicketEditDialog ticketId={t.id} status={t.status} />
                   </div>
                 </TableCell>
