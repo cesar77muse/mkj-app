@@ -984,6 +984,10 @@ export type Database = {
         Args: { _ticket_id: string }
         Returns: undefined
       }
+      ship_shipping_ticket_inventory: {
+        Args: { _ticket_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "warehouse_manager" | "manager" | "engineer"
