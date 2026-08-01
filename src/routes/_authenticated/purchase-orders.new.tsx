@@ -14,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "sonner";
 import { FileText, Plus, Trash } from "lucide-react";
 import { previewDraftPurchaseOrderPdf } from "@/lib/po-pdf";
+import { AssigneeSelect } from "@/components/assignee-select";
 
 export const Route = createFileRoute("/_authenticated/purchase-orders/new")({
   head: () => ({ meta: [{ title: "New Purchase Order — MKJ Ops" }] }),
