@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { PageHeader } from "@/components/page-header";
 import { toast } from "sonner";
-import { Plus } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { useRoles } from "@/hooks/use-session";
 import { isWarehouseOrAdmin } from "@/lib/roles";
 
@@ -24,6 +24,7 @@ function ProductsPage() {
   const canWrite = isWarehouseOrAdmin(roles);
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
   const [pn, setPn] = useState("");
   const [desc, setDesc] = useState("");
   const [unit, setUnit] = useState("ea");
@@ -37,6 +38,16 @@ function ProductsPage() {
       return data;
     },
   });
+
+  const term = q.trim().toLowerCase();
+  const filtered = useMemo(() => {
+    if (!products.data) return [];
+    if (!term) return products.data;
+    return products.data.filter((p) => {
+      const hay = [p.part_number, p.description].filter(Boolean).join(" ").toLowerCase();
+      return hay.includes(term);
+    });
+  }, [products.data, term]);
 
   const createMut = useMutation({
     mutationFn: async () => {
@@ -84,20 +95,30 @@ function ProductsPage() {
         ) : null}
       />
 
+      <div className="relative mb-4">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Search part # or description…"
+          className="pl-9"
+        />
+      </div>
+
       <Card><CardContent className="p-0">
         <Table>
           <TableHeader><TableRow>
             <TableHead>Part #</TableHead><TableHead>Description</TableHead><TableHead>Unit</TableHead><TableHead className="text-right">Reorder point</TableHead>
           </TableRow></TableHeader>
           <TableBody>
-            {products.data && products.data.length > 0 ? products.data.map((p) => (
+            {filtered.length > 0 ? filtered.map((p) => (
               <TableRow key={p.id}>
                 <TableCell className="font-mono">{p.part_number}</TableCell>
                 <TableCell>{p.description}</TableCell>
                 <TableCell>{p.unit}</TableCell>
                 <TableCell className="text-right">{p.reorder_point}</TableCell>
               </TableRow>
-            )) : <TableRow><TableCell colSpan={4} className="py-6 text-center text-sm text-muted-foreground">No products yet.</TableCell></TableRow>}
+            )) : <TableRow><TableCell colSpan={4} className="py-6 text-center text-sm text-muted-foreground">{term ? "No matches." : "No products yet."}</TableCell></TableRow>}
           </TableBody>
         </Table>
       </CardContent></Card>

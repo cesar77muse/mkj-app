@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { PageHeader } from "@/components/page-header";
 import { toast } from "sonner";
-import { Plus, Pencil } from "lucide-react";
+import { Plus, Pencil, Search } from "lucide-react";
 import { useRoles } from "@/hooks/use-session";
 import { canWrite as canWriteRoles } from "@/lib/roles";
 
@@ -28,6 +28,7 @@ function SuppliersPage() {
   const canWrite = canWriteRoles(roles);
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
   const [form, setForm] = useState<SupplierForm>(emptyForm);
   const [editId, setEditId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<SupplierForm>(emptyForm);
@@ -36,6 +37,16 @@ function SuppliersPage() {
     queryKey: ["suppliers"],
     queryFn: async () => (await supabase.from("suppliers").select("*").order("name")).data ?? [],
   });
+
+  const term = q.trim().toLowerCase();
+  const filtered = useMemo(() => {
+    if (!suppliers.data) return [];
+    if (!term) return suppliers.data;
+    return suppliers.data.filter((s) => {
+      const hay = [s.name, s.contact_name, s.phone, s.email, s.address].filter(Boolean).join(" ").toLowerCase();
+      return hay.includes(term);
+    });
+  }, [suppliers.data, term]);
 
   const createMut = useMutation({
     mutationFn: async () => {
@@ -107,6 +118,16 @@ function SuppliersPage() {
           </Dialog>
         ) : null}
       />
+      <div className="relative mb-4">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Search name, contact, phone, email or address…"
+          className="pl-9"
+        />
+      </div>
+
       <Card><CardContent className="p-0">
         <Table>
           <TableHeader><TableRow>
@@ -114,7 +135,7 @@ function SuppliersPage() {
             {canWrite ? <TableHead className="w-16 text-right">Edit</TableHead> : null}
           </TableRow></TableHeader>
           <TableBody>
-            {suppliers.data && suppliers.data.length > 0 ? suppliers.data.map((s) => (
+            {filtered.length > 0 ? filtered.map((s) => (
               <TableRow key={s.id}>
                 <TableCell className="font-medium">{s.name}</TableCell>
                 <TableCell>{s.contact_name ?? "—"}</TableCell>
@@ -142,7 +163,7 @@ function SuppliersPage() {
                   </TableCell>
                 ) : null}
               </TableRow>
-            )) : <TableRow><TableCell colSpan={canWrite ? 5 : 4} className="py-6 text-center text-sm text-muted-foreground">No suppliers yet.</TableCell></TableRow>}
+            )) : <TableRow><TableCell colSpan={canWrite ? 5 : 4} className="py-6 text-center text-sm text-muted-foreground">{term ? "No matches." : "No suppliers yet."}</TableCell></TableRow>}
           </TableBody>
         </Table>
       </CardContent></Card>
