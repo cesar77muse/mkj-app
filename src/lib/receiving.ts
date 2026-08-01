@@ -77,9 +77,16 @@ export function slipStatusFor(lines: { qty_ordered: number; qty_received: number
   return lines.some((l) => l.qty_received < l.qty_ordered) ? "partially_received" : "received";
 }
 
-/** Recompute a PO's received status from every packing slip logged against it. */
+/**
+ * Recompute a PO's received status from every packing slip logged against it.
+ *
+ * Receiving never sets Approved/Executed — those stay manual. The PO's status
+ * from just before its first receipt is stashed in `pre_receipt_status` so the
+ * PO can fall back to it if every receipt is later removed/zeroed out.
+ */
 export async function refreshPoStatus(poId: string) {
-  const [{ data: poItems }, { data: slipItems }] = await Promise.all([
+  const [{ data: po }, { data: poItems }, { data: slipItems }] = await Promise.all([
+    supabase.from("purchase_orders").select("status, pre_receipt_status").eq("id", poId).maybeSingle(),
     supabase.from("purchase_order_items").select("id, qty").eq("po_id", poId),
     supabase
       .from("packing_slip_items")
@@ -91,9 +98,26 @@ export async function refreshPoStatus(poId: string) {
     if (!s.po_item_id) return;
     received.set(s.po_item_id, (received.get(s.po_item_id) ?? 0) + Number(s.qty_received));
   });
+
+  const anyReceived = [...received.values()].some((q) => q > 0);
+  if (!anyReceived) {
+    // No receipts left — revert to whatever the PO was before the first one.
+    await supabase
+      .from("purchase_orders")
+      .update({ status: po?.pre_receipt_status ?? "executed", pre_receipt_status: null })
+      .eq("id", poId);
+    return;
+  }
+
   const anyOpen = (poItems ?? []).some((i) => (received.get(i.id) ?? 0) < Number(i.qty));
+  const isReceipt = po?.status === "received" || po?.status === "partially_received";
   await supabase
     .from("purchase_orders")
-    .update({ status: anyOpen ? "partially_received" : "received" })
+    .update({
+      status: anyOpen ? "partially_received" : "received",
+      // Only capture the pre-receipt status on the first receipt.
+      ...(po && !isReceipt && !po.pre_receipt_status ? { pre_receipt_status: po.status } : {}),
+    })
     .eq("id", poId);
 }
+
