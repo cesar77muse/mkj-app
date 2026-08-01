@@ -100,6 +100,7 @@ function POEditForm({ poId, onDone }: { poId: string; onDone: () => void }) {
       if (lines.some((l) => !l.description.trim())) throw new Error("Every line needs a description");
       const { error: upErr } = await supabase.from("purchase_orders").update({
         supplier_id: supplierId || null,
+        assignee: assigneeId,
         delivery_date: deliveryDate || null,
         ship_via: shipVia || null,
         payment_terms: paymentTerms || null,
