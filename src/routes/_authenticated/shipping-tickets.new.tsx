@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import { FileText, Plus, Trash } from "lucide-react";
+import { previewDraftShippingTicketPdf } from "@/lib/shipping-ticket-pdf";
 
 export const Route = createFileRoute("/_authenticated/shipping-tickets/new")({
   head: () => ({ meta: [{ title: "New Shipping Ticket — MKJ Ops" }] }),
