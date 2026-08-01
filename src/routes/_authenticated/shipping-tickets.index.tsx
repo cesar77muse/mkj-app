@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, FileText } from "lucide-react";
 import { ShippingTicketEditDialog } from "@/components/shipping-ticket-edit-dialog";
 
 export const Route = createFileRoute("/_authenticated/shipping-tickets/")({
