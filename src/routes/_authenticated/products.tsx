@@ -111,14 +111,14 @@ function ProductsPage() {
             <TableHead>Part #</TableHead><TableHead>Description</TableHead><TableHead>Unit</TableHead><TableHead className="text-right">Reorder point</TableHead>
           </TableRow></TableHeader>
           <TableBody>
-            {products.data && products.data.length > 0 ? products.data.map((p) => (
+            {filtered.length > 0 ? filtered.map((p) => (
               <TableRow key={p.id}>
                 <TableCell className="font-mono">{p.part_number}</TableCell>
                 <TableCell>{p.description}</TableCell>
                 <TableCell>{p.unit}</TableCell>
                 <TableCell className="text-right">{p.reorder_point}</TableCell>
               </TableRow>
-            )) : <TableRow><TableCell colSpan={4} className="py-6 text-center text-sm text-muted-foreground">No products yet.</TableCell></TableRow>}
+            )) : <TableRow><TableCell colSpan={4} className="py-6 text-center text-sm text-muted-foreground">{term ? "No matches." : "No products yet."}</TableCell></TableRow>}
           </TableBody>
         </Table>
       </CardContent></Card>
