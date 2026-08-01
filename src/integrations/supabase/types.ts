@@ -487,6 +487,38 @@ export type Database = {
           },
         ]
       }
+      purchase_order_pdfs: {
+        Row: {
+          content_hash: string
+          generated_at: string
+          generated_by: string | null
+          po_id: string
+          storage_path: string
+        }
+        Insert: {
+          content_hash: string
+          generated_at?: string
+          generated_by?: string | null
+          po_id: string
+          storage_path: string
+        }
+        Update: {
+          content_hash?: string
+          generated_at?: string
+          generated_by?: string | null
+          po_id?: string
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_order_pdfs_po_id_fkey"
+            columns: ["po_id"]
+            isOneToOne: true
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       purchase_orders: {
         Row: {
           additional_freight: number | null
