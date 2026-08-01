@@ -147,6 +147,10 @@ function NewPO() {
               <Input className="mt-2" placeholder="Supplier name" value={otherSupplier} onChange={(e) => setOtherSupplier(e.target.value)} />
             )}
           </div>
+          <div>
+            <Label htmlFor="po-assignee">Assignee</Label>
+            <AssigneeSelect id="po-assignee" value={assigneeId} onChange={setAssigneeId} />
+          </div>
           <div><Label>Bill to</Label><Textarea rows={3} value={billTo} onChange={(e) => setBillTo(e.target.value)} /></div>
           <div><Label>Ship to</Label><Textarea rows={3} value={shipTo} onChange={(e) => setShipTo(e.target.value)} /></div>
           <div><Label>Delivery date</Label><Input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} /></div>
