@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, FileText } from "lucide-react";
 import { ShippingTicketEditDialog } from "@/components/shipping-ticket-edit-dialog";
 
 export const Route = createFileRoute("/_authenticated/shipping-tickets/")({
@@ -43,7 +43,13 @@ function STList() {
                 <TableCell>{t.deliver_to_name ?? "—"}</TableCell>
                 <TableCell>{t.ship_date}</TableCell>
                 <TableCell><Badge variant="secondary">{t.status}</Badge></TableCell>
-                <TableCell><ShippingTicketEditDialog ticketId={t.id} status={t.status} /></TableCell>
+                <TableCell>
+                  <div className="flex items-center justify-end gap-1">
+                    <Button size="sm" variant="outline"><FileText className="mr-1 h-4 w-4" />View Ticket</Button>
+                    <Button size="sm" variant="outline"><FileText className="mr-1 h-4 w-4" />Preview Ticket</Button>
+                    <ShippingTicketEditDialog ticketId={t.id} status={t.status} />
+                  </div>
+                </TableCell>
               </TableRow>
             )) : <TableRow><TableCell colSpan={6} className="py-6 text-center text-sm text-muted-foreground">No tickets yet.</TableCell></TableRow>}
           </TableBody>
