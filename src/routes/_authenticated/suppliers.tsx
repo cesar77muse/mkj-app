@@ -38,6 +38,16 @@ function SuppliersPage() {
     queryFn: async () => (await supabase.from("suppliers").select("*").order("name")).data ?? [],
   });
 
+  const term = q.trim().toLowerCase();
+  const filtered = useMemo(() => {
+    if (!suppliers.data) return [];
+    if (!term) return suppliers.data;
+    return suppliers.data.filter((s) => {
+      const hay = [s.name, s.contact_name, s.phone, s.email, s.address].filter(Boolean).join(" ").toLowerCase();
+      return hay.includes(term);
+    });
+  }, [suppliers.data, term]);
+
   const createMut = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("suppliers").insert({
