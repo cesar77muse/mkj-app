@@ -23,7 +23,7 @@ type Line = { product_id: string; description: string; qty_shipped: number; qty_
 
 function NewTicket() {
   const navigate = useNavigate();
-  const projects = useQuery({ queryKey: ["projects", "active"], queryFn: async () => (await supabase.from("projects").select("id, mkj_number, name").eq("status", "active").order("mkj_number")).data ?? [] });
+  const projects = useQuery({ queryKey: ["projects", "active"], queryFn: async () => (await supabase.from("projects").select("id, mkj_number, name, contract_number").eq("status", "active").order("mkj_number")).data ?? [] });
   const products = useQuery({ queryKey: ["products"], queryFn: async () => (await supabase.from("products").select("id, part_number, description").order("part_number")).data ?? [] });
 
   const [projectId, setProjectId] = useState("");
