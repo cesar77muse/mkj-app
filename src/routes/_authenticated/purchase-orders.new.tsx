@@ -67,6 +67,11 @@ function NewPO() {
         _description: description || null,
       } as never);
       if (insErr) throw insErr;
+      if (assigneeId) {
+        // create_purchase_order() has no assignee param — set it in a follow-up update
+        const { error: aErr } = await supabase.from("purchase_orders").update({ assignee: assigneeId }).eq("id", poRow!.id);
+        if (aErr) throw aErr;
+      }
       const items = lines.filter((l) => l.description.trim()).map((l) => ({
         po_id: poRow!.id, line_no: l.line_no, budget_code: l.budget_code || null,
         description: l.description, qty: l.qty, unit: l.unit || "ea", unit_cost: l.unit_cost,
