@@ -20,8 +20,8 @@ export const Route = createFileRoute("/_authenticated/shipping-tickets/")({
 
 function STList() {
   const list = useQuery({
-
     queryKey: ["tickets"],
+
     queryFn: async () => (await supabase
       .from("shipping_tickets")
       .select("id, ticket_number, ship_date, created_at, status, deliver_to_name, projects:project_id(mkj_number)")
