@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/page-header";
@@ -10,6 +10,8 @@ import { toast } from "sonner";
 import { FileText } from "lucide-react";
 import { openShippingTicketPdf } from "@/lib/shipping-ticket-pdf";
 import { ShippingTicketEditDialog } from "@/components/shipping-ticket-edit-dialog";
+import { ShippingTicketDeleteButton } from "@/components/shipping-ticket-delete-button";
+
 
 export const Route = createFileRoute("/_authenticated/shipping-tickets/$id")({
   head: () => ({ meta: [{ title: "Shipping Ticket — MKJ Ops" }] }),
