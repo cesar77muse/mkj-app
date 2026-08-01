@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
-import { resolveProductId, syncSlipInventory } from "@/lib/receiving";
+import { refreshPoStatus, resolveProductId, syncSlipInventory } from "@/lib/receiving";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -71,7 +71,7 @@ function NewSlip() {
       .from("purchase_orders")
       .select("id, po_number, description, status, suppliers:supplier_id(name)")
       .eq("project_id", projectId)
-      .in("status", ["approved", "executed", "partially_received"])
+      .in("status", ["executed", "partially_received", "received"])
       .order("po_number")).data ?? [],
   });
 
@@ -188,7 +188,7 @@ function NewSlip() {
         userId: user.user?.id ?? null,
       });
 
-      await supabase.from("purchase_orders").update({ status: slipStatus }).eq("id", poDetail.data.po.id);
+      await refreshPoStatus(poDetail.data.po.id);
       return slip.id as string;
     },
     onSuccess: () => {
