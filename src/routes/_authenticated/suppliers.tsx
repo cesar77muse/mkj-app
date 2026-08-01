@@ -135,7 +135,7 @@ function SuppliersPage() {
             {canWrite ? <TableHead className="w-16 text-right">Edit</TableHead> : null}
           </TableRow></TableHeader>
           <TableBody>
-            {suppliers.data && suppliers.data.length > 0 ? suppliers.data.map((s) => (
+            {filtered.length > 0 ? filtered.map((s) => (
               <TableRow key={s.id}>
                 <TableCell className="font-medium">{s.name}</TableCell>
                 <TableCell>{s.contact_name ?? "—"}</TableCell>
@@ -163,7 +163,7 @@ function SuppliersPage() {
                   </TableCell>
                 ) : null}
               </TableRow>
-            )) : <TableRow><TableCell colSpan={canWrite ? 5 : 4} className="py-6 text-center text-sm text-muted-foreground">No suppliers yet.</TableCell></TableRow>}
+            )) : <TableRow><TableCell colSpan={canWrite ? 5 : 4} className="py-6 text-center text-sm text-muted-foreground">{term ? "No matches." : "No suppliers yet."}</TableCell></TableRow>}
           </TableBody>
         </Table>
       </CardContent></Card>
