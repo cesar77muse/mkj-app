@@ -2,3 +2,6 @@ project_id = "beoggpwowmwzqmtuidvl"
 
 [functions.po-pdf]
 verify_jwt = true
+
+[functions.shipping-ticket-pdf]
+verify_jwt = true
