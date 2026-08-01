@@ -51,7 +51,7 @@ function STList() {
                   </div>
                 </TableCell>
               </TableRow>
-            )) : <TableRow><TableCell colSpan={6} className="py-6 text-center text-sm text-muted-foreground">No tickets yet.</TableCell></TableRow>}
+            )) : <TableRow><TableCell colSpan={7} className="py-6 text-center text-sm text-muted-foreground">No tickets yet.</TableCell></TableRow>}
           </TableBody>
         </Table>
       </CardContent></Card>
