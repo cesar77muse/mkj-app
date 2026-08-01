@@ -31,6 +31,7 @@ function NewPO() {
   const [projectId, setProjectId] = useState("");
   const [supplierId, setSupplierId] = useState("");
   const [otherSupplier, setOtherSupplier] = useState("");
+  const [assigneeId, setAssigneeId] = useState<string | null>(null);
   const [billTo, setBillTo] = useState("MKJ Communications\n850 3rd Ave., #407\nBrooklyn, NY 11232");
   const [shipTo, setShipTo] = useState("MKJ Communications\n850 3rd Ave., #407\nBrooklyn, NY 11232");
   const [deliveryDate, setDeliveryDate] = useState("");
