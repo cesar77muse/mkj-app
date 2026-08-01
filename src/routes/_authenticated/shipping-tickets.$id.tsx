@@ -84,6 +84,9 @@ function TicketView() {
         actions={
           <div className="flex items-center gap-2">
             <Badge variant="secondary">{t.status}</Badge>
+            <Button size="sm" variant="outline" onClick={() => pdfMut.mutate()} disabled={pdfMut.isPending}>
+              <FileText className="mr-1 h-4 w-4" />{pdfMut.isPending ? "Opening…" : "View Ticket"}
+            </Button>
             <ShippingTicketEditDialog ticketId={t.id} status={t.status} variant="button" />
             {t.status === "draft" || t.status === "ready" ? (
               <Button size="sm" onClick={() => shipMut.mutate()}>Mark shipped</Button>
