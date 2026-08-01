@@ -113,7 +113,8 @@ function POView() {
         <Card><CardContent className="p-4 text-sm">
           <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Delivery</div>
           <div>Ship via: {po.data.ship_via ?? "—"}</div>
-          <div>Delivery date: {po.data.delivery_date ?? "—"}</div>
+          <div>Expected delivery: {po.data.delivery_date ?? "—"}</div>
+          <div>Last received: {slips.data?.[0]?.received_date ?? "—"}</div>
           <div>Payment terms: {po.data.payment_terms ?? "—"}</div>
         </CardContent></Card>
       </div>

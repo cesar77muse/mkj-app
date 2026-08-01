@@ -63,7 +63,7 @@ function POList() {
       <Card><CardContent className="p-0">
         <Table>
           <TableHeader><TableRow>
-            <TableHead>PO #</TableHead><TableHead>Project</TableHead><TableHead>Supplier</TableHead><TableHead>Status</TableHead><TableHead>Delivery</TableHead><TableHead className="text-right">Actions</TableHead>
+            <TableHead>PO #</TableHead><TableHead>Project</TableHead><TableHead>Supplier</TableHead><TableHead>Status</TableHead><TableHead>Expected</TableHead><TableHead>Received</TableHead><TableHead className="text-right">Actions</TableHead>
           </TableRow></TableHeader>
           <TableBody>
             {pos.data && pos.data.length > 0 ? pos.data.map((po) => (
@@ -73,6 +73,7 @@ function POList() {
                 <TableCell>{po.suppliers?.name ?? "—"}</TableCell>
                 <TableCell><POStatusBadge status={po.status} /></TableCell>
                 <TableCell>{po.delivery_date ?? "—"}</TableCell>
+                <TableCell>{receipts.data?.[po.id] ?? "—"}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-1">
                     <Button
@@ -89,7 +90,7 @@ function POList() {
                   </div>
                 </TableCell>
               </TableRow>
-            )) : <TableRow><TableCell colSpan={6} className="py-6 text-center text-sm text-muted-foreground">No purchase orders yet.</TableCell></TableRow>}
+            )) : <TableRow><TableCell colSpan={7} className="py-6 text-center text-sm text-muted-foreground">No purchase orders yet.</TableCell></TableRow>}
           </TableBody>
         </Table>
       </CardContent></Card>
