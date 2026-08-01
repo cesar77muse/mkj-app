@@ -67,6 +67,7 @@ function POView() {
   if (!po.data) return <p className="text-sm text-muted-foreground">Not found.</p>;
 
   const total = (items.data ?? []).reduce((s, l) => s + Number(l.qty) * Number(l.unit_cost), 0) + Number(po.data.additional_freight ?? 0);
+  const assigneeUserId = po.data.assignee;
 
   return (
     <div className="mx-auto max-w-5xl">
