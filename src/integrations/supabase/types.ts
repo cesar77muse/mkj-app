@@ -961,6 +961,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      delete_shipping_ticket: {
+        Args: { _ticket_id: string }
+        Returns: undefined
+      }
       gen_ps_number: { Args: { _mkj: string }; Returns: string }
       gen_ticket_number: { Args: never; Returns: string }
       has_role: {
@@ -975,6 +979,10 @@ export type Database = {
       manages_project: {
         Args: { _project_id: string; _user_id: string }
         Returns: boolean
+      }
+      reverse_shipping_ticket_inventory: {
+        Args: { _ticket_id: string }
+        Returns: undefined
       }
     }
     Enums: {
