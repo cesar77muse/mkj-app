@@ -42,6 +42,7 @@ function STList() {
                 <TableCell className="font-mono text-xs">{t.projects?.mkj_number}</TableCell>
                 <TableCell>{t.deliver_to_name ?? "—"}</TableCell>
                 <TableCell>{t.ship_date}</TableCell>
+                <TableCell className="text-muted-foreground">{t.created_at ? new Date(t.created_at).toLocaleDateString() : "—"}</TableCell>
                 <TableCell><Badge variant="secondary">{t.status}</Badge></TableCell>
                 <TableCell>
                   <div className="flex items-center justify-end gap-1">
