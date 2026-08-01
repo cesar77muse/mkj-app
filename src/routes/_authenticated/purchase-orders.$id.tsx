@@ -13,6 +13,7 @@ import { FileText } from "lucide-react";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
 import { openPurchaseOrderPdf } from "@/lib/po-pdf";
+import { assigneeLabel, useAssignableUsers } from "@/components/assignee-select";
 
 type POStatus = Database["public"]["Enums"]["po_status"];
 
@@ -42,6 +43,8 @@ function POView() {
     queryKey: ["po-slips", id],
     queryFn: async () => (await supabase.from("packing_slips").select("id, slip_number, received_date").eq("po_id", id).order("received_date", { ascending: false })).data ?? [],
   });
+  const { data: assignableUsers = [] } = useAssignableUsers();
+
 
   const statusMut = useMutation({
     mutationFn: async (status: POStatus) => {
@@ -64,6 +67,7 @@ function POView() {
   if (!po.data) return <p className="text-sm text-muted-foreground">Not found.</p>;
 
   const total = (items.data ?? []).reduce((s, l) => s + Number(l.qty) * Number(l.unit_cost), 0) + Number(po.data.additional_freight ?? 0);
+  const assigneeUserId = po.data.assignee;
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -103,6 +107,8 @@ function POView() {
           <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Supplier</div>
           <div className="font-medium">{po.data.suppliers?.name ?? "—"}</div>
           <div className="whitespace-pre-wrap text-muted-foreground">{po.data.suppliers?.address ?? ""}</div>
+          <div className="mt-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Assignee</div>
+          <div>{assigneeLabel(assignableUsers.find((u) => u.id === assigneeUserId))}</div>
         </CardContent></Card>
         <Card><CardContent className="p-4 text-sm">
           <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Delivery</div>

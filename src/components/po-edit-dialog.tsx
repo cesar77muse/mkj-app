@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { Pencil, Plus, Trash } from "lucide-react";
 import { useRoles } from "@/hooks/use-session";
 import { isAdmin, isWarehouseOrAdmin, type AppRole } from "@/lib/roles";
+import { AssigneeSelect } from "@/components/assignee-select";
 
 type Line = { id?: string; line_no: number; budget_code: string; description: string; qty: number; unit: string; unit_cost: number };
 
@@ -62,6 +63,7 @@ function POEditForm({ poId, onDone }: { poId: string; onDone: () => void }) {
   });
 
   const [supplierId, setSupplierId] = useState("");
+  const [assigneeId, setAssigneeId] = useState<string | null>(null);
   const [deliveryDate, setDeliveryDate] = useState("");
   const [shipVia, setShipVia] = useState("");
   const [paymentTerms, setPaymentTerms] = useState("");
@@ -74,6 +76,7 @@ function POEditForm({ poId, onDone }: { poId: string; onDone: () => void }) {
   useEffect(() => {
     if (!po.data) return;
     setSupplierId(po.data.supplier_id ?? "");
+    setAssigneeId(po.data.assignee ?? null);
     setDeliveryDate(po.data.delivery_date ?? "");
     setShipVia(po.data.ship_via ?? "");
     setPaymentTerms(po.data.payment_terms ?? "");
@@ -97,6 +100,7 @@ function POEditForm({ poId, onDone }: { poId: string; onDone: () => void }) {
       if (lines.some((l) => !l.description.trim())) throw new Error("Every line needs a description");
       const { error: upErr } = await supabase.from("purchase_orders").update({
         supplier_id: supplierId || null,
+        assignee: assigneeId,
         delivery_date: deliveryDate || null,
         ship_via: shipVia || null,
         payment_terms: paymentTerms || null,
@@ -163,6 +167,10 @@ function POEditForm({ poId, onDone }: { poId: string; onDone: () => void }) {
             <SelectTrigger><SelectValue placeholder="Choose supplier" /></SelectTrigger>
             <SelectContent>{suppliers.data?.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
           </Select>
+        </div>
+        <div>
+          <Label htmlFor="po-edit-assignee">Assignee</Label>
+          <AssigneeSelect id="po-edit-assignee" value={assigneeId} onChange={setAssigneeId} />
         </div>
         <div><Label>Delivery date</Label><Input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} /></div>
         <div><Label>Ship via</Label><Input value={shipVia} onChange={(e) => setShipVia(e.target.value)} /></div>

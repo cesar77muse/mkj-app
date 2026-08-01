@@ -14,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "sonner";
 import { FileText, Plus, Trash } from "lucide-react";
 import { previewDraftPurchaseOrderPdf } from "@/lib/po-pdf";
+import { AssigneeSelect } from "@/components/assignee-select";
 
 export const Route = createFileRoute("/_authenticated/purchase-orders/new")({
   head: () => ({ meta: [{ title: "New Purchase Order — MKJ Ops" }] }),
@@ -30,6 +31,7 @@ function NewPO() {
   const [projectId, setProjectId] = useState("");
   const [supplierId, setSupplierId] = useState("");
   const [otherSupplier, setOtherSupplier] = useState("");
+  const [assigneeId, setAssigneeId] = useState<string | null>(null);
   const [billTo, setBillTo] = useState("MKJ Communications\n850 3rd Ave., #407\nBrooklyn, NY 11232");
   const [shipTo, setShipTo] = useState("MKJ Communications\n850 3rd Ave., #407\nBrooklyn, NY 11232");
   const [deliveryDate, setDeliveryDate] = useState("");
@@ -65,6 +67,11 @@ function NewPO() {
         _description: description || null,
       } as never);
       if (insErr) throw insErr;
+      if (assigneeId) {
+        // create_purchase_order() has no assignee param — set it in a follow-up update
+        const { error: aErr } = await supabase.from("purchase_orders").update({ assignee: assigneeId }).eq("id", poRow!.id);
+        if (aErr) throw aErr;
+      }
       const items = lines.filter((l) => l.description.trim()).map((l) => ({
         po_id: poRow!.id, line_no: l.line_no, budget_code: l.budget_code || null,
         description: l.description, qty: l.qty, unit: l.unit || "ea", unit_cost: l.unit_cost,
@@ -139,6 +146,10 @@ function NewPO() {
             {supplierId === "__other__" && (
               <Input className="mt-2" placeholder="Supplier name" value={otherSupplier} onChange={(e) => setOtherSupplier(e.target.value)} />
             )}
+          </div>
+          <div>
+            <Label htmlFor="po-assignee">Assignee</Label>
+            <AssigneeSelect id="po-assignee" value={assigneeId} onChange={setAssigneeId} />
           </div>
           <div><Label>Bill to</Label><Textarea rows={3} value={billTo} onChange={(e) => setBillTo(e.target.value)} /></div>
           <div><Label>Ship to</Label><Textarea rows={3} value={shipTo} onChange={(e) => setShipTo(e.target.value)} /></div>
