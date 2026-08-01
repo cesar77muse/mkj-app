@@ -25,14 +25,32 @@ export type DraftPoPdfInput = {
   items: DraftPoLine[];
 };
 
-/** Opens the (cached or freshly generated) PDF for a saved PO in a new tab. */
+/**
+ * Opens the (cached or freshly generated) PDF for a saved PO in a new tab.
+ *
+ * The tab is opened blank *synchronously*, before the await below, and only
+ * navigated once we have the signed URL. Popup blockers allow window.open()
+ * during the synchronous handling of a click, but silently block it if
+ * called after an awaited network call — by then it's no longer considered
+ * a direct response to the user's gesture, even though it demonstrably was.
+ */
 export async function openPurchaseOrderPdf(poId: string): Promise<void> {
-  const { data, error } = await supabase.functions.invoke<{ url: string }>("po-pdf", {
-    body: { po_id: poId },
-  });
-  if (error) throw error;
-  if (!data?.url) throw new Error("PDF service returned no URL");
-  window.open(data.url, "_blank", "noopener,noreferrer");
+  const newTab = window.open("", "_blank");
+  try {
+    const { data, error } = await supabase.functions.invoke<{ url: string }>("po-pdf", {
+      body: { po_id: poId },
+    });
+    if (error) throw error;
+    if (!data?.url) throw new Error("PDF service returned no URL");
+    if (newTab) {
+      newTab.location.href = data.url;
+    } else {
+      window.open(data.url, "_blank");
+    }
+  } catch (err) {
+    newTab?.close();
+    throw err;
+  }
 }
 
 function functionsUrl(name: string): string {
@@ -52,28 +70,39 @@ function publishableKey(): string {
  * branch on the application/pdf content type.
  */
 export async function previewDraftPurchaseOrderPdf(draft: DraftPoPdfInput): Promise<void> {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  if (!session) throw new Error("Not signed in");
+  // See openPurchaseOrderPdf above for why this opens blank before the awaits.
+  const newTab = window.open("", "_blank");
+  try {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) throw new Error("Not signed in");
 
-  const res = await fetch(functionsUrl("po-pdf"), {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${session.access_token}`,
-      apikey: publishableKey(),
-    },
-    body: JSON.stringify({ draft }),
-  });
+    const res = await fetch(functionsUrl("po-pdf"), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+        apikey: publishableKey(),
+      },
+      body: JSON.stringify({ draft }),
+    });
 
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body?.error || `PDF preview failed (${res.status})`);
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body?.error || `PDF preview failed (${res.status})`);
+    }
+
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    if (newTab) {
+      newTab.location.href = url;
+    } else {
+      window.open(url, "_blank");
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  } catch (err) {
+    newTab?.close();
+    throw err;
   }
-
-  const blob = await res.blob();
-  const url = URL.createObjectURL(blob);
-  window.open(url, "_blank", "noopener,noreferrer");
-  setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
