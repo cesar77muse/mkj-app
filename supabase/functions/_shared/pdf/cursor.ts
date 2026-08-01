@@ -39,8 +39,29 @@ export function ensureSpace(cursor: PdfCursor, height: number) {
   if (cursor.y - height < BOTTOM_MARGIN) addPage(cursor);
 }
 
+// pdf-lib's standard fonts (Helvetica etc.) use WinAnsi encoding, which can't
+// represent characters like the narrow no-break space (U+202F) that
+// Intl.DateTimeFormat/toLocaleString insert before AM/PM in modern JS
+// engines, or smart quotes/em dashes that show up in pasted free text.
+// Normalize those to their closest WinAnsi-safe equivalent before they ever
+// reach pdf-lib, rather than special-casing each source of the text.
+const PDF_TEXT_REPLACEMENTS: [RegExp, string][] = [
+  [/[‘’‚‛]/g, "'"],
+  [/[“”„‟]/g, '"'],
+  [/[–—]/g, "-"],
+  [/…/g, "..."],
+  [/[     ]/g, " "],
+  [/•/g, "-"],
+];
+
+export function sanitizeForPdf(text: string): string {
+  let out = text ?? "";
+  for (const [pattern, replacement] of PDF_TEXT_REPLACEMENTS) out = out.replace(pattern, replacement);
+  return out;
+}
+
 export function textWidth(cursor: PdfCursor, text: string, size: number, bold = false): number {
-  return (bold ? cursor.fontBold : cursor.font).widthOfTextAtSize(text, size);
+  return (bold ? cursor.fontBold : cursor.font).widthOfTextAtSize(sanitizeForPdf(text), size);
 }
 
 export function drawText(
@@ -50,8 +71,9 @@ export function drawText(
   y: number,
   opts: { size?: number; bold?: boolean; color?: { r: number; g: number; b: number } } = {},
 ) {
-  if (!text) return;
-  cursor.page.drawText(text, {
+  const clean = sanitizeForPdf(text);
+  if (!clean) return;
+  cursor.page.drawText(clean, {
     x,
     y,
     size: opts.size ?? FONT_SIZE_DEFAULT,
