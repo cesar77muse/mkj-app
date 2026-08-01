@@ -33,7 +33,7 @@ function STList() {
       <Card><CardContent className="p-0">
         <Table>
           <TableHeader><TableRow>
-            <TableHead>Ticket #</TableHead><TableHead>Project</TableHead><TableHead>Deliver to</TableHead><TableHead>Date</TableHead><TableHead>Status</TableHead><TableHead className="w-10" />
+            <TableHead>Ticket #</TableHead><TableHead>Project</TableHead><TableHead>Deliver to</TableHead><TableHead>Delivery date</TableHead><TableHead>Created date</TableHead><TableHead>Status</TableHead><TableHead className="w-10" />
           </TableRow></TableHeader>
           <TableBody>
             {list.data && list.data.length > 0 ? list.data.map((t) => (
