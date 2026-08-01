@@ -19,10 +19,11 @@ export function useManagers() {
       if (roleErr) throw roleErr;
       const ids = (roleRows ?? []).map((r) => r.user_id);
       if (ids.length === 0) return [];
+      // user_directory exposes names only — emails stay restricted to the owner and admins
       const { data, error } = await supabase
-        .from("profiles").select("id, full_name, email").in("id", ids).order("full_name");
+        .from("user_directory").select("id, full_name").in("id", ids).order("full_name");
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []).map((d) => ({ ...d, email: null }));
     },
   });
 }

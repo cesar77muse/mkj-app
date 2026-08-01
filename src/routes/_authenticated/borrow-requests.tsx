@@ -90,8 +90,8 @@ function BorrowPage() {
       const ids = Array.from(new Set(reqs.flatMap((r) => [r.requested_by, r.decided_by]).filter(Boolean) as string[]));
       let byId: Record<string, { full_name: string | null; email: string | null }> = {};
       if (ids.length > 0) {
-        const { data: profs } = await supabase.from("profiles").select("id, full_name, email").in("id", ids);
-        byId = Object.fromEntries((profs ?? []).map((p) => [p.id, { full_name: p.full_name, email: p.email }]));
+        const { data: profs } = await supabase.from("user_directory").select("id, full_name").in("id", ids);
+        byId = Object.fromEntries((profs ?? []).map((p) => [p.id, { full_name: p.full_name, email: null }]));
       }
       return reqs.map((r) => ({
         ...r,

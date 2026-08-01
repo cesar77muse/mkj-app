@@ -487,6 +487,38 @@ export type Database = {
           },
         ]
       }
+      purchase_order_pdfs: {
+        Row: {
+          content_hash: string
+          generated_at: string
+          generated_by: string | null
+          po_id: string
+          storage_path: string
+        }
+        Insert: {
+          content_hash: string
+          generated_at?: string
+          generated_by?: string | null
+          po_id: string
+          storage_path: string
+        }
+        Update: {
+          content_hash?: string
+          generated_at?: string
+          generated_by?: string | null
+          po_id?: string
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_order_pdfs_po_id_fkey"
+            columns: ["po_id"]
+            isOneToOne: true
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       purchase_orders: {
         Row: {
           additional_freight: number | null
@@ -719,6 +751,32 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      user_directory: {
+        Row: {
+          full_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          full_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_directory_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
