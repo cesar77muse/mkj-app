@@ -32,9 +32,21 @@ function InventoryPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("v_project_inventory")
-        .select("project_id, product_id, on_hand, projects:project_id(mkj_number, name), products:product_id(part_number, description, reorder_point)");
+        .select("project_id, product_id, on_hand, products:product_id(part_number, description, reorder_point)");
       if (error) throw error;
-      return (data ?? []) as unknown as InvRow[];
+      const rows = (data ?? []) as unknown as Omit<InvRow, "projects">[];
+
+      // project_id references projects, which a viewer who isn't on that
+      // project can't read directly — look names up through the same
+      // role-gated, name-only directory used on the borrow-requests page.
+      const projectIds = Array.from(new Set(rows.map((r) => r.project_id)));
+      let projById: Record<string, { mkj_number: string; name: string }> = {};
+      if (projectIds.length > 0) {
+        const { data: projs } = await supabase.from("v_project_directory").select("id, mkj_number, name").in("id", projectIds);
+        projById = Object.fromEntries((projs ?? []).map((p) => [p.id, { mkj_number: p.mkj_number, name: p.name }]));
+      }
+
+      return rows.map((r) => ({ ...r, projects: projById[r.project_id] ?? null })) as InvRow[];
     },
   });
 
@@ -85,7 +97,7 @@ function InventoryPage() {
 
   return (
     <div className="mx-auto max-w-7xl">
-      <PageHeader title="Inventory" description="On-hand quantities across every project you can see." />
+      <PageHeader title="Inventory" description="On-hand quantities across every project." />
 
       <div className="relative mb-4">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

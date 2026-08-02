@@ -842,7 +842,7 @@ export type Database = {
       }
     }
     Views: {
-      v_borrow_project_options: {
+      v_project_directory: {
         Row: {
           id: string
           mkj_number: string
@@ -996,6 +996,7 @@ export type Database = {
       }
       gen_ps_number: { Args: { _mkj: string }; Returns: string }
       gen_ticket_number: { Args: never; Returns: string }
+      has_any_role: { Args: { _user_id: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

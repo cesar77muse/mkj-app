@@ -80,12 +80,22 @@ function BorrowPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("borrow_requests")
-        .select(
-          "*, source:source_project_id(mkj_number, name), target:target_project_id(mkj_number, name), product:product_id(part_number, description)",
-        )
+        .select("*, product:product_id(part_number, description)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       const reqs = (data ?? []) as unknown as Req[];
+
+      // source_project_id/target_project_id reference projects, which a
+      // viewer who isn't on that project can't read directly — look their
+      // names up through the same role-gated, name-only directory the
+      // "Borrow from" picker uses.
+      const projectIds = Array.from(new Set(reqs.flatMap((r) => [r.source_project_id, r.target_project_id])));
+      let projById: Record<string, { mkj_number: string; name: string }> = {};
+      if (projectIds.length > 0) {
+        const { data: projs } = await supabase.from("v_project_directory").select("id, mkj_number, name").in("id", projectIds);
+        projById = Object.fromEntries((projs ?? []).map((p) => [p.id, { mkj_number: p.mkj_number, name: p.name }]));
+      }
+
       // requested_by/decided_by reference auth.users, so profile names are fetched separately
       const ids = Array.from(new Set(reqs.flatMap((r) => [r.requested_by, r.decided_by]).filter(Boolean) as string[]));
       let byId: Record<string, { full_name: string | null; email: string | null }> = {};
@@ -95,6 +105,8 @@ function BorrowPage() {
       }
       return reqs.map((r) => ({
         ...r,
+        source: projById[r.source_project_id] ?? null,
+        target: projById[r.target_project_id] ?? null,
         requester: r.requested_by ? byId[r.requested_by] ?? null : null,
         decider: r.decided_by ? byId[r.decided_by] ?? null : null,
       }));
@@ -107,7 +119,7 @@ function BorrowPage() {
     queryFn: async () => (await supabase.from("project_managers").select("project_id").eq("user_id", userId!)).data?.map((r) => r.project_id) ?? [],
   });
 
-  const projects = useQuery({ queryKey: ["projects"], queryFn: async () => (await supabase.from("v_borrow_project_options").select("id, mkj_number, name").order("mkj_number")).data ?? [] });
+  const projects = useQuery({ queryKey: ["projects"], queryFn: async () => (await supabase.from("v_project_directory").select("id, mkj_number, name").order("mkj_number")).data ?? [] });
   const products = useQuery({ queryKey: ["products"], queryFn: async () => (await supabase.from("products").select("id, part_number, description").order("part_number")).data ?? [] });
 
   const canDecide = (r: Req) => r.status === "pending" && (oversight || (myProjects.data ?? []).includes(r.source_project_id));
