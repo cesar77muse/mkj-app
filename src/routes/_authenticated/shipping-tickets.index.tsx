@@ -13,6 +13,8 @@ import { toast } from "sonner";
 import { openShippingTicketPdf } from "@/lib/shipping-ticket-pdf";
 import { ShippingTicketEditDialog } from "@/components/shipping-ticket-edit-dialog";
 import { ShippingTicketDeleteButton } from "@/components/shipping-ticket-delete-button";
+import { UploadSignedTicketButton } from "@/components/upload-signed-ticket-button";
+import { ShippingTicketStatusBadge } from "@/components/shipping-ticket-status-badge";
 
 
 export const Route = createFileRoute("/_authenticated/shipping-tickets/")({
@@ -79,7 +81,7 @@ function STList() {
                 <TableCell>{t.deliver_to_name ?? "—"}</TableCell>
                 <TableCell>{t.ship_date}</TableCell>
                 <TableCell className="text-muted-foreground">{t.created_at ? new Date(t.created_at).toLocaleDateString() : "—"}</TableCell>
-                <TableCell><Badge variant="secondary">{t.status}</Badge></TableCell>
+                <TableCell><ShippingTicketStatusBadge status={t.status} /></TableCell>
                 <TableCell>
                   <div className="flex items-center justify-end gap-1">
                     <Button
@@ -91,6 +93,7 @@ function STList() {
                       <FileText className="mr-1 h-4 w-4" />
                       {pdfMut.isPending && pdfMut.variables === t.id ? "Opening…" : "View Ticket"}
                     </Button>
+                    <UploadSignedTicketButton status={t.status} ticketNumber={t.ticket_number} />
                     <ShippingTicketEditDialog ticketId={t.id} status={t.status} />
                     <ShippingTicketDeleteButton ticketId={t.id} ticketNumber={t.ticket_number} status={t.status} />
 
