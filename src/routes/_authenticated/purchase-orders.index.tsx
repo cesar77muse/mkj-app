@@ -55,6 +55,17 @@ function POList() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const [q, setQ] = useState("");
+  const filtered = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    const rows = pos.data ?? [];
+    if (!needle) return rows;
+    return rows.filter((po) =>
+      [po.po_number, po.projects?.mkj_number, po.projects?.name, po.suppliers?.name, po.status]
+        .some((v) => (v ?? "").toLowerCase().includes(needle)),
+    );
+  }, [pos.data, q]);
+
   return (
     <div className="mx-auto max-w-7xl">
       <PageHeader
@@ -62,14 +73,26 @@ function POList() {
         description="All POs across projects you can see."
         actions={<Link to="/purchase-orders/new"><Button><Plus className="mr-1 h-4 w-4" />New PO</Button></Link>}
       />
+
+      <div className="relative mb-4">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Search PO #, project or supplier…"
+          className="pl-9"
+        />
+      </div>
+
       <Card><CardContent className="p-0">
         <Table>
           <TableHeader><TableRow>
             <TableHead>PO #</TableHead><TableHead>Project</TableHead><TableHead>Supplier</TableHead><TableHead>Status</TableHead><TableHead>Expected</TableHead><TableHead>Received</TableHead><TableHead className="text-right">Actions</TableHead>
           </TableRow></TableHeader>
           <TableBody>
-            {pos.data && pos.data.length > 0 ? pos.data.map((po) => (
+            {filtered.length > 0 ? filtered.map((po) => (
               <TableRow key={po.id}>
+
                 <TableCell><Link className="font-mono text-primary hover:underline" to="/purchase-orders/$id" params={{ id: po.id }}>{po.po_number}</Link></TableCell>
                 <TableCell><span className="font-mono text-xs">{po.projects?.mkj_number}</span></TableCell>
                 <TableCell>{po.suppliers?.name ?? "—"}</TableCell>
