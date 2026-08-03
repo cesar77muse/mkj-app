@@ -36,6 +36,17 @@ function STList() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const [q, setQ] = useState("");
+  const filtered = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    const rows = list.data ?? [];
+    if (!needle) return rows;
+    return rows.filter((t) =>
+      [t.ticket_number, t.projects?.mkj_number, t.deliver_to_name, t.status]
+        .some((v) => (v ?? "").toLowerCase().includes(needle)),
+    );
+  }, [list.data, q]);
+
   return (
     <div className="mx-auto max-w-7xl">
       <PageHeader
@@ -43,13 +54,25 @@ function STList() {
         description="Deliveries going out to job sites."
         actions={<Link to="/shipping-tickets/new"><Button><Plus className="mr-1 h-4 w-4" />New Ticket</Button></Link>}
       />
+
+      <div className="relative mb-4">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Search ticket #, project or deliver to…"
+          className="pl-9"
+        />
+      </div>
+
       <Card><CardContent className="p-0">
         <Table>
           <TableHeader><TableRow>
             <TableHead>Ticket #</TableHead><TableHead>Project</TableHead><TableHead>Deliver to</TableHead><TableHead>Delivery date</TableHead><TableHead>Created date</TableHead><TableHead>Status</TableHead><TableHead className="w-10" />
           </TableRow></TableHeader>
           <TableBody>
-            {list.data && list.data.length > 0 ? list.data.map((t) => (
+            {filtered.length > 0 ? filtered.map((t) => (
+
               <TableRow key={t.id}>
                 <TableCell><Link className="font-mono text-primary hover:underline" to="/shipping-tickets/$id" params={{ id: t.id }}>{t.ticket_number}</Link></TableCell>
                 <TableCell className="font-mono text-xs">{t.projects?.mkj_number}</TableCell>
