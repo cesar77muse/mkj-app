@@ -190,8 +190,8 @@ function BorrowPage() {
       const { error } = await supabase.rpc("decide_borrow_request", {
         _request_id: req.id,
         _status: status,
-        _qty_approved: qty_approved ?? null,
-        _note: note || null,
+        _qty_approved: (qty_approved ?? null) as unknown as number,
+        _note: (note || null) as unknown as string,
       });
       if (error) throw error;
     },
