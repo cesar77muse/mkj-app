@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { Pencil, Plus, Trash } from "lucide-react";
 import { useRoles } from "@/hooks/use-session";
 import { isAdmin, isWarehouseOrAdmin, type AppRole } from "@/lib/roles";
+import { SHIPPING_TICKET_STATUSES } from "@/components/shipping-ticket-status-badge";
 
 type Line = { id?: string; product_id: string; description: string; qty_shipped: number; qty_backordered: number };
 
@@ -19,7 +20,7 @@ type Line = { id?: string; product_id: string; description: string; qty_shipped:
 export function canEditTicket(roles: AppRole[], status: string): boolean {
   if (isAdmin(roles)) return true;
   if (!isWarehouseOrAdmin(roles)) return false;
-  return status !== "delivered";
+  return status !== "delivered" && status !== "closed";
 }
 
 export function ShippingTicketEditDialog({ ticketId, status, variant = "icon" }: { ticketId: string; status: string; variant?: "icon" | "button" }) {
@@ -113,7 +114,7 @@ function TicketEditForm({ ticketId, onDone }: { ticketId: string; onDone: () => 
         contact_name: contact || null,
         contact_phone: phone || null,
         ship_by: shipBy || null,
-        status: status as "draft" | "ready" | "shipped" | "delivered",
+        status: status as never,
       }).eq("id", ticketId);
       if (upErr) throw upErr;
 
@@ -173,10 +174,9 @@ function TicketEditForm({ ticketId, onDone }: { ticketId: string; onDone: () => 
           <Select value={status} onValueChange={setStatus}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="draft">Draft</SelectItem>
-              <SelectItem value="ready">Ready</SelectItem>
-              <SelectItem value="shipped">Shipped</SelectItem>
-              <SelectItem value="delivered">Delivered</SelectItem>
+              {SHIPPING_TICKET_STATUSES.map((s) => (
+                <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

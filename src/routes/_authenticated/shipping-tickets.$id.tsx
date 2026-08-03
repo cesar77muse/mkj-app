@@ -11,6 +11,8 @@ import { FileText } from "lucide-react";
 import { openShippingTicketPdf } from "@/lib/shipping-ticket-pdf";
 import { ShippingTicketEditDialog } from "@/components/shipping-ticket-edit-dialog";
 import { ShippingTicketDeleteButton } from "@/components/shipping-ticket-delete-button";
+import { UploadSignedTicketButton } from "@/components/upload-signed-ticket-button";
+import { ShippingTicketStatusBadge } from "@/components/shipping-ticket-status-badge";
 
 
 export const Route = createFileRoute("/_authenticated/shipping-tickets/$id")({
@@ -75,7 +77,7 @@ function TicketView() {
         description={`Project ${t.projects?.mkj_number} — ${t.projects?.name}`}
         actions={
           <div className="flex items-center gap-2">
-            <Badge variant="secondary">{t.status}</Badge>
+            <ShippingTicketStatusBadge status={t.status} />
             <Button size="sm" variant="outline" onClick={() => pdfMut.mutate()} disabled={pdfMut.isPending}>
               <FileText className="mr-1 h-4 w-4" />{pdfMut.isPending ? "Opening…" : "View Ticket"}
             </Button>
@@ -86,6 +88,7 @@ function TicketView() {
             {t.status === "shipped" ? (
               <Button size="sm" variant="outline" onClick={() => deliveredMut.mutate()}>Mark delivered</Button>
             ) : null}
+            <UploadSignedTicketButton status={t.status} ticketNumber={t.ticket_number} variant="button" />
             <ShippingTicketDeleteButton
               ticketId={id}
               ticketNumber={t.ticket_number}

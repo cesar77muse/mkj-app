@@ -15,7 +15,7 @@ import { isAdmin, isWarehouseOrAdmin, type AppRole } from "@/lib/roles";
 export function canDeleteTicket(roles: AppRole[], status: string): boolean {
   if (isAdmin(roles)) return true;
   if (!isWarehouseOrAdmin(roles)) return false;
-  return status !== "delivered";
+  return status !== "delivered" && status !== "closed";
 }
 
 export function ShippingTicketDeleteButton({
