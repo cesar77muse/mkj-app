@@ -119,7 +119,7 @@ function BorrowPage() {
     queryFn: async () => (await supabase.from("project_managers").select("project_id").eq("user_id", userId!)).data?.map((r) => r.project_id) ?? [],
   });
 
-  const projects = useQuery({ queryKey: ["projects"], queryFn: async () => (await supabase.from("v_project_directory").select("id, mkj_number, name").order("mkj_number")).data ?? [] });
+  const projects = useQuery({ queryKey: ["projects"], queryFn: async () => ((await supabase.from("v_project_directory").select("id, mkj_number, name").order("mkj_number")).data ?? []).filter((p): p is { id: string; mkj_number: string; name: string } => !!p.id) });
   const products = useQuery({ queryKey: ["products"], queryFn: async () => (await supabase.from("products").select("id, part_number, description").order("part_number")).data ?? [] });
 
   const canDecide = (r: Req) => r.status === "pending" && (oversight || (myProjects.data ?? []).includes(r.source_project_id));
@@ -190,8 +190,8 @@ function BorrowPage() {
       const { error } = await supabase.rpc("decide_borrow_request", {
         _request_id: req.id,
         _status: status,
-        _qty_approved: qty_approved ?? null,
-        _note: note || null,
+        _qty_approved: (qty_approved ?? null) as unknown as number,
+        _note: (note || null) as unknown as string,
       });
       if (error) throw error;
     },

@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { ProjectMultiSelect } from "@/components/project-multiselect";
 import { toast } from "sonner";
 import { ROLE_LABELS, type AppRole } from "@/lib/roles";
 import { Pencil } from "lucide-react";
@@ -169,18 +169,11 @@ function UsersPage() {
                   </TableCell>
                   <TableCell>
                     {table ? (
-                      <div className="flex flex-wrap gap-2">
-                        {users.data.projects.map((p) => {
-                          const on = assigned.has(p.id);
-                          return (
-                            <label key={p.id} className="flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs">
-                              <Checkbox checked={on} onCheckedChange={(v) => toggleAssignmentMut.mutate({ userId: u.id, projectId: p.id, table, on: v === true })} />
-                              <span className="font-mono">{p.mkj_number}</span>
-                            </label>
-                          );
-                        })}
-                        {users.data.projects.length === 0 ? <span className="text-xs text-muted-foreground">No projects created yet.</span> : null}
-                      </div>
+                      <ProjectMultiSelect
+                        projects={users.data.projects}
+                        selected={assigned}
+                        onToggle={(projectId, on) => toggleAssignmentMut.mutate({ userId: u.id, projectId, table, on })}
+                      />
                     ) : (
                       <span className="text-xs text-muted-foreground">Admins & Warehouse Managers see every project.</span>
                     )}

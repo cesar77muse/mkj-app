@@ -82,10 +82,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "borrow_requests_source_project_id_fkey"
+            columns: ["source_project_id"]
+            isOneToOne: false
+            referencedRelation: "v_project_directory"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "borrow_requests_target_project_id_fkey"
             columns: ["target_project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "borrow_requests_target_project_id_fkey"
+            columns: ["target_project_id"]
+            isOneToOne: false
+            referencedRelation: "v_project_directory"
             referencedColumns: ["id"]
           },
         ]
@@ -137,6 +151,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_adjustments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_project_directory"
             referencedColumns: ["id"]
           },
         ]
@@ -287,6 +308,13 @@ export type Database = {
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "packing_slips_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_project_directory"
+            referencedColumns: ["id"]
+          },
         ]
       }
       products: {
@@ -364,6 +392,13 @@ export type Database = {
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "project_engineers_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_project_directory"
+            referencedColumns: ["id"]
+          },
         ]
       }
       project_managers: {
@@ -385,6 +420,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_managers_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_project_directory"
             referencedColumns: ["id"]
           },
         ]
@@ -595,6 +637,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "purchase_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_project_directory"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "purchase_orders_supplier_id_fkey"
             columns: ["supplier_id"]
             isOneToOne: false
@@ -758,6 +807,13 @@ export type Database = {
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "shipping_tickets_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_project_directory"
+            referencedColumns: ["id"]
+          },
         ]
       }
       suppliers: {
@@ -844,9 +900,19 @@ export type Database = {
     Views: {
       v_project_directory: {
         Row: {
-          id: string
-          mkj_number: string
-          name: string
+          id: string | null
+          mkj_number: string | null
+          name: string | null
+        }
+        Insert: {
+          id?: string | null
+          mkj_number?: string | null
+          name?: string | null
+        }
+        Update: {
+          id?: string | null
+          mkj_number?: string | null
+          name?: string | null
         }
         Relationships: []
       }
@@ -869,6 +935,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_adjustments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_project_directory"
             referencedColumns: ["id"]
           },
         ]
@@ -979,17 +1052,14 @@ export type Database = {
       }
       decide_borrow_request: {
         Args: {
-          _note: string | null
-          _qty_approved: number | null
+          _note: string
+          _qty_approved: number
           _request_id: string
           _status: string
         }
         Returns: undefined
       }
-      delete_purchase_order: {
-        Args: { _po_id: string }
-        Returns: undefined
-      }
+      delete_purchase_order: { Args: { _po_id: string }; Returns: undefined }
       delete_shipping_ticket: {
         Args: { _ticket_id: string }
         Returns: undefined
