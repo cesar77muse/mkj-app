@@ -1,10 +1,12 @@
+import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useRoles } from "@/hooks/use-session";
 import { canWrite } from "@/lib/roles";
@@ -26,6 +28,18 @@ function PSList() {
       .order("received_date", { ascending: false })
       .limit(200)).data ?? [],
   });
+
+  const [q, setQ] = useState("");
+  const filtered = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    const rows = list.data ?? [];
+    if (!needle) return rows;
+    return rows.filter((s) =>
+      [s.slip_number, s.projects?.mkj_number, s.purchase_orders?.po_number, s.vendor_slip_number, s.status]
+        .some((v) => (v ?? "").toLowerCase().includes(needle)),
+    );
+  }, [list.data, q]);
+
   return (
     <div className="mx-auto max-w-7xl">
       <PageHeader
@@ -37,13 +51,25 @@ function PSList() {
           </Button>
         ) : undefined}
       />
+
+      <div className="relative mb-4">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Search slip #, project, PO or vendor slip #…"
+          className="pl-9"
+        />
+      </div>
+
       <Card><CardContent className="p-0">
         <Table>
           <TableHeader><TableRow>
             <TableHead>Slip #</TableHead><TableHead>Project</TableHead><TableHead>PO</TableHead><TableHead>Vendor slip #</TableHead><TableHead>Status</TableHead><TableHead>Received</TableHead>
           </TableRow></TableHeader>
           <TableBody>
-            {list.data && list.data.length > 0 ? list.data.map((s) => (
+            {filtered.length > 0 ? filtered.map((s) => (
+
               <TableRow key={s.id}>
                 <TableCell><Link className="font-mono text-primary hover:underline" to="/packing-slips/$id" params={{ id: s.id }}>{s.slip_number}</Link></TableCell>
                 <TableCell className="font-mono text-xs">{s.projects?.mkj_number}</TableCell>
