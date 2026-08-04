@@ -167,6 +167,9 @@ function UserMenu() {
         </DropdownMenuLabel>
 
         <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => navigate({ to: "/account-settings" })}>
+          <Settings className="mr-2 h-4 w-4" /> Account settings
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={signOut}>
           <LogOut className="mr-2 h-4 w-4" /> Sign out
         </DropdownMenuItem>
