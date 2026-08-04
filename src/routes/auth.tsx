@@ -71,7 +71,7 @@ function AuthPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/40 px-4">
       <div className="w-full max-w-md">
-        <Link to="/" className="mb-8 flex items-center justify-center gap-3">
+        <Link to="/" className="mb-8 flex flex-col items-center justify-center gap-3">
           <div className="flex h-12 items-center justify-center rounded-lg bg-white px-3">
             <img src={mkjLogo.url} alt="MKJ Communications" className="h-9 w-auto object-contain" />
           </div>
