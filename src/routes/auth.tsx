@@ -48,6 +48,7 @@ function AuthPage() {
 
   async function signUp(e: React.FormEvent) {
     e.preventDefault();
+    if (!isPasswordValid(password)) return toast.error("Password does not meet the requirements.");
     setLoading(true);
     const { data, error } = await supabase.auth.signUp({
       email,
