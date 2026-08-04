@@ -15,6 +15,7 @@ import {
   Building2,
   Menu,
   LogOut,
+  Settings,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import mkjLogo from "@/assets/mkj-logo.jpg.asset.json";
