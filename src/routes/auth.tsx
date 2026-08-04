@@ -8,6 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Package } from "lucide-react";
+import { PasswordRequirements } from "@/components/password-requirements";
+import { PASSWORD_MIN_LENGTH, isPasswordValid } from "@/lib/password-policy";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
