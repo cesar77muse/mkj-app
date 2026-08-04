@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Package } from "lucide-react";
+import mkjLogo from "@/assets/mkj-logo.jpg.asset.json";
 import { PasswordRequirements } from "@/components/password-requirements";
 import { PASSWORD_MIN_LENGTH, isPasswordValid } from "@/lib/password-policy";
 
@@ -71,12 +71,13 @@ function AuthPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/40 px-4">
       <div className="w-full max-w-md">
-        <Link to="/" className="mb-8 flex items-center justify-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Package className="h-5 w-5" />
+        <Link to="/" className="mb-8 flex items-center justify-center gap-3">
+          <div className="flex h-12 items-center justify-center rounded-lg bg-white px-3">
+            <img src={mkjLogo.url} alt="MKJ Communications" className="h-9 w-auto object-contain" />
           </div>
           <span className="text-2xl font-semibold tracking-tight">MKJ Ops</span>
         </Link>
+
         <Card>
           <CardHeader>
             <CardTitle>Sign in</CardTitle>
