@@ -15,6 +15,7 @@ import {
   Building2,
   Menu,
   LogOut,
+  Settings,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import mkjLogo from "@/assets/mkj-logo.jpg.asset.json";
@@ -167,6 +168,9 @@ function UserMenu() {
         </DropdownMenuLabel>
 
         <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => navigate({ to: "/account-settings" })}>
+          <Settings className="mr-2 h-4 w-4" /> Account settings
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={signOut}>
           <LogOut className="mr-2 h-4 w-4" /> Sign out
         </DropdownMenuItem>

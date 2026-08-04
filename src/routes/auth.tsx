@@ -8,6 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Package } from "lucide-react";
+import { PasswordRequirements } from "@/components/password-requirements";
+import { PASSWORD_MIN_LENGTH, isPasswordValid } from "@/lib/password-policy";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
@@ -46,6 +48,7 @@ function AuthPage() {
 
   async function signUp(e: React.FormEvent) {
     e.preventDefault();
+    if (!isPasswordValid(password)) return toast.error("Password does not meet the requirements.");
     setLoading(true);
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -110,7 +113,8 @@ function AuthPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="pw-up">Password</Label>
-                    <Input id="pw-up" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} autoComplete="new-password" />
+                    <Input id="pw-up" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={PASSWORD_MIN_LENGTH} autoComplete="new-password" />
+                    <PasswordRequirements value={password} />
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>{loading ? "Creating…" : "Create account"}</Button>
                   <p className="text-xs text-muted-foreground">

@@ -19,6 +19,7 @@ import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authen
 import { Route as AuthenticatedInventoryRouteImport } from './routes/_authenticated/inventory'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedBorrowRequestsRouteImport } from './routes/_authenticated/borrow-requests'
+import { Route as AuthenticatedAccountSettingsRouteImport } from './routes/_authenticated/account-settings'
 import { Route as AuthenticatedShippingTicketsIndexRouteImport } from './routes/_authenticated/shipping-tickets.index'
 import { Route as AuthenticatedPurchaseOrdersIndexRouteImport } from './routes/_authenticated/purchase-orders.index'
 import { Route as AuthenticatedProjectsIndexRouteImport } from './routes/_authenticated/projects.index'
@@ -80,6 +81,12 @@ const AuthenticatedBorrowRequestsRoute =
   AuthenticatedBorrowRequestsRouteImport.update({
     id: '/borrow-requests',
     path: '/borrow-requests',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAccountSettingsRoute =
+  AuthenticatedAccountSettingsRouteImport.update({
+    id: '/account-settings',
+    path: '/account-settings',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedShippingTicketsIndexRoute =
@@ -152,6 +159,7 @@ const AuthenticatedPackingSlipsIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/account-settings': typeof AuthenticatedAccountSettingsRoute
   '/borrow-requests': typeof AuthenticatedBorrowRequestsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/inventory': typeof AuthenticatedInventoryRoute
@@ -174,6 +182,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/account-settings': typeof AuthenticatedAccountSettingsRoute
   '/borrow-requests': typeof AuthenticatedBorrowRequestsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/inventory': typeof AuthenticatedInventoryRoute
@@ -198,6 +207,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/account-settings': typeof AuthenticatedAccountSettingsRoute
   '/_authenticated/borrow-requests': typeof AuthenticatedBorrowRequestsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/inventory': typeof AuthenticatedInventoryRoute
@@ -222,6 +232,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/account-settings'
     | '/borrow-requests'
     | '/dashboard'
     | '/inventory'
@@ -244,6 +255,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/account-settings'
     | '/borrow-requests'
     | '/dashboard'
     | '/inventory'
@@ -267,6 +279,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/account-settings'
     | '/_authenticated/borrow-requests'
     | '/_authenticated/dashboard'
     | '/_authenticated/inventory'
@@ -365,6 +378,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBorrowRequestsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/account-settings': {
+      id: '/_authenticated/account-settings'
+      path: '/account-settings'
+      fullPath: '/account-settings'
+      preLoaderRoute: typeof AuthenticatedAccountSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/shipping-tickets/': {
       id: '/_authenticated/shipping-tickets/'
       path: '/shipping-tickets'
@@ -446,6 +466,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAccountSettingsRoute: typeof AuthenticatedAccountSettingsRoute
   AuthenticatedBorrowRequestsRoute: typeof AuthenticatedBorrowRequestsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedInventoryRoute: typeof AuthenticatedInventoryRoute
@@ -467,6 +488,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAccountSettingsRoute: AuthenticatedAccountSettingsRoute,
   AuthenticatedBorrowRequestsRoute: AuthenticatedBorrowRequestsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedInventoryRoute: AuthenticatedInventoryRoute,
