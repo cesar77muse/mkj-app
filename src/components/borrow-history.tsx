@@ -15,7 +15,7 @@ type Row = {
   products: { part_number: string; description: string } | null;
 };
 
-/** Borrow movements (in/out) for a project, so it's clear where stock went. */
+/** Borrow movements (out/in, plus their returns) for a project, so it's clear where stock went. */
 export function BorrowHistory({ projectId, title = "Borrow history" }: { projectId?: string; title?: string }) {
   const { data } = useQuery({
     queryKey: ["borrow-history", projectId ?? "all"],
@@ -23,7 +23,7 @@ export function BorrowHistory({ projectId, title = "Borrow history" }: { project
       let q = supabase
         .from("inventory_adjustments")
         .select("id, created_at, delta, source_type, reason, project_id, products:product_id(part_number, description)")
-        .in("source_type", ["borrow_in", "borrow_out"])
+        .in("source_type", ["borrow_in", "borrow_out", "borrow_return_in", "borrow_return_out"])
         .order("created_at", { ascending: false })
         .limit(50);
       if (projectId) q = q.eq("project_id", projectId);
@@ -46,14 +46,15 @@ export function BorrowHistory({ projectId, title = "Borrow history" }: { project
           </TableRow></TableHeader>
           <TableBody>
             {data && data.length > 0 ? data.map((r) => {
-              const out = r.source_type === "borrow_out";
+              const isReturn = r.source_type === "borrow_return_out" || r.source_type === "borrow_return_in";
+              const out = r.source_type === "borrow_out" || r.source_type === "borrow_return_out";
               return (
                 <TableRow key={r.id}>
                   <TableCell className="whitespace-nowrap text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString()}</TableCell>
                   <TableCell>
                     <Badge variant={out ? "destructive" : "default"} className="gap-1">
                       {out ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownLeft className="h-3 w-3" />}
-                      {out ? "Borrowed out" : "Borrowed in"}
+                      {isReturn ? (out ? "Returned out" : "Returned in") : (out ? "Borrowed out" : "Borrowed in")}
                     </Badge>
                   </TableCell>
                   <TableCell className="font-mono text-xs">{r.products?.part_number}</TableCell>
