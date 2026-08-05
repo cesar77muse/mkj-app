@@ -177,7 +177,7 @@ function BorrowPage() {
 
   const returnStock = useMutation({
     mutationFn: async ({ req, qty }: { req: Req; qty: number }) => {
-      const { error } = await supabase.rpc("return_borrowed_stock", {
+      const { error } = await supabase.rpc("return_borrowed_stock" as never, {
         _request_id: req.id,
         _qty: qty,
       } as never);
