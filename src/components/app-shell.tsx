@@ -105,7 +105,7 @@ function NotificationsBell() {
     if (!userId) return;
     const channel = supabase
       .channel(`notifications-${userId}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` }, () => {
+      .on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: `recipient_user_id=eq.${userId}` }, () => {
         qc.invalidateQueries({ queryKey: ["notifications"] });
       })
       .subscribe();
