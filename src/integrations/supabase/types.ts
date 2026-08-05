@@ -1095,11 +1095,7 @@ export type Database = {
         Returns: boolean
       }
       return_borrowed_stock: {
-        Args: {
-          _note?: string | null
-          _qty: number
-          _request_id: string
-        }
+        Args: { _note?: string; _qty: number; _request_id: string }
         Returns: undefined
       }
       reverse_shipping_ticket_inventory: {
@@ -1123,9 +1119,9 @@ export type Database = {
         | "partially_approved"
         | "denied"
         | "fulfilled"
-        | "partially_returned"
         | "returned"
         | "cancelled"
+        | "partially_returned"
       ledger_source:
         | "packing_slip"
         | "shipping_ticket"
@@ -1277,9 +1273,9 @@ export const Constants = {
         "partially_approved",
         "denied",
         "fulfilled",
-        "partially_returned",
         "returned",
         "cancelled",
+        "partially_returned",
       ],
       ledger_source: [
         "packing_slip",
