@@ -1103,6 +1103,13 @@ export type Database = {
         Args: { _ticket_id: string }
         Returns: undefined
       }
+      set_user_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: undefined
+      }
       ship_shipping_ticket_inventory: {
         Args: { _ticket_id: string }
         Returns: undefined

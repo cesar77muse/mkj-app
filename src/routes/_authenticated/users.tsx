@@ -15,6 +15,10 @@ import { Pencil } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/users")({
   head: () => ({ meta: [{ title: "Users & Roles — MKJ Ops" }] }),
@@ -77,10 +81,8 @@ function UsersPage() {
 
   const setRoleMut = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: AppRole }) => {
-      const { error: delErr } = await supabase.from("user_roles").delete().eq("user_id", userId);
-      if (delErr) throw delErr;
-      const { error: insErr } = await supabase.from("user_roles").insert({ user_id: userId, role });
-      if (insErr) throw insErr;
+      const { error } = await supabase.rpc("set_user_role" as never, { _user_id: userId, _role: role } as never);
+      if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Role updated");
@@ -88,6 +90,16 @@ function UsersPage() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const [demoteConfirm, setDemoteConfirm] = useState<{ userId: string; name: string; role: AppRole } | null>(null);
+
+  function handleRoleChange(userId: string, name: string, currentRole: AppRole | undefined, role: AppRole) {
+    if (currentRole === "admin" && role !== "admin") {
+      setDemoteConfirm({ userId, name, role });
+    } else {
+      setRoleMut.mutate({ userId, role });
+    }
+  }
 
   const renameMut = useMutation({
     mutationFn: async ({ userId, fullName }: { userId: string; fullName: string }) => {
@@ -159,7 +171,7 @@ function UsersPage() {
                   <TableCell>
                     <div className="flex items-center gap-2">
                       {currentRole ? <Badge>{ROLE_LABELS[currentRole]}</Badge> : <Badge variant="outline">None</Badge>}
-                      <Select value={currentRole ?? ""} onValueChange={(v) => setRoleMut.mutate({ userId: u.id, role: v as AppRole })}>
+                      <Select value={currentRole ?? ""} onValueChange={(v) => handleRoleChange(u.id, u.full_name ?? u.email ?? "this user", currentRole, v as AppRole)}>
                         <SelectTrigger className="h-8 w-40"><SelectValue placeholder="Set role" /></SelectTrigger>
                         <SelectContent>
                           {ALL_ROLES.map((r) => <SelectItem key={r} value={r}>{ROLE_LABELS[r]}</SelectItem>)}
@@ -210,6 +222,27 @@ function UsersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!demoteConfirm} onOpenChange={(o) => !o && setDemoteConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove admin from {demoteConfirm?.name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This changes their role to {demoteConfirm ? ROLE_LABELS[demoteConfirm.role] : ""}. If they're the only
+              admin, this will be rejected — the system never allows the last admin to be removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={setRoleMut.isPending}
+              onClick={() => demoteConfirm && setRoleMut.mutate({ userId: demoteConfirm.userId, role: demoteConfirm.role }, { onSuccess: () => setDemoteConfirm(null) })}
+            >
+              {setRoleMut.isPending ? "Saving…" : "Confirm"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
