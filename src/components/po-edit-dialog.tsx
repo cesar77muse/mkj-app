@@ -70,6 +70,8 @@ function POEditForm({ poId, onDone }: { poId: string; onDone: () => void }) {
   const [billTo, setBillTo] = useState("");
   const [shipTo, setShipTo] = useState("");
   const [description, setDescription] = useState("");
+  const [additionalFreight, setAdditionalFreight] = useState(0);
+  const [termsConditions, setTermsConditions] = useState("");
   const [lines, setLines] = useState<Line[]>([]);
   const [removed, setRemoved] = useState<string[]>([]);
 
@@ -83,6 +85,8 @@ function POEditForm({ poId, onDone }: { poId: string; onDone: () => void }) {
     setBillTo(po.data.bill_to ?? "");
     setShipTo(po.data.ship_to ?? "");
     setDescription(po.data.description ?? "");
+    setAdditionalFreight(Number(po.data.additional_freight ?? 0));
+    setTermsConditions(po.data.terms_conditions ?? "");
   }, [po.data]);
 
   useEffect(() => {
@@ -93,7 +97,7 @@ function POEditForm({ poId, onDone }: { poId: string; onDone: () => void }) {
     })));
   }, [itemsQ.data]);
 
-  const total = lines.reduce((s, l) => s + Number(l.qty || 0) * Number(l.unit_cost || 0), 0);
+  const total = lines.reduce((s, l) => s + Number(l.qty || 0) * Number(l.unit_cost || 0), 0) + Number(additionalFreight || 0);
 
   const save = useMutation({
     mutationFn: async () => {
@@ -107,6 +111,8 @@ function POEditForm({ poId, onDone }: { poId: string; onDone: () => void }) {
         bill_to: billTo || null,
         ship_to: shipTo || null,
         description: description || null,
+        additional_freight: additionalFreight || 0,
+        terms_conditions: termsConditions || null,
       }).eq("id", poId);
       if (upErr) throw upErr;
 
@@ -175,9 +181,11 @@ function POEditForm({ poId, onDone }: { poId: string; onDone: () => void }) {
         <div><Label>Delivery date</Label><Input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} /></div>
         <div><Label>Ship via</Label><Input value={shipVia} onChange={(e) => setShipVia(e.target.value)} /></div>
         <div><Label>Payment terms</Label><Input value={paymentTerms} onChange={(e) => setPaymentTerms(e.target.value)} /></div>
+        <div><Label>Additional freight</Label><Input type="number" step="0.01" min={0} value={additionalFreight} onChange={(e) => setAdditionalFreight(Math.max(0, Number(e.target.value) || 0))} /></div>
         <div><Label>Bill to</Label><Textarea rows={3} value={billTo} onChange={(e) => setBillTo(e.target.value)} /></div>
         <div><Label>Ship to</Label><Textarea rows={3} value={shipTo} onChange={(e) => setShipTo(e.target.value)} /></div>
         <div className="md:col-span-2"><Label>Description / notes</Label><Textarea rows={2} value={description} onChange={(e) => setDescription(e.target.value)} /></div>
+        <div className="md:col-span-2"><Label>Terms & conditions</Label><Textarea rows={2} value={termsConditions} onChange={(e) => setTermsConditions(e.target.value)} /></div>
       </div>
 
       <div>

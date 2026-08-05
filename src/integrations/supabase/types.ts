@@ -982,6 +982,7 @@ export type Database = {
       }
       create_purchase_order: {
         Args: {
+          _additional_freight?: number
           _assignee?: string
           _bill_to: string
           _delivery_date: string
@@ -991,6 +992,7 @@ export type Database = {
           _ship_to: string
           _ship_via: string
           _supplier_id: string
+          _terms_conditions?: string
         }
         Returns: {
           additional_freight: number | null

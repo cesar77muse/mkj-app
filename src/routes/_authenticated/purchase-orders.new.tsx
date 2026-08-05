@@ -38,9 +38,11 @@ function NewPO() {
   const [shipVia, setShipVia] = useState("");
   const [paymentTerms, setPaymentTerms] = useState("");
   const [description, setDescription] = useState("");
+  const [additionalFreight, setAdditionalFreight] = useState(0);
+  const [termsConditions, setTermsConditions] = useState("");
   const [lines, setLines] = useState<Line[]>([{ line_no: 1, budget_code: "", description: "", qty: 1, unit: "ea", unit_cost: 0 }]);
 
-  const total = lines.reduce((sum, l) => sum + Number(l.qty || 0) * Number(l.unit_cost || 0), 0);
+  const total = lines.reduce((sum, l) => sum + Number(l.qty || 0) * Number(l.unit_cost || 0), 0) + Number(additionalFreight || 0);
 
   const create = useMutation({
     mutationFn: async () => {
@@ -66,6 +68,8 @@ function NewPO() {
         _payment_terms: paymentTerms || null,
         _description: description || null,
         _assignee: assigneeId || null,
+        _additional_freight: additionalFreight || 0,
+        _terms_conditions: termsConditions || null,
       } as never);
       if (insErr) throw insErr;
       const items = lines.filter((l) => l.description.trim()).map((l) => ({
@@ -102,6 +106,8 @@ function NewPO() {
         shipVia,
         paymentTerms,
         description,
+        additionalFreight,
+        termsConditions,
         items: lines.filter((l) => l.description.trim()),
       });
     },
@@ -152,7 +158,9 @@ function NewPO() {
           <div><Label>Delivery date</Label><Input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} /></div>
           <div><Label>Ship via</Label><Input value={shipVia} onChange={(e) => setShipVia(e.target.value)} /></div>
           <div><Label>Payment terms</Label><Input value={paymentTerms} onChange={(e) => setPaymentTerms(e.target.value)} /></div>
+          <div><Label>Additional freight</Label><Input type="number" step="0.01" min={0} value={additionalFreight} onChange={(e) => setAdditionalFreight(Math.max(0, Number(e.target.value) || 0))} /></div>
           <div><Label>Description / notes</Label><Textarea rows={2} value={description} onChange={(e) => setDescription(e.target.value)} /></div>
+          <div><Label>Terms & conditions</Label><Textarea rows={2} value={termsConditions} onChange={(e) => setTermsConditions(e.target.value)} /></div>
         </div>
 
         <div>

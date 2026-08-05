@@ -22,6 +22,7 @@ export type DraftPoPdfInput = {
   paymentTerms?: string | null;
   description?: string | null;
   additionalFreight?: number;
+  termsConditions?: string | null;
   items: DraftPoLine[];
 };
 

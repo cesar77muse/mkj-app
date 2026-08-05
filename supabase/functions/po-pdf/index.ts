@@ -164,6 +164,7 @@ interface DraftPayload {
   paymentTerms?: string | null;
   description?: string | null;
   additionalFreight?: number;
+  termsConditions?: string | null;
   items: DraftLine[];
 }
 
@@ -199,7 +200,7 @@ async function buildPdfDataFromDraft(
     shipVia: draft.shipVia ?? null,
     deliveryDate: draft.deliveryDate ?? null,
     description: draft.description ?? null,
-    termsConditions: null,
+    termsConditions: draft.termsConditions ?? null,
     additionalFreight: Number(draft.additionalFreight ?? 0),
     items: toLineItems(
       (draft.items ?? []).map((l) => ({
