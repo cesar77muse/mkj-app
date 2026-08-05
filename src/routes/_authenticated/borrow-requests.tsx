@@ -298,7 +298,12 @@ function BorrowPage() {
                 </TableCell>
                 <TableCell className="font-mono text-xs">{r.source?.mkj_number}</TableCell>
                 <TableCell className="font-mono text-xs">{r.target?.mkj_number}</TableCell>
-                <TableCell className="text-right">{Number(r.qty_requested)}{r.qty_approved != null ? ` (approved ${Number(r.qty_approved)})` : ""}</TableCell>
+                <TableCell className="text-right">
+                  {Number(r.qty_requested)}{r.qty_approved != null ? ` (approved ${Number(r.qty_approved)})` : ""}
+                  {Number(r.qty_returned ?? 0) > 0 ? (
+                    <div className="text-xs text-muted-foreground">{Number(r.qty_returned ?? 0)} of {Number(r.qty_approved ?? 0)} returned</div>
+                  ) : null}
+                </TableCell>
                 <TableCell>{r.needed_by ?? "—"}</TableCell>
                 <TableCell><Badge variant={statusVariant(r.status)}>{STATUS_LABEL[r.status] ?? r.status}</Badge></TableCell>
                 <TableCell className="space-x-1 text-right">
@@ -307,6 +312,9 @@ function BorrowPage() {
                       <Button size="sm" onClick={() => { setApproving(r); setApproveQty(Number(r.qty_requested)); setNote(""); }}>Approve</Button>
                       <Button size="sm" variant="outline" onClick={() => decide.mutate({ req: r, status: "denied" })}>Deny</Button>
                     </>
+                  ) : null}
+                  {canReturn(r) ? (
+                    <Button size="sm" variant="outline" onClick={() => openReturn(r)}>Return</Button>
                   ) : null}
                   {canCancel(r) ? (
                     <Button size="sm" variant="ghost" onClick={() => cancel.mutate(r.id)}>Cancel</Button>
