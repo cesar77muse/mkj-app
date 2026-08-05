@@ -178,7 +178,7 @@ async function buildPdfDataFromDraft(
 
   let createdByName: string | null = null;
   if (user) {
-    const { data: profile } = await callerClient.from("profiles").select("full_name").eq("id", user.id).maybeSingle();
+    const { data: profile } = await callerClient.from("user_directory").select("full_name").eq("id", user.id).maybeSingle();
     createdByName = profile?.full_name ?? null;
   }
 
@@ -262,7 +262,7 @@ Deno.serve(async (req) => {
     const userIds = [po.created_by, po.assignee].filter((id): id is string => Boolean(id));
     let profilesById: Record<string, string> = {};
     if (userIds.length > 0) {
-      const { data: profiles } = await callerClient.from("profiles").select("id, full_name").in("id", userIds);
+      const { data: profiles } = await callerClient.from("user_directory").select("id, full_name").in("id", userIds);
       profilesById = Object.fromEntries((profiles ?? []).map((p) => [p.id, p.full_name ?? ""]));
     }
 
