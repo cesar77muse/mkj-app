@@ -338,7 +338,7 @@ line to different products.
 
 ### F-22 Over-receipt is silently allowed
 
-> **Status (F-22):** ❌ **OPEN** — no validation was added. `qty_received` can still exceed the outstanding quantity, and the PO still lands on `received`.
+> **Status (F-22):** ✅ **Accepted by design, no fix needed** — reviewed and deliberately left as warn-only. A vendor can legitimately ship more than was ordered, so blocking (or requiring confirmation) would reject a valid receipt. The "over" hint stays informational; `qty_received` is not capped, and the PO can still land on `received` with an over-received line. Do not re-flag as open — see project discussion 2026-08-05.
 
 `packing-slips.new.tsx:290-313` shows an "over" hint but nothing prevents
 receiving more than was ordered, and the PO still lands on `received`.
