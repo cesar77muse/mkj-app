@@ -18,6 +18,7 @@ import { Route as AuthenticatedProductsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedInventoryRouteImport } from './routes/_authenticated/inventory'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedBulkUploadRouteImport } from './routes/_authenticated/bulk-upload'
 import { Route as AuthenticatedBorrowRequestsRouteImport } from './routes/_authenticated/borrow-requests'
 import { Route as AuthenticatedAccountSettingsRouteImport } from './routes/_authenticated/account-settings'
 import { Route as AuthenticatedShippingTicketsIndexRouteImport } from './routes/_authenticated/shipping-tickets.index'
@@ -75,6 +76,11 @@ const AuthenticatedInventoryRoute = AuthenticatedInventoryRouteImport.update({
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedBulkUploadRoute = AuthenticatedBulkUploadRouteImport.update({
+  id: '/bulk-upload',
+  path: '/bulk-upload',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedBorrowRequestsRoute =
@@ -161,6 +167,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/account-settings': typeof AuthenticatedAccountSettingsRoute
   '/borrow-requests': typeof AuthenticatedBorrowRequestsRoute
+  '/bulk-upload': typeof AuthenticatedBulkUploadRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/inventory': typeof AuthenticatedInventoryRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
@@ -184,6 +191,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/account-settings': typeof AuthenticatedAccountSettingsRoute
   '/borrow-requests': typeof AuthenticatedBorrowRequestsRoute
+  '/bulk-upload': typeof AuthenticatedBulkUploadRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/inventory': typeof AuthenticatedInventoryRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
@@ -209,6 +217,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/account-settings': typeof AuthenticatedAccountSettingsRoute
   '/_authenticated/borrow-requests': typeof AuthenticatedBorrowRequestsRoute
+  '/_authenticated/bulk-upload': typeof AuthenticatedBulkUploadRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/inventory': typeof AuthenticatedInventoryRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
@@ -234,6 +243,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/account-settings'
     | '/borrow-requests'
+    | '/bulk-upload'
     | '/dashboard'
     | '/inventory'
     | '/notifications'
@@ -257,6 +267,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/account-settings'
     | '/borrow-requests'
+    | '/bulk-upload'
     | '/dashboard'
     | '/inventory'
     | '/notifications'
@@ -281,6 +292,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/account-settings'
     | '/_authenticated/borrow-requests'
+    | '/_authenticated/bulk-upload'
     | '/_authenticated/dashboard'
     | '/_authenticated/inventory'
     | '/_authenticated/notifications'
@@ -369,6 +381,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/bulk-upload': {
+      id: '/_authenticated/bulk-upload'
+      path: '/bulk-upload'
+      fullPath: '/bulk-upload'
+      preLoaderRoute: typeof AuthenticatedBulkUploadRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/borrow-requests': {
@@ -468,6 +487,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAccountSettingsRoute: typeof AuthenticatedAccountSettingsRoute
   AuthenticatedBorrowRequestsRoute: typeof AuthenticatedBorrowRequestsRoute
+  AuthenticatedBulkUploadRoute: typeof AuthenticatedBulkUploadRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedInventoryRoute: typeof AuthenticatedInventoryRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
@@ -490,6 +510,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAccountSettingsRoute: AuthenticatedAccountSettingsRoute,
   AuthenticatedBorrowRequestsRoute: AuthenticatedBorrowRequestsRoute,
+  AuthenticatedBulkUploadRoute: AuthenticatedBulkUploadRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedInventoryRoute: AuthenticatedInventoryRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
