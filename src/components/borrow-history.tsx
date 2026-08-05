@@ -15,26 +15,34 @@ type Row = {
   products: { part_number: string; description: string } | null;
 };
 
+const BORROW_HISTORY_LIMIT = 50;
+
 /** Borrow movements (out/in, plus their returns) for a project, so it's clear where stock went. */
 export function BorrowHistory({ projectId, title = "Borrow history" }: { projectId?: string; title?: string }) {
   const { data } = useQuery({
     queryKey: ["borrow-history", projectId ?? "all"],
     queryFn: async () => {
+      // Fetch one past the cap so a full page can be told apart from a
+      // truncated one, instead of silently dropping anything past the limit.
       let q = supabase
         .from("inventory_adjustments")
         .select("id, created_at, delta, source_type, reason, project_id, products:product_id(part_number, description)")
         .in("source_type", ["borrow_in", "borrow_out", "borrow_return_in", "borrow_return_out"])
         .order("created_at", { ascending: false })
-        .limit(50);
+        .limit(BORROW_HISTORY_LIMIT + 1);
       if (projectId) q = q.eq("project_id", projectId);
       const { data } = await q;
-      return (data ?? []) as unknown as Row[];
+      const rows = (data ?? []) as unknown as Row[];
+      return { rows: rows.slice(0, BORROW_HISTORY_LIMIT), truncated: rows.length > BORROW_HISTORY_LIMIT };
     },
   });
 
   return (
     <Card>
       <CardHeader><CardTitle className="text-base">{title}</CardTitle></CardHeader>
+      {data?.truncated ? (
+        <p className="px-6 text-xs text-muted-foreground">Showing the most recent {BORROW_HISTORY_LIMIT} movements.</p>
+      ) : null}
       <CardContent className="p-0">
         <Table>
           <TableHeader><TableRow>
@@ -45,7 +53,7 @@ export function BorrowHistory({ projectId, title = "Borrow history" }: { project
             <TableHead>Detail</TableHead>
           </TableRow></TableHeader>
           <TableBody>
-            {data && data.length > 0 ? data.map((r) => {
+            {data && data.rows.length > 0 ? data.rows.map((r) => {
               const isReturn = r.source_type === "borrow_return_out" || r.source_type === "borrow_return_in";
               const out = r.source_type === "borrow_out" || r.source_type === "borrow_return_out";
               return (

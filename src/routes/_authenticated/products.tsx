@@ -10,9 +10,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { PageHeader } from "@/components/page-header";
 import { toast } from "sonner";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Pencil } from "lucide-react";
 import { useRoles } from "@/hooks/use-session";
 import { isWarehouseOrAdmin } from "@/lib/roles";
+
+type Product = { id: string; part_number: string; description: string; unit: string; reorder_point: number };
 
 export const Route = createFileRoute("/_authenticated/products")({
   head: () => ({ meta: [{ title: "Products — MKJ Ops" }] }),
@@ -68,6 +70,37 @@ function ProductsPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const [editing, setEditing] = useState<Product | null>(null);
+  const [ePn, setEPn] = useState("");
+  const [eDesc, setEDesc] = useState("");
+  const [eUnit, setEUnit] = useState("ea");
+  const [eRp, setERp] = useState<number>(0);
+
+  function openEdit(p: Product) {
+    setEditing(p);
+    setEPn(p.part_number);
+    setEDesc(p.description);
+    setEUnit(p.unit);
+    setERp(p.reorder_point);
+  }
+
+  const editMut = useMutation({
+    mutationFn: async () => {
+      if (!editing) return;
+      const { error } = await supabase
+        .from("products")
+        .update({ part_number: ePn.trim(), description: eDesc.trim(), unit: eUnit.trim() || "ea", reorder_point: eRp })
+        .eq("id", editing.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Product updated");
+      setEditing(null);
+      qc.invalidateQueries({ queryKey: ["products"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   return (
     <div className="mx-auto max-w-7xl">
       <PageHeader
@@ -108,7 +141,7 @@ function ProductsPage() {
       <Card><CardContent className="p-0">
         <Table>
           <TableHeader><TableRow>
-            <TableHead>Part #</TableHead><TableHead>Description</TableHead><TableHead>Unit</TableHead><TableHead className="text-right">Reorder point</TableHead>
+            <TableHead>Part #</TableHead><TableHead>Description</TableHead><TableHead>Unit</TableHead><TableHead className="text-right">Reorder point</TableHead><TableHead />
           </TableRow></TableHeader>
           <TableBody>
             {filtered.length > 0 ? filtered.map((p) => (
@@ -117,11 +150,36 @@ function ProductsPage() {
                 <TableCell>{p.description}</TableCell>
                 <TableCell>{p.unit}</TableCell>
                 <TableCell className="text-right">{p.reorder_point}</TableCell>
+                <TableCell className="text-right">
+                  {canWrite ? (
+                    <Button size="icon" variant="ghost" aria-label="Edit product" onClick={() => openEdit(p)}>
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                  ) : null}
+                </TableCell>
               </TableRow>
-            )) : <TableRow><TableCell colSpan={4} className="py-6 text-center text-sm text-muted-foreground">{term ? "No matches." : "No products yet."}</TableCell></TableRow>}
+            )) : <TableRow><TableCell colSpan={5} className="py-6 text-center text-sm text-muted-foreground">{term ? "No matches." : "No products yet."}</TableCell></TableRow>}
           </TableBody>
         </Table>
       </CardContent></Card>
+
+      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Edit product</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div><Label htmlFor="e-pn">Part number</Label><Input id="e-pn" value={ePn} onChange={(e) => setEPn(e.target.value)} /></div>
+            <div><Label htmlFor="e-pdesc">Description</Label><Input id="e-pdesc" value={eDesc} onChange={(e) => setEDesc(e.target.value)} /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label htmlFor="e-unit">Unit</Label><Input id="e-unit" value={eUnit} onChange={(e) => setEUnit(e.target.value)} /></div>
+              <div><Label htmlFor="e-rp">Reorder point</Label><Input id="e-rp" type="number" min={0} step={1} inputMode="numeric" value={eRp} onChange={(e) => setERp(Math.max(0, Math.trunc(Number(e.target.value) || 0)))} /></div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditing(null)}>Cancel</Button>
+            <Button onClick={() => editMut.mutate()} disabled={!ePn.trim() || !eDesc.trim() || editMut.isPending}>{editMut.isPending ? "Saving…" : "Save"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

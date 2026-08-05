@@ -934,6 +934,13 @@ export type Database = {
         }
         Relationships: []
       }
+      v_project_last_updated: {
+        Row: {
+          last_updated: string | null
+          project_id: string | null
+        }
+        Relationships: []
+      }
       v_project_inventory: {
         Row: {
           on_hand: number | null
@@ -1026,6 +1033,7 @@ export type Database = {
           _bill_to: string
           _delivery_date: string
           _description: string
+          _new_supplier_name?: string
           _payment_terms: string
           _project_id: string
           _ship_to: string

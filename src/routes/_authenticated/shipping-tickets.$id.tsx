@@ -13,6 +13,7 @@ import { ShippingTicketEditDialog } from "@/components/shipping-ticket-edit-dial
 import { ShippingTicketDeleteButton } from "@/components/shipping-ticket-delete-button";
 import { UploadSignedTicketButton } from "@/components/upload-signed-ticket-button";
 import { ShippingTicketStatusBadge } from "@/components/shipping-ticket-status-badge";
+import { todayInBusinessTimezone } from "@/lib/date";
 
 
 export const Route = createFileRoute("/_authenticated/shipping-tickets/$id")({
@@ -51,7 +52,7 @@ function TicketView() {
 
   const deliveredMut = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("shipping_tickets").update({ status: "delivered", received_date: new Date().toISOString().slice(0, 10) }).eq("id", id);
+      const { error } = await supabase.from("shipping_tickets").update({ status: "delivered", received_date: todayInBusinessTimezone() }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -67,7 +68,8 @@ function TicketView() {
 
 
 
-  if (!ticket.data) return <p className="text-sm text-muted-foreground">Loading…</p>;
+  if (ticket.isLoading) return <p className="text-sm text-muted-foreground">Loading…</p>;
+  if (!ticket.data) return <p className="text-sm text-muted-foreground">Not found.</p>;
   const t = ticket.data;
 
   return (

@@ -1,13 +1,18 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+import { Paperclip, Upload } from "lucide-react";
 import { POStatusBadge } from "@/components/po-status-badge";
 import { PackingSlipEditDialog } from "@/components/packing-slip-edit-dialog";
 import { PackingSlipDeleteButton } from "@/components/packing-slip-delete-button";
+import { getPackingSlipAttachmentUrl, uploadPackingSlipAttachment } from "@/lib/packing-slip-attachments";
 
 export const Route = createFileRoute("/_authenticated/packing-slips/$id")({
   head: () => ({ meta: [{ title: "Packing Slip — MKJ Ops" }] }),
@@ -17,6 +22,7 @@ export const Route = createFileRoute("/_authenticated/packing-slips/$id")({
 function SlipView() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const slip = useQuery({
     queryKey: ["ps", id],
     queryFn: async () => (await supabase.from("packing_slips").select("*, projects:project_id(mkj_number, name), purchase_orders:po_id(po_number)").eq("id", id).maybeSingle()).data,
@@ -26,7 +32,23 @@ function SlipView() {
     queryFn: async () => (await supabase.from("packing_slip_items").select("*, products:product_id(part_number)").eq("slip_id", id)).data ?? [],
   });
 
-  if (!slip.data) return <p className="text-sm text-muted-foreground">Loading…</p>;
+  const viewAttachmentMut = useMutation({
+    mutationFn: async (path: string) => getPackingSlipAttachmentUrl(path),
+    onSuccess: (url) => window.open(url, "_blank"),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const uploadAttachmentMut = useMutation({
+    mutationFn: (file: File) => uploadPackingSlipAttachment(id, file),
+    onSuccess: () => {
+      toast.success("Attachment uploaded");
+      qc.invalidateQueries({ queryKey: ["ps", id] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  if (slip.isLoading) return <p className="text-sm text-muted-foreground">Loading…</p>;
+  if (!slip.data) return <p className="text-sm text-muted-foreground">Not found.</p>;
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -66,6 +88,34 @@ function SlipView() {
           <div>Vendor slip #: {slip.data.vendor_slip_number ?? "—"}</div>
         </div>
         {slip.data.notes ? <div className="mt-3 whitespace-pre-wrap text-muted-foreground">{slip.data.notes}</div> : null}
+        <div className="mt-3 flex items-center gap-2">
+          {slip.data.attachment_url ? (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={viewAttachmentMut.isPending}
+              onClick={() => viewAttachmentMut.mutate(slip.data!.attachment_url!)}
+            >
+              <Paperclip className="mr-1.5 h-4 w-4" />{viewAttachmentMut.isPending ? "Opening…" : "View vendor slip scan"}
+            </Button>
+          ) : (
+            <label className="inline-flex cursor-pointer items-center gap-1.5 text-sm text-primary hover:underline">
+              <Upload className="h-4 w-4" />
+              {uploadAttachmentMut.isPending ? "Uploading…" : "Attach vendor slip scan"}
+              <Input
+                type="file"
+                accept="application/pdf,image/*"
+                className="hidden"
+                disabled={uploadAttachmentMut.isPending}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) uploadAttachmentMut.mutate(file);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+          )}
+        </div>
       </CardContent></Card>
 
 

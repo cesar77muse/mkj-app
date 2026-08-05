@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/page-header";
 import { useRoles } from "@/hooks/use-session";
 import { ROLE_LABELS, highestRole } from "@/lib/roles";
+import { daysAgoInBusinessTimezone } from "@/lib/date";
 import { Badge } from "@/components/ui/badge";
 import { FolderKanban, ClipboardList, Truck, Package, ArrowLeftRight } from "lucide-react";
 
@@ -42,7 +43,7 @@ function Dashboard() {
         supabase.from("projects").select("*", { count: "exact", head: true }).eq("status", "active"),
         supabase.from("purchase_orders").select("*", { count: "exact", head: true }).in("status", ["draft", "approved", "executed", "partially_received"]),
         supabase.from("shipping_tickets").select("*", { count: "exact", head: true }).in("status", ["draft", "ready"]),
-        supabase.from("packing_slips").select("*", { count: "exact", head: true }).gte("received_date", new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10)),
+        supabase.from("packing_slips").select("*", { count: "exact", head: true }).gte("received_date", daysAgoInBusinessTimezone(7)),
         supabase.from("borrow_requests").select("*", { count: "exact", head: true }).eq("status", "pending"),
       ]);
       return {

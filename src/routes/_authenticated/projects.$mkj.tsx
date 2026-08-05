@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/page-header";
@@ -34,7 +34,6 @@ function ProjectDetail() {
     queryFn: async () => {
       const { data, error } = await supabase.from("projects").select("*").eq("mkj_number", mkj).maybeSingle();
       if (error) throw error;
-      if (!data) throw notFound();
       return data;
     },
   });

@@ -48,19 +48,14 @@ function NewPO() {
     mutationFn: async () => {
       const project = projects.data?.find((p) => p.id === projectId);
       if (!project) throw new Error("Choose a project");
-      let resolvedSupplierId: string | null = supplierId === "__other__" ? null : supplierId || null;
-      if (supplierId === "__other__") {
-        const name = otherSupplier.trim();
-        if (!name) throw new Error("Enter the supplier name");
-        const { data: newSup, error: supErr } = await supabase.from("suppliers").insert({ name }).select("id").single();
-        if (supErr) throw supErr;
-        resolvedSupplierId = newSup.id;
-      }
-      // create_purchase_order mints the per-project MKJ<project>EX<seq> number
-      // and inserts the PO row atomically (see migration for details).
+      if (supplierId === "__other__" && !otherSupplier.trim()) throw new Error("Enter the supplier name");
+      // create_purchase_order mints the per-project MKJ<project>EX<seq> number,
+      // creates the "Other…" supplier if any, and inserts the PO row all in
+      // one atomic call — a failure partway through leaves nothing behind
+      // (see migration for details).
       const { data: poRow, error: insErr } = await supabase.rpc("create_purchase_order", {
         _project_id: projectId,
-        _supplier_id: resolvedSupplierId,
+        _supplier_id: supplierId === "__other__" ? null : supplierId || null,
         _bill_to: billTo || null,
         _ship_to: shipTo || null,
         _delivery_date: deliveryDate || null,
@@ -70,6 +65,7 @@ function NewPO() {
         _assignee: assigneeId || null,
         _additional_freight: additionalFreight || 0,
         _terms_conditions: termsConditions || null,
+        _new_supplier_name: supplierId === "__other__" ? otherSupplier.trim() : null,
       } as never);
       if (insErr) throw insErr;
       const items = lines.filter((l) => l.description.trim()).map((l) => ({

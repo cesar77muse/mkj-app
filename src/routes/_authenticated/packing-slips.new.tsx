@@ -15,6 +15,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { refreshPoStatus, resolveProductId, syncSlipInventory } from "@/lib/receiving";
+import { todayInBusinessTimezone } from "@/lib/date";
+import { uploadPackingSlipAttachment } from "@/lib/packing-slip-attachments";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -43,15 +45,16 @@ function NewSlip() {
   const [projectId, setProjectId] = useState<string>("");
   const [poId, setPoId] = useState<string>(search.po ?? "");
   const [poOpen, setPoOpen] = useState(false);
-  const [receivedDate, setReceivedDate] = useState(new Date().toISOString().slice(0, 10));
+  const [receivedDate, setReceivedDate] = useState(todayInBusinessTimezone());
   const [carrier, setCarrier] = useState("");
   const [vendorSlip, setVendorSlip] = useState("");
   const [notes, setNotes] = useState("");
+  const [attachment, setAttachment] = useState<File | null>(null);
   const [lines, setLines] = useState<Line[]>([]);
 
   const projects = useQuery({
     queryKey: ["projects-for-slip"],
-    queryFn: async () => (await supabase.from("projects").select("id, mkj_number, name").order("mkj_number")).data ?? [],
+    queryFn: async () => (await supabase.from("projects").select("id, mkj_number, name").eq("status", "active").order("mkj_number")).data ?? [],
   });
 
   // Resolve project when arriving via ?po=
@@ -185,6 +188,8 @@ function NewSlip() {
         userId: user.user?.id ?? null,
       });
 
+      if (attachment) await uploadPackingSlipAttachment(slip!.id, attachment);
+
       await refreshPoStatus(poDetail.data.po.id);
       return slip!.id as string;
     },
@@ -256,6 +261,11 @@ function NewSlip() {
           <div><Label>Carrier</Label><Input value={carrier} onChange={(e) => setCarrier(e.target.value)} /></div>
           <div><Label>Vendor's slip #</Label><Input value={vendorSlip} onChange={(e) => setVendorSlip(e.target.value)} /></div>
           <div className="md:col-span-2"><Label>Notes</Label><Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
+          <div className="md:col-span-2">
+            <Label htmlFor="ps-attachment">Vendor slip scan (optional)</Label>
+            <Input id="ps-attachment" type="file" accept="application/pdf,image/*" onChange={(e) => setAttachment(e.target.files?.[0] ?? null)} />
+            {attachment ? <p className="mt-1 text-xs text-muted-foreground">{attachment.name}</p> : null}
+          </div>
         </div>
 
         <div>

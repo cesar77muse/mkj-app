@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "sonner";
 import { FileText, Plus, Trash } from "lucide-react";
 import { previewDraftShippingTicketPdf } from "@/lib/shipping-ticket-pdf";
+import { todayInBusinessTimezone } from "@/lib/date";
 
 export const Route = createFileRoute("/_authenticated/shipping-tickets/new")({
   head: () => ({ meta: [{ title: "New Shipping Ticket — MKJ Ops" }] }),
@@ -43,7 +44,7 @@ function NewTicket() {
     },
   });
 
-  const [shipDate, setShipDate] = useState(new Date().toISOString().slice(0, 10));
+  const [shipDate, setShipDate] = useState(todayInBusinessTimezone());
   const [deliverTo, setDeliverTo] = useState("");
   const [address, setAddress] = useState("");
   const [contact, setContact] = useState("");

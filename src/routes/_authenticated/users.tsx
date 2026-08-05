@@ -145,7 +145,6 @@ function UsersPage() {
               const currentRole = rs[0];
               const isManager = currentRole === "manager";
               const isEngineer = currentRole === "engineer";
-              const table = isManager ? "project_managers" : isEngineer ? "project_engineers" : null;
               const assigned = new Set(
                 isManager ? users.data.managerProjects.get(u.id) ?? []
                 : isEngineer ? users.data.engineerProjects.get(u.id) ?? []
@@ -180,11 +179,16 @@ function UsersPage() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    {table ? (
+                    {isManager ? (
+                      <div className="text-xs text-muted-foreground">
+                        {users.data.projects.filter((p) => assigned.has(p.id)).map((p) => p.mkj_number).join(", ") || "No projects yet"}
+                        <div>Set via each project's edit dialog — a project has one manager.</div>
+                      </div>
+                    ) : isEngineer ? (
                       <ProjectMultiSelect
                         projects={users.data.projects}
                         selected={assigned}
-                        onToggle={(projectId, on) => toggleAssignmentMut.mutate({ userId: u.id, projectId, table, on })}
+                        onToggle={(projectId, on) => toggleAssignmentMut.mutate({ userId: u.id, projectId, table: "project_engineers", on })}
                       />
                     ) : (
                       <span className="text-xs text-muted-foreground">Admins & Warehouse Managers see every project.</span>

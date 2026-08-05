@@ -28,9 +28,9 @@ const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const PDF_BUCKET = "purchase-order-pdfs";
 const ASSETS_BUCKET = "app-assets";
 const LOGO_PATH = "logo/mkj-logo.jpg";
-const SIGNED_URL_TTL_SECONDS = 120;
+const SIGNED_URL_TTL_SECONDS = 3600;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const EXECUTED_STATUSES = new Set(["executed", "partially_received", "received", "closed"]);
+const EXECUTED_STATUSES = new Set(["executed", "partially_received", "received"]);
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

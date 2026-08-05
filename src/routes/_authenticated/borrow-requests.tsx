@@ -392,8 +392,8 @@ function BorrowPage() {
               </div>
               <div>
                 <Label>Approved quantity</Label>
-                <Input type="number" min={1} step={1} inputMode="numeric" value={approveQty}
-                  onChange={(e) => setApproveQty(Math.max(1, Math.trunc(Number(e.target.value) || 1)))} />
+                <Input type="number" min={1} max={Number(approving.qty_requested)} step={1} inputMode="numeric" value={approveQty}
+                  onChange={(e) => setApproveQty(Math.min(Number(approving.qty_requested), Math.max(1, Math.trunc(Number(e.target.value) || 1))))} />
                 <p className="mt-1 text-xs text-muted-foreground">
                   On hand at {approving.source?.mkj_number}: <span className="font-mono font-semibold">{approveOnHand.data ?? 0}</span>
                   {approveQty < Number(approving.qty_requested) ? " — this will be recorded as a partial approval." : ""}
@@ -405,7 +405,7 @@ function BorrowPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setApproving(null)}>Cancel</Button>
             <Button
-              disabled={decide.isPending || !approving || approveQty > (approveOnHand.data ?? 0)}
+              disabled={decide.isPending || !approving || approveQty > (approveOnHand.data ?? 0) || (!!approving && approveQty > Number(approving.qty_requested))}
               onClick={() => approving && decide.mutate({
                 req: approving,
                 status: approveQty < Number(approving.qty_requested) ? "partially_approved" : "approved",

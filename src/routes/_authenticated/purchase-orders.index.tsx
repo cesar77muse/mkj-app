@@ -19,20 +19,28 @@ export const Route = createFileRoute("/_authenticated/purchase-orders/")({
   component: POList,
 });
 
+const PO_LIST_LIMIT = 200;
+
 function POList() {
   const pos = useQuery({
     queryKey: ["pos"],
     queryFn: async () => {
+      // Fetch one past the cap so a full page can be told apart from a
+      // truncated one, instead of silently dropping anything past the limit.
       const { data } = await supabase
         .from("purchase_orders")
         .select("id, po_number, status, delivery_date, created_at, projects:project_id(mkj_number, name), suppliers:supplier_id(name)")
         .order("created_at", { ascending: false })
-        .limit(200);
-      return data ?? [];
+        .limit(PO_LIST_LIMIT + 1);
+      const rows = data ?? [];
+      return { rows: rows.slice(0, PO_LIST_LIMIT), truncated: rows.length > PO_LIST_LIMIT };
     },
   });
 
-  const poIds = (pos.data ?? []).map((p) => p.id);
+  // Sorted so the query key is stable regardless of the order pos.data
+  // happens to come back in — an unsorted array of the same IDs in a
+  // different order hashes to a different key, triggering a pointless refetch.
+  const poIds = useMemo(() => (pos.data?.rows ?? []).map((p) => p.id).sort(), [pos.data]);
   const receipts = useQuery({
     enabled: poIds.length > 0,
     queryKey: ["po-last-receipt", poIds],
@@ -58,7 +66,7 @@ function POList() {
   const [q, setQ] = useState("");
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    const rows = pos.data ?? [];
+    const rows = pos.data?.rows ?? [];
     if (!needle) return rows;
     return rows.filter((po) =>
       [po.po_number, po.projects?.mkj_number, po.projects?.name, po.suppliers?.name, po.status]
@@ -83,6 +91,12 @@ function POList() {
           className="pl-9"
         />
       </div>
+
+      {pos.data?.truncated ? (
+        <p className="mb-3 text-xs text-muted-foreground">
+          Showing the most recent {PO_LIST_LIMIT} purchase orders — search above to narrow results.
+        </p>
+      ) : null}
 
       <Card><CardContent className="p-0">
         <Table>

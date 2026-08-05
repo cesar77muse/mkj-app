@@ -18,22 +18,30 @@ export const Route = createFileRoute("/_authenticated/packing-slips/")({
   component: PSList,
 });
 
+const PS_LIST_LIMIT = 200;
+
 function PSList() {
   const roles = useRoles();
   const writable = canWrite(roles.data ?? []);
   const list = useQuery({
     queryKey: ["packing-slips"],
-    queryFn: async () => (await supabase
-      .from("packing_slips")
-      .select("id, slip_number, received_date, status, vendor_slip_number, po_id, projects:project_id(mkj_number), purchase_orders:po_id(po_number)")
-      .order("received_date", { ascending: false })
-      .limit(200)).data ?? [],
+    queryFn: async () => {
+      // Fetch one past the cap so a full page can be told apart from a
+      // truncated one, instead of silently dropping anything past the limit.
+      const { data } = await supabase
+        .from("packing_slips")
+        .select("id, slip_number, received_date, status, vendor_slip_number, po_id, projects:project_id(mkj_number), purchase_orders:po_id(po_number)")
+        .order("received_date", { ascending: false })
+        .limit(PS_LIST_LIMIT + 1);
+      const rows = data ?? [];
+      return { rows: rows.slice(0, PS_LIST_LIMIT), truncated: rows.length > PS_LIST_LIMIT };
+    },
   });
 
   const [q, setQ] = useState("");
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    const rows = list.data ?? [];
+    const rows = list.data?.rows ?? [];
     if (!needle) return rows;
     return rows.filter((s) =>
       [s.slip_number, s.projects?.mkj_number, s.purchase_orders?.po_number, s.vendor_slip_number, s.status]
@@ -62,6 +70,12 @@ function PSList() {
           className="pl-9"
         />
       </div>
+
+      {list.data?.truncated ? (
+        <p className="mb-3 text-xs text-muted-foreground">
+          Showing the most recent {PS_LIST_LIMIT} packing slips — search above to narrow results.
+        </p>
+      ) : null}
 
       <Card><CardContent className="p-0">
         <Table>

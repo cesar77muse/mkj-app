@@ -11,12 +11,20 @@ export const Route = createFileRoute("/_authenticated/notifications")({
   component: NotificationsPage,
 });
 
+const NOTIF_LIST_LIMIT = 100;
+
 function NotificationsPage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const list = useQuery({
     queryKey: ["notifications", "list"],
-    queryFn: async () => (await supabase.from("notifications").select("*").order("created_at", { ascending: false }).limit(100)).data ?? [],
+    queryFn: async () => {
+      // Fetch one past the cap so a full page can be told apart from a
+      // truncated one, instead of silently dropping anything past the limit.
+      const { data } = await supabase.from("notifications").select("*").order("created_at", { ascending: false }).limit(NOTIF_LIST_LIMIT + 1);
+      const rows = data ?? [];
+      return { rows: rows.slice(0, NOTIF_LIST_LIMIT), truncated: rows.length > NOTIF_LIST_LIMIT };
+    },
   });
 
   const markAll = useMutation({
@@ -48,10 +56,13 @@ function NotificationsPage() {
         description="Events across your projects."
         actions={<Button variant="outline" size="sm" onClick={() => markAll.mutate()}>Mark all read</Button>}
       />
+      {list.data?.truncated ? (
+        <p className="mb-3 text-xs text-muted-foreground">Showing the most recent {NOTIF_LIST_LIMIT} notifications.</p>
+      ) : null}
       <Card><CardContent className="p-0">
-        {list.data && list.data.length > 0 ? (
+        {list.data && list.data.rows.length > 0 ? (
           <ul className="divide-y">
-            {list.data.map((n) => (
+            {list.data.rows.map((n) => (
               <li key={n.id} className="p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">

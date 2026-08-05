@@ -21,15 +21,22 @@ export const Route = createFileRoute("/_authenticated/shipping-tickets/")({
   component: STList,
 });
 
+const ST_LIST_LIMIT = 200;
+
 function STList() {
   const list = useQuery({
     queryKey: ["tickets"],
-
-    queryFn: async () => (await supabase
-      .from("shipping_tickets")
-      .select("id, ticket_number, ship_date, created_at, status, deliver_to_name, projects:project_id(mkj_number)")
-      .order("ship_date", { ascending: false })
-      .limit(200)).data ?? [],
+    queryFn: async () => {
+      // Fetch one past the cap so a full page can be told apart from a
+      // truncated one, instead of silently dropping anything past the limit.
+      const { data } = await supabase
+        .from("shipping_tickets")
+        .select("id, ticket_number, ship_date, created_at, status, deliver_to_name, projects:project_id(mkj_number)")
+        .order("ship_date", { ascending: false })
+        .limit(ST_LIST_LIMIT + 1);
+      const rows = data ?? [];
+      return { rows: rows.slice(0, ST_LIST_LIMIT), truncated: rows.length > ST_LIST_LIMIT };
+    },
   });
 
   const pdfMut = useMutation({
@@ -40,7 +47,7 @@ function STList() {
   const [q, setQ] = useState("");
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    const rows = list.data ?? [];
+    const rows = list.data?.rows ?? [];
     if (!needle) return rows;
     return rows.filter((t) =>
       [t.ticket_number, t.projects?.mkj_number, t.deliver_to_name, t.status]
@@ -65,6 +72,12 @@ function STList() {
           className="pl-9"
         />
       </div>
+
+      {list.data?.truncated ? (
+        <p className="mb-3 text-xs text-muted-foreground">
+          Showing the most recent {ST_LIST_LIMIT} shipping tickets — search above to narrow results.
+        </p>
+      ) : null}
 
       <Card><CardContent className="p-0">
         <Table>
