@@ -87,10 +87,15 @@ export async function refreshPoStatus(poId: string) {
 
   const anyReceived = [...received.values()].some((q) => q > 0);
   if (!anyReceived) {
+    if (!po?.pre_receipt_status) {
+      // Unknown pre-receipt status (this PO's first receipt predates the
+      // column) — don't guess a status, leave it for a human to correct.
+      return;
+    }
     // No receipts left — revert to whatever the PO was before the first one.
     await supabase
       .from("purchase_orders")
-      .update({ status: po?.pre_receipt_status ?? "executed", pre_receipt_status: null })
+      .update({ status: po.pre_receipt_status, pre_receipt_status: null })
       .eq("id", poId);
     return;
   }
