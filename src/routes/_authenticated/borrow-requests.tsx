@@ -40,11 +40,15 @@ type Req = {
   decided_by: string | null;
   created_at: string;
   decided_at: string | null;
+  qty_returned?: number | null;
+  returned_by?: string | null;
+  returned_at?: string | null;
   source: { mkj_number: string; name: string } | null;
   target: { mkj_number: string; name: string } | null;
   product: { part_number: string; description: string } | null;
   requester: { full_name: string | null; email: string | null } | null;
   decider: { full_name: string | null; email: string | null } | null;
+  returner?: { full_name: string | null; email: string | null } | null;
 };
 
 function statusVariant(s: string) {
@@ -58,6 +62,7 @@ const STATUS_LABEL: Record<string, string> = {
   partially_approved: "Partially approved",
   denied: "Denied",
   fulfilled: "Fulfilled",
+  partially_returned: "Partially returned",
   returned: "Returned",
   cancelled: "Cancelled",
 };
