@@ -71,7 +71,7 @@ not by this button.
 
 ### F-04 Deleting a PO strands inventory and surfaces a raw DB error
 
-> **Status (F-04):** ⚠️ **Fixed, one follow-up open** — `delete_purchase_order()` handles FK order and reverses inventory, but the confirmation dialog still says only "the purchase order and all of its line items" and does not mention that packing slips are deleted too ([po-delete-button.tsx:65](../src/components/po-delete-button.tsx)).
+> **Status (F-04):** ✅ **Fixed** — `delete_purchase_order()` handles FK order and reverses inventory; the confirmation dialog now discloses the full effect ("…all of its line items, and every packing slip received against it — any inventory those slips added will be reversed"). Follow-up closed 2026-08-05.
 
 `src/components/po-delete-button.tsx:36-39`
 
@@ -382,7 +382,9 @@ the supplier remains, and retrying creates a duplicate.
 
 ### F-27 Approved-quantity is never bounded by the request
 
-> **Status (F-27):** ⚠️ **Fixed client-side only** — the approve input is capped and the button disabled above `qty_requested`, but `decide_borrow_request()` does not bound `_q` server-side, so a direct RPC call can still over-approve. Low impact (self-inflicted, on your own lending project) but it is the same UI-only-gate pattern as F-05.
+> **Status (F-27):** ✅ **Fixed, client and server** — the approve input is capped at `qty_requested` and the button disabled above it, and `decide_borrow_request()` raises `'Cannot approve % — only % was requested.'` before any on-hand check or write (migration `20260801222000`, which supersedes `20260801220600` and retains the F-02 `status <> 'pending'` guard). Confirmed empirically 2026-08-05 by a direct RPC call against the published app, bypassing the UI.
+>
+> *Correction: an earlier pass recorded this as client-side only. That was wrong — the server-side bound was already present; the grep patterns used missed its `_q > _req.qty_requested` form.*
 
 `borrow-requests.tsx:338-343` lets an approver enter more than `qty_requested`
 (only on-hand is checked), and the row is then written as `approved` rather than
