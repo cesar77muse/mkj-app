@@ -148,6 +148,16 @@ function BorrowPage() {
   const [approveQty, setApproveQty] = useState(1);
   const [note, setNote] = useState("");
 
+  const [returning, setReturning] = useState<Req | null>(null);
+  const [returnQty, setReturnQty] = useState(1);
+  const [returnNote, setReturnNote] = useState("");
+  const outstanding = returning ? Math.max(0, Number(returning.qty_approved ?? 0) - Number(returning.qty_returned ?? 0)) : 0;
+  const openReturn = (r: Req) => {
+    setReturning(r);
+    setReturnQty(Math.max(1, Number(r.qty_approved ?? 0) - Number(r.qty_returned ?? 0)));
+    setReturnNote("");
+  };
+
   const onHand = useQuery({
     queryKey: ["onhand", sourceId, productId],
     enabled: !!sourceId && !!productId,
