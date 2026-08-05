@@ -271,6 +271,8 @@ export type Database = {
           notes: string | null
           po_id: string
           project_id: string
+          project_number: string
+          ps_sequence: number
           received_by: string | null
           received_date: string
           slip_number: string
@@ -285,6 +287,8 @@ export type Database = {
           notes?: string | null
           po_id: string
           project_id: string
+          project_number: string
+          ps_sequence: number
           received_by?: string | null
           received_date?: string
           slip_number: string
@@ -299,6 +303,8 @@ export type Database = {
           notes?: string | null
           po_id?: string
           project_id?: string
+          project_number?: string
+          ps_sequence?: number
           received_by?: string | null
           received_date?: string
           slip_number?: string
@@ -979,6 +985,39 @@ export type Database = {
       can_write_project: {
         Args: { _project_id: string; _user_id: string }
         Returns: boolean
+      }
+      create_packing_slip: {
+        Args: {
+          _carrier: string | null
+          _notes: string | null
+          _po_id: string
+          _project_id: string
+          _received_date: string
+          _status: string
+          _vendor_slip_number: string | null
+        }
+        Returns: {
+          attachment_url: string | null
+          carrier: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          po_id: string
+          project_id: string
+          project_number: string
+          ps_sequence: number
+          received_by: string | null
+          received_date: string
+          slip_number: string
+          status: string
+          vendor_slip_number: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "packing_slips"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       create_purchase_order: {
         Args: {

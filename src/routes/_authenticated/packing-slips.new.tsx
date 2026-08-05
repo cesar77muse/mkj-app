@@ -137,23 +137,20 @@ function NewSlip() {
   const create = useMutation({
     mutationFn: async () => {
       if (!poDetail.data?.po) throw new Error("Pick a PO");
-      const mkj = poDetail.data.po.projects?.mkj_number as string;
-      const { data: numRow, error: numErr } = await supabase.rpc("gen_ps_number", { _mkj: mkj });
-      if (numErr) throw numErr;
       const { data: user } = await supabase.auth.getUser();
       const anyBackorder = lines.some((l) => l.qty_already + l.qty_received < l.qty_ordered);
       const slipStatus = anyBackorder ? "partially_received" : "received";
-      const { data: slip, error } = await supabase.from("packing_slips").insert({
-        slip_number: numRow as unknown as string,
-        po_id: poDetail.data.po.id,
-        project_id: poDetail.data.po.project_id,
-        received_date: receivedDate,
-        received_by: user.user?.id ?? null,
-        carrier: carrier || null,
-        vendor_slip_number: vendorSlip || null,
-        notes: notes || null,
-        status: slipStatus,
-      }).select("id").single();
+      // create_packing_slip mints the per-project <project>-PS-#### number
+      // and inserts the slip row atomically (see migration for details).
+      const { data: slip, error } = await supabase.rpc("create_packing_slip", {
+        _po_id: poDetail.data.po.id,
+        _project_id: poDetail.data.po.project_id,
+        _received_date: receivedDate,
+        _carrier: carrier || null,
+        _vendor_slip_number: vendorSlip || null,
+        _notes: notes || null,
+        _status: slipStatus,
+      });
       if (error) throw error;
 
       // Resolve (or create) catalog products so received qty always hits inventory,
@@ -172,7 +169,7 @@ function NewSlip() {
       }
 
       const items = resolved.map(({ line: l, product_id }) => ({
-        slip_id: slip.id, po_item_id: l.po_item_id, product_id,
+        slip_id: slip!.id, po_item_id: l.po_item_id, product_id,
         description: l.description, qty_ordered: l.qty_ordered, qty_received: l.qty_received, condition: l.condition,
       }));
       if (items.length > 0) {
@@ -181,15 +178,15 @@ function NewSlip() {
       }
 
       await syncSlipInventory({
-        slipId: slip.id,
-        slipNumber: numRow as unknown as string,
+        slipId: slip!.id,
+        slipNumber: slip!.slip_number,
         projectId: poDetail.data.po.project_id,
         lines: resolved.map(({ line, product_id }) => ({ product_id, qty_received: line.qty_received })),
         userId: user.user?.id ?? null,
       });
 
       await refreshPoStatus(poDetail.data.po.id);
-      return slip.id as string;
+      return slip!.id as string;
     },
     onSuccess: () => {
       toast.success("Packing slip recorded and inventory updated");
