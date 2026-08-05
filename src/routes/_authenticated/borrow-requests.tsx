@@ -123,6 +123,9 @@ function BorrowPage() {
   const products = useQuery({ queryKey: ["products"], queryFn: async () => (await supabase.from("products").select("id, part_number, description").order("part_number")).data ?? [] });
 
   const canDecide = (r: Req) => r.status === "pending" && (oversight || (myProjects.data ?? []).includes(r.source_project_id));
+  const canReturn = (r: Req) =>
+    (r.status === "fulfilled" || r.status === "partially_returned") &&
+    (oversight || (myProjects.data ?? []).includes(r.target_project_id));
   const canCancel = (r: Req) => r.status === "pending" && r.requested_by === userId;
 
   const [tab, setTab] = useState("all");
