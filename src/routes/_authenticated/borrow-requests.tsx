@@ -166,6 +166,35 @@ function BorrowPage() {
     },
   });
 
+  const returnOnHand = useQuery({
+    queryKey: ["onhand", returning?.target_project_id, returning?.product_id],
+    enabled: !!returning,
+    queryFn: async () => {
+      const { data } = await supabase.from("v_project_inventory").select("on_hand").eq("project_id", returning!.target_project_id).eq("product_id", returning!.product_id).maybeSingle();
+      return Number(data?.on_hand ?? 0);
+    },
+  });
+
+  const returnStock = useMutation({
+    mutationFn: async ({ req, qty }: { req: Req; qty: number }) => {
+      const { error } = await supabase.rpc("return_borrowed_stock", {
+        _request_id: req.id,
+        _qty: qty,
+      } as never);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Return recorded — stock moved back to the lending project");
+      setReturning(null); setReturnNote("");
+      qc.invalidateQueries({ queryKey: ["borrow-requests"] });
+      qc.invalidateQueries({ queryKey: ["inventory"] });
+      qc.invalidateQueries({ queryKey: ["borrow-history"] });
+      qc.invalidateQueries({ queryKey: ["notifications"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+
   const create = useMutation({
     mutationFn: async () => {
       if (sourceId === targetId) throw new Error("Source and target projects must differ");
