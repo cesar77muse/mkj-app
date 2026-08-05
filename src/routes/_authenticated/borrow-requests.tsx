@@ -370,12 +370,18 @@ function BorrowPage() {
               <div><span className="text-muted-foreground">To: </span>{focused.target?.mkj_number} — {focused.target?.name}</div>
               <div><span className="text-muted-foreground">Quantity requested: </span>{Number(focused.qty_requested)}</div>
               {focused.qty_approved != null ? <div><span className="text-muted-foreground">Quantity approved: </span>{Number(focused.qty_approved)}</div> : null}
+              {Number(focused.qty_returned ?? 0) > 0 ? (
+                <div><span className="text-muted-foreground">Returned: </span>{Number(focused.qty_returned ?? 0)} of {Number(focused.qty_approved ?? 0)}</div>
+              ) : null}
               <div><span className="text-muted-foreground">Status: </span><Badge variant={statusVariant(focused.status)}>{STATUS_LABEL[focused.status] ?? focused.status}</Badge></div>
               <div><span className="text-muted-foreground">Requested by: </span>{personLabel(focused.requester)} on {new Date(focused.created_at).toLocaleString()}</div>
               <div><span className="text-muted-foreground">Needed by: </span>{focused.needed_by ?? "—"}</div>
               <div><span className="text-muted-foreground">Reason: </span>{focused.reason ?? "—"}</div>
               {focused.decided_at ? (
                 <div><span className="text-muted-foreground">Decision: </span>{personLabel(focused.decider)} on {new Date(focused.decided_at).toLocaleString()}</div>
+              ) : null}
+              {focused.returned_at ? (
+                <div><span className="text-muted-foreground">Last return: </span>{personLabel(focused.returner)} on {new Date(focused.returned_at).toLocaleString()}</div>
               ) : null}
               {focused.decision_note ? <div><span className="text-muted-foreground">Note: </span>{focused.decision_note}</div> : null}
               <div className="flex gap-2 pt-2">
@@ -384,6 +390,9 @@ function BorrowPage() {
                     <Button size="sm" onClick={() => { setApproving(focused); setApproveQty(Number(focused.qty_requested)); setNote(""); navigate({ search: { request: undefined } }); }}>Approve</Button>
                     <Button size="sm" variant="outline" onClick={() => decide.mutate({ req: focused, status: "denied" })}>Deny</Button>
                   </>
+                ) : null}
+                {canReturn(focused) ? (
+                  <Button size="sm" variant="outline" onClick={() => { openReturn(focused); navigate({ search: { request: undefined } }); }}>Return</Button>
                 ) : null}
                 {canCancel(focused) ? <Button size="sm" variant="ghost" onClick={() => cancel.mutate(focused.id)}>Withdraw request</Button> : null}
               </div>
