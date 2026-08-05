@@ -37,6 +37,8 @@ import type { ReactNode } from "react";
 
 type NavItem = { to: string; label: string; icon: React.ComponentType<{ className?: string }>; adminOnly?: boolean; warehouseOnly?: boolean };
 
+import { Upload } from "lucide-react";
+
 const NAV: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/projects", label: "Projects", icon: FolderKanban },
@@ -48,6 +50,7 @@ const NAV: NavItem[] = [
   { to: "/products", label: "Products", icon: Package, warehouseOnly: true },
   { to: "/suppliers", label: "Suppliers", icon: Building2, warehouseOnly: true },
   { to: "/users", label: "Users & Roles", icon: Users, adminOnly: true },
+  { to: "/bulk-upload", label: "Bulk Upload", icon: Upload, adminOnly: true },
 ];
 
 function NavList({ onNavigate }: { onNavigate?: () => void }) {
