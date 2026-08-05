@@ -26,8 +26,12 @@ export type Database = {
           product_id: string
           qty_approved: number | null
           qty_requested: number
+          qty_returned: number
           reason: string | null
           requested_by: string | null
+          return_note: string | null
+          returned_at: string | null
+          returned_by: string | null
           source_project_id: string
           status: Database["public"]["Enums"]["borrow_status"]
           target_project_id: string
@@ -43,8 +47,12 @@ export type Database = {
           product_id: string
           qty_approved?: number | null
           qty_requested: number
+          qty_returned?: number
           reason?: string | null
           requested_by?: string | null
+          return_note?: string | null
+          returned_at?: string | null
+          returned_by?: string | null
           source_project_id: string
           status?: Database["public"]["Enums"]["borrow_status"]
           target_project_id: string
@@ -60,8 +68,12 @@ export type Database = {
           product_id?: string
           qty_approved?: number | null
           qty_requested?: number
+          qty_returned?: number
           reason?: string | null
           requested_by?: string | null
+          return_note?: string | null
+          returned_at?: string | null
+          returned_by?: string | null
           source_project_id?: string
           status?: Database["public"]["Enums"]["borrow_status"]
           target_project_id?: string
@@ -1080,6 +1092,14 @@ export type Database = {
         Args: { _project_id: string; _user_id: string }
         Returns: boolean
       }
+      return_borrowed_stock: {
+        Args: {
+          _note?: string | null
+          _qty: number
+          _request_id: string
+        }
+        Returns: undefined
+      }
       reverse_shipping_ticket_inventory: {
         Args: { _ticket_id: string }
         Returns: undefined
@@ -1101,6 +1121,7 @@ export type Database = {
         | "partially_approved"
         | "denied"
         | "fulfilled"
+        | "partially_returned"
         | "returned"
         | "cancelled"
       ledger_source:
@@ -1254,6 +1275,7 @@ export const Constants = {
         "partially_approved",
         "denied",
         "fulfilled",
+        "partially_returned",
         "returned",
         "cancelled",
       ],

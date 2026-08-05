@@ -43,6 +43,7 @@ type Req = {
   qty_returned?: number | null;
   returned_by?: string | null;
   returned_at?: string | null;
+  return_note?: string | null;
   source: { mkj_number: string; name: string } | null;
   target: { mkj_number: string; name: string } | null;
   product: { part_number: string; description: string } | null;
@@ -195,10 +196,11 @@ function BorrowPage() {
   });
 
   const returnStock = useMutation({
-    mutationFn: async ({ req, qty }: { req: Req; qty: number }) => {
+    mutationFn: async ({ req, qty, note }: { req: Req; qty: number; note?: string }) => {
       const { error } = await supabase.rpc("return_borrowed_stock" as never, {
         _request_id: req.id,
         _qty: qty,
+        _note: note || null,
       } as never);
       if (error) throw error;
     },
@@ -445,7 +447,7 @@ function BorrowPage() {
             <Button variant="outline" onClick={() => setReturning(null)}>Cancel</Button>
             <Button
               disabled={returnStock.isPending || !returning || returnQty > outstanding || returnQty > (returnOnHand.data ?? 0)}
-              onClick={() => returning && returnStock.mutate({ req: returning, qty: returnQty })}
+              onClick={() => returning && returnStock.mutate({ req: returning, qty: returnQty, note: returnNote })}
             >{returnStock.isPending ? "Saving…" : "Return stock"}</Button>
           </DialogFooter>
         </DialogContent>
@@ -476,6 +478,7 @@ function BorrowPage() {
                 <div><span className="text-muted-foreground">Last return: </span>{personLabel(focused.returner)} on {new Date(focused.returned_at).toLocaleString()}</div>
               ) : null}
               {focused.decision_note ? <div><span className="text-muted-foreground">Note: </span>{focused.decision_note}</div> : null}
+              {focused.return_note ? <div><span className="text-muted-foreground">Return note: </span>{focused.return_note}</div> : null}
               <div className="flex gap-2 pt-2">
                 {canDecide(focused) ? (
                   <>
