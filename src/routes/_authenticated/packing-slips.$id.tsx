@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/page-header";
@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { POStatusBadge } from "@/components/po-status-badge";
 import { PackingSlipEditDialog } from "@/components/packing-slip-edit-dialog";
+import { PackingSlipDeleteButton } from "@/components/packing-slip-delete-button";
 
 export const Route = createFileRoute("/_authenticated/packing-slips/$id")({
   head: () => ({ meta: [{ title: "Packing Slip — MKJ Ops" }] }),
@@ -15,6 +16,7 @@ export const Route = createFileRoute("/_authenticated/packing-slips/$id")({
 
 function SlipView() {
   const { id } = Route.useParams();
+  const navigate = useNavigate();
   const slip = useQuery({
     queryKey: ["ps", id],
     queryFn: async () => (await supabase.from("packing_slips").select("*, projects:project_id(mkj_number, name), purchase_orders:po_id(po_number)").eq("id", id).maybeSingle()).data,
@@ -44,6 +46,13 @@ function SlipView() {
                 qty_received: Number(l.qty_received),
                 condition: l.condition,
               }))}
+            />
+            <PackingSlipDeleteButton
+              slipId={id}
+              slipNumber={slip.data.slip_number}
+              poId={slip.data.po_id}
+              variant="button"
+              onDeleted={() => navigate({ to: "/packing-slips" })}
             />
           </div>
         }

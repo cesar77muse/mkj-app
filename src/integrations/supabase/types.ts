@@ -1073,6 +1073,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      delete_packing_slip: { Args: { _slip_id: string }; Returns: undefined }
       delete_purchase_order: { Args: { _po_id: string }; Returns: undefined }
       delete_shipping_ticket: {
         Args: { _ticket_id: string }
