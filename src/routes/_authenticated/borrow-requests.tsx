@@ -359,6 +359,42 @@ function BorrowPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Return dialog — supports partial returns */}
+      <Dialog open={!!returning} onOpenChange={(o) => { if (!o) setReturning(null); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Return borrowed stock</DialogTitle></DialogHeader>
+          {returning ? (
+            <div className="space-y-3 text-sm">
+              <div className="text-muted-foreground">
+                {returning.target?.mkj_number} borrowed <span className="font-semibold text-foreground">{Number(returning.qty_approved ?? 0)}</span> x{" "}
+                <span className="font-mono text-foreground">{returning.product?.part_number}</span> from {returning.source?.mkj_number}.
+              </div>
+              <div className="text-muted-foreground">
+                Already returned: <span className="font-mono font-semibold text-foreground">{Number(returning.qty_returned ?? 0)}</span>
+                {" · "}Outstanding: <span className="font-mono font-semibold text-foreground">{outstanding}</span>
+              </div>
+              <div>
+                <Label>Quantity to return</Label>
+                <Input type="number" min={1} step={1} inputMode="numeric" value={returnQty}
+                  onChange={(e) => setReturnQty(Math.max(1, Math.trunc(Number(e.target.value) || 1)))} />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  On hand at {returning.target?.mkj_number}: <span className="font-mono font-semibold">{returnOnHand.data ?? 0}</span>
+                  {returnQty > outstanding ? " — exceeds the outstanding amount." : returnQty > (returnOnHand.data ?? 0) ? " — exceeds on-hand stock." : returnQty < outstanding ? " — this will be recorded as a partial return." : ""}
+                </p>
+              </div>
+              <div><Label>Note (optional)</Label><Textarea value={returnNote} onChange={(e) => setReturnNote(e.target.value)} /></div>
+            </div>
+          ) : null}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReturning(null)}>Cancel</Button>
+            <Button
+              disabled={returnStock.isPending || !returning || returnQty > outstanding || returnQty > (returnOnHand.data ?? 0)}
+              onClick={() => returning && returnStock.mutate({ req: returning, qty: returnQty })}
+            >{returnStock.isPending ? "Saving…" : "Return stock"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Detail panel (deep link target from notifications) */}
       <Dialog open={!!focused} onOpenChange={(o) => { if (!o) navigate({ search: { request: undefined } }); }}>
         <DialogContent>
