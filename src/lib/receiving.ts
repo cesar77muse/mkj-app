@@ -1,5 +1,14 @@
 import { supabase } from "@/integrations/supabase/client";
 
+const MAX_AUTO_PART_NUMBER_LENGTH = 60;
+
+/** Caps a free-typed description used as a fallback part number, so a whole sentence never becomes the stored value (the full text is kept in `description` regardless). */
+function truncateForPartNumber(text: string): string {
+  return text.length > MAX_AUTO_PART_NUMBER_LENGTH
+    ? text.slice(0, MAX_AUTO_PART_NUMBER_LENGTH - 1).trimEnd() + "…"
+    : text;
+}
+
 /**
  * Packing-slip lines often come from PO lines that were typed free-hand and have
  * no product_id. Without a product we can't move inventory, so resolve (or create)
@@ -15,18 +24,35 @@ export async function resolveProductId(opts: {
   const key = (opts.partNumber || opts.description || "").trim();
   if (!key) return null;
 
-  const { data: existing } = await supabase
+  // Two separate, properly-parameterized lookups instead of interpolating
+  // free-typed text into a raw PostgREST .or() filter string -- a comma,
+  // parenthesis, or dot in `key` broke that (wrong matches, or a 400).
+  // .order("id") makes repeated calls with the same key deterministic when
+  // more than one row matches, instead of an arbitrary one among ties.
+  const { data: byPartNumber } = await supabase
     .from("products")
     .select("id")
-    .or(`part_number.ilike.${key},description.ilike.${key}`)
+    .ilike("part_number", key)
+    .order("id")
     .limit(1)
     .maybeSingle();
-  if (existing?.id) return existing.id;
+  if (byPartNumber?.id) return byPartNumber.id;
+
+  const { data: byDescription } = await supabase
+    .from("products")
+    .select("id")
+    .ilike("description", key)
+    .order("id")
+    .limit(1)
+    .maybeSingle();
+  if (byDescription?.id) return byDescription.id;
+
+  const partNumber = opts.partNumber?.trim() || truncateForPartNumber(key);
 
   const { data: created, error } = await supabase
     .from("products")
     .insert({
-      part_number: key,
+      part_number: partNumber,
       description: opts.description || key,
       unit: opts.unit || "ea",
     })

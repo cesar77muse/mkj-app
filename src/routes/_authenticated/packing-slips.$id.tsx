@@ -23,7 +23,7 @@ function SlipView() {
   });
   const items = useQuery({
     queryKey: ["ps-items", id],
-    queryFn: async () => (await supabase.from("packing_slip_items").select("*").eq("slip_id", id)).data ?? [],
+    queryFn: async () => (await supabase.from("packing_slip_items").select("*, products:product_id(part_number)").eq("slip_id", id)).data ?? [],
   });
 
   if (!slip.data) return <p className="text-sm text-muted-foreground">Loading…</p>;
@@ -41,6 +41,7 @@ function SlipView() {
               items={(items.data ?? []).map((l) => ({
                 id: l.id,
                 product_id: l.product_id,
+                part_number: l.products?.part_number ?? null,
                 description: l.description,
                 qty_ordered: Number(l.qty_ordered),
                 qty_received: Number(l.qty_received),

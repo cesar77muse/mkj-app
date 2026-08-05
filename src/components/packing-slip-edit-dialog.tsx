@@ -19,6 +19,7 @@ import { refreshPoStatus, resolveProductId, slipStatusFor, syncSlipInventory } f
 type SlipItem = {
   id: string;
   product_id: string | null;
+  part_number: string | null;
   description: string;
   qty_ordered: number;
   qty_received: number;
@@ -65,6 +66,7 @@ export function PackingSlipEditDialog({
       for (const l of lines) {
         const product_id = await resolveProductId({
           productId: l.product_id,
+          partNumber: l.part_number,
           description: l.description,
         });
         resolved.push({ ...l, product_id });
