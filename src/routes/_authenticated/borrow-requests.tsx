@@ -40,11 +40,15 @@ type Req = {
   decided_by: string | null;
   created_at: string;
   decided_at: string | null;
+  qty_returned?: number | null;
+  returned_by?: string | null;
+  returned_at?: string | null;
   source: { mkj_number: string; name: string } | null;
   target: { mkj_number: string; name: string } | null;
   product: { part_number: string; description: string } | null;
   requester: { full_name: string | null; email: string | null } | null;
   decider: { full_name: string | null; email: string | null } | null;
+  returner?: { full_name: string | null; email: string | null } | null;
 };
 
 function statusVariant(s: string) {
@@ -58,6 +62,7 @@ const STATUS_LABEL: Record<string, string> = {
   partially_approved: "Partially approved",
   denied: "Denied",
   fulfilled: "Fulfilled",
+  partially_returned: "Partially returned",
   returned: "Returned",
   cancelled: "Cancelled",
 };
@@ -96,8 +101,8 @@ function BorrowPage() {
         projById = Object.fromEntries((projs ?? []).map((p) => [p.id, { mkj_number: p.mkj_number, name: p.name }]));
       }
 
-      // requested_by/decided_by reference auth.users, so profile names are fetched separately
-      const ids = Array.from(new Set(reqs.flatMap((r) => [r.requested_by, r.decided_by]).filter(Boolean) as string[]));
+      // requested_by/decided_by/returned_by reference auth.users, so profile names are fetched separately
+      const ids = Array.from(new Set(reqs.flatMap((r) => [r.requested_by, r.decided_by, r.returned_by ?? null]).filter(Boolean) as string[]));
       let byId: Record<string, { full_name: string | null; email: string | null }> = {};
       if (ids.length > 0) {
         const { data: profs } = await supabase.from("user_directory").select("id, full_name").in("id", ids);
@@ -109,6 +114,7 @@ function BorrowPage() {
         target: projById[r.target_project_id] ?? null,
         requester: r.requested_by ? byId[r.requested_by] ?? null : null,
         decider: r.decided_by ? byId[r.decided_by] ?? null : null,
+        returner: r.returned_by ? byId[r.returned_by] ?? null : null,
       }));
     },
   });
@@ -123,6 +129,9 @@ function BorrowPage() {
   const products = useQuery({ queryKey: ["products"], queryFn: async () => (await supabase.from("products").select("id, part_number, description").order("part_number")).data ?? [] });
 
   const canDecide = (r: Req) => r.status === "pending" && (oversight || (myProjects.data ?? []).includes(r.source_project_id));
+  const canReturn = (r: Req) =>
+    (r.status === "fulfilled" || r.status === "partially_returned") &&
+    (oversight || (myProjects.data ?? []).includes(r.target_project_id));
   const canCancel = (r: Req) => r.status === "pending" && r.requested_by === userId;
 
   const [tab, setTab] = useState("all");
@@ -148,6 +157,16 @@ function BorrowPage() {
   const [approveQty, setApproveQty] = useState(1);
   const [note, setNote] = useState("");
 
+  const [returning, setReturning] = useState<Req | null>(null);
+  const [returnQty, setReturnQty] = useState(1);
+  const [returnNote, setReturnNote] = useState("");
+  const outstanding = returning ? Math.max(0, Number(returning.qty_approved ?? 0) - Number(returning.qty_returned ?? 0)) : 0;
+  const openReturn = (r: Req) => {
+    setReturning(r);
+    setReturnQty(Math.max(1, Number(r.qty_approved ?? 0) - Number(r.qty_returned ?? 0)));
+    setReturnNote("");
+  };
+
   const onHand = useQuery({
     queryKey: ["onhand", sourceId, productId],
     enabled: !!sourceId && !!productId,
@@ -165,6 +184,35 @@ function BorrowPage() {
       return Number(data?.on_hand ?? 0);
     },
   });
+
+  const returnOnHand = useQuery({
+    queryKey: ["onhand", returning?.target_project_id, returning?.product_id],
+    enabled: !!returning,
+    queryFn: async () => {
+      const { data } = await supabase.from("v_project_inventory").select("on_hand").eq("project_id", returning!.target_project_id).eq("product_id", returning!.product_id).maybeSingle();
+      return Number(data?.on_hand ?? 0);
+    },
+  });
+
+  const returnStock = useMutation({
+    mutationFn: async ({ req, qty }: { req: Req; qty: number }) => {
+      const { error } = await supabase.rpc("return_borrowed_stock" as never, {
+        _request_id: req.id,
+        _qty: qty,
+      } as never);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Return recorded — stock moved back to the lending project");
+      setReturning(null); setReturnNote("");
+      qc.invalidateQueries({ queryKey: ["borrow-requests"] });
+      qc.invalidateQueries({ queryKey: ["inventory"] });
+      qc.invalidateQueries({ queryKey: ["borrow-history"] });
+      qc.invalidateQueries({ queryKey: ["notifications"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
 
   const create = useMutation({
     mutationFn: async () => {
@@ -298,7 +346,12 @@ function BorrowPage() {
                 </TableCell>
                 <TableCell className="font-mono text-xs">{r.source?.mkj_number}</TableCell>
                 <TableCell className="font-mono text-xs">{r.target?.mkj_number}</TableCell>
-                <TableCell className="text-right">{Number(r.qty_requested)}{r.qty_approved != null ? ` (approved ${Number(r.qty_approved)})` : ""}</TableCell>
+                <TableCell className="text-right">
+                  {Number(r.qty_requested)}{r.qty_approved != null ? ` (approved ${Number(r.qty_approved)})` : ""}
+                  {Number(r.qty_returned ?? 0) > 0 ? (
+                    <div className="text-xs text-muted-foreground">{Number(r.qty_returned ?? 0)} of {Number(r.qty_approved ?? 0)} returned</div>
+                  ) : null}
+                </TableCell>
                 <TableCell>{r.needed_by ?? "—"}</TableCell>
                 <TableCell><Badge variant={statusVariant(r.status)}>{STATUS_LABEL[r.status] ?? r.status}</Badge></TableCell>
                 <TableCell className="space-x-1 text-right">
@@ -307,6 +360,9 @@ function BorrowPage() {
                       <Button size="sm" onClick={() => { setApproving(r); setApproveQty(Number(r.qty_requested)); setNote(""); }}>Approve</Button>
                       <Button size="sm" variant="outline" onClick={() => decide.mutate({ req: r, status: "denied" })}>Deny</Button>
                     </>
+                  ) : null}
+                  {canReturn(r) ? (
+                    <Button size="sm" variant="outline" onClick={() => openReturn(r)}>Return</Button>
                   ) : null}
                   {canCancel(r) ? (
                     <Button size="sm" variant="ghost" onClick={() => cancel.mutate(r.id)}>Cancel</Button>
@@ -359,6 +415,42 @@ function BorrowPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Return dialog — supports partial returns */}
+      <Dialog open={!!returning} onOpenChange={(o) => { if (!o) setReturning(null); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Return borrowed stock</DialogTitle></DialogHeader>
+          {returning ? (
+            <div className="space-y-3 text-sm">
+              <div className="text-muted-foreground">
+                {returning.target?.mkj_number} borrowed <span className="font-semibold text-foreground">{Number(returning.qty_approved ?? 0)}</span> x{" "}
+                <span className="font-mono text-foreground">{returning.product?.part_number}</span> from {returning.source?.mkj_number}.
+              </div>
+              <div className="text-muted-foreground">
+                Already returned: <span className="font-mono font-semibold text-foreground">{Number(returning.qty_returned ?? 0)}</span>
+                {" · "}Outstanding: <span className="font-mono font-semibold text-foreground">{outstanding}</span>
+              </div>
+              <div>
+                <Label>Quantity to return</Label>
+                <Input type="number" min={1} step={1} inputMode="numeric" value={returnQty}
+                  onChange={(e) => setReturnQty(Math.max(1, Math.trunc(Number(e.target.value) || 1)))} />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  On hand at {returning.target?.mkj_number}: <span className="font-mono font-semibold">{returnOnHand.data ?? 0}</span>
+                  {returnQty > outstanding ? " — exceeds the outstanding amount." : returnQty > (returnOnHand.data ?? 0) ? " — exceeds on-hand stock." : returnQty < outstanding ? " — this will be recorded as a partial return." : ""}
+                </p>
+              </div>
+              <div><Label>Note (optional)</Label><Textarea value={returnNote} onChange={(e) => setReturnNote(e.target.value)} /></div>
+            </div>
+          ) : null}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReturning(null)}>Cancel</Button>
+            <Button
+              disabled={returnStock.isPending || !returning || returnQty > outstanding || returnQty > (returnOnHand.data ?? 0)}
+              onClick={() => returning && returnStock.mutate({ req: returning, qty: returnQty })}
+            >{returnStock.isPending ? "Saving…" : "Return stock"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Detail panel (deep link target from notifications) */}
       <Dialog open={!!focused} onOpenChange={(o) => { if (!o) navigate({ search: { request: undefined } }); }}>
         <DialogContent>
@@ -370,12 +462,18 @@ function BorrowPage() {
               <div><span className="text-muted-foreground">To: </span>{focused.target?.mkj_number} — {focused.target?.name}</div>
               <div><span className="text-muted-foreground">Quantity requested: </span>{Number(focused.qty_requested)}</div>
               {focused.qty_approved != null ? <div><span className="text-muted-foreground">Quantity approved: </span>{Number(focused.qty_approved)}</div> : null}
+              {Number(focused.qty_returned ?? 0) > 0 ? (
+                <div><span className="text-muted-foreground">Returned: </span>{Number(focused.qty_returned ?? 0)} of {Number(focused.qty_approved ?? 0)}</div>
+              ) : null}
               <div><span className="text-muted-foreground">Status: </span><Badge variant={statusVariant(focused.status)}>{STATUS_LABEL[focused.status] ?? focused.status}</Badge></div>
               <div><span className="text-muted-foreground">Requested by: </span>{personLabel(focused.requester)} on {new Date(focused.created_at).toLocaleString()}</div>
               <div><span className="text-muted-foreground">Needed by: </span>{focused.needed_by ?? "—"}</div>
               <div><span className="text-muted-foreground">Reason: </span>{focused.reason ?? "—"}</div>
               {focused.decided_at ? (
                 <div><span className="text-muted-foreground">Decision: </span>{personLabel(focused.decider)} on {new Date(focused.decided_at).toLocaleString()}</div>
+              ) : null}
+              {focused.returned_at ? (
+                <div><span className="text-muted-foreground">Last return: </span>{personLabel(focused.returner)} on {new Date(focused.returned_at).toLocaleString()}</div>
               ) : null}
               {focused.decision_note ? <div><span className="text-muted-foreground">Note: </span>{focused.decision_note}</div> : null}
               <div className="flex gap-2 pt-2">
@@ -384,6 +482,9 @@ function BorrowPage() {
                     <Button size="sm" onClick={() => { setApproving(focused); setApproveQty(Number(focused.qty_requested)); setNote(""); navigate({ search: { request: undefined } }); }}>Approve</Button>
                     <Button size="sm" variant="outline" onClick={() => decide.mutate({ req: focused, status: "denied" })}>Deny</Button>
                   </>
+                ) : null}
+                {canReturn(focused) ? (
+                  <Button size="sm" variant="outline" onClick={() => { openReturn(focused); navigate({ search: { request: undefined } }); }}>Return</Button>
                 ) : null}
                 {canCancel(focused) ? <Button size="sm" variant="ghost" onClick={() => cancel.mutate(focused.id)}>Withdraw request</Button> : null}
               </div>
