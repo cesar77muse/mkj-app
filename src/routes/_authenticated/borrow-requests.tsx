@@ -101,8 +101,8 @@ function BorrowPage() {
         projById = Object.fromEntries((projs ?? []).map((p) => [p.id, { mkj_number: p.mkj_number, name: p.name }]));
       }
 
-      // requested_by/decided_by reference auth.users, so profile names are fetched separately
-      const ids = Array.from(new Set(reqs.flatMap((r) => [r.requested_by, r.decided_by]).filter(Boolean) as string[]));
+      // requested_by/decided_by/returned_by reference auth.users, so profile names are fetched separately
+      const ids = Array.from(new Set(reqs.flatMap((r) => [r.requested_by, r.decided_by, r.returned_by ?? null]).filter(Boolean) as string[]));
       let byId: Record<string, { full_name: string | null; email: string | null }> = {};
       if (ids.length > 0) {
         const { data: profs } = await supabase.from("user_directory").select("id, full_name").in("id", ids);
@@ -114,6 +114,7 @@ function BorrowPage() {
         target: projById[r.target_project_id] ?? null,
         requester: r.requested_by ? byId[r.requested_by] ?? null : null,
         decider: r.decided_by ? byId[r.decided_by] ?? null : null,
+        returner: r.returned_by ? byId[r.returned_by] ?? null : null,
       }));
     },
   });
