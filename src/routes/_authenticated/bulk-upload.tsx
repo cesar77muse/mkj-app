@@ -34,11 +34,26 @@ function BulkUploadPage() {
     fileInputRef.current?.click();
   }
 
+  function downloadTemplate() {
+    const link = document.createElement("a");
+    link.href = "/bulk-upload-template.xlsx";
+    link.download = "mkj-ops-bulk-upload-template.xlsx";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
   return (
     <div className="mx-auto max-w-3xl">
       <PageHeader
         title="Bulk Upload"
         description="Admin-only tool for importing data via Excel spreadsheets."
+        actions={
+          <Button variant="outline" onClick={downloadTemplate}>
+            <Download className="mr-2 h-4 w-4" />
+            Download Template
+          </Button>
+        }
       />
 
       <Card>
