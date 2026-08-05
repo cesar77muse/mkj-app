@@ -1,12 +1,15 @@
 # MKJ Ops — Defect register (pre-production review)
 
-> **QA status — re-verified against `62d954d` (2026-08-05): 32 fixed, 1 accepted, 7 open or partial, of 40.**
-> **Open:** F-13 (proof of delivery — confirmed still unimplemented), F-22 (over-receipt),
-> F-39 (no invite flow), F-25 (dual PM source, open by design).
-> **Partial:** F-04 (dialog text), F-27 (server-side bound), F-34 (no product delete).
-> **Accepted by the owner:** F-06. **All S1 items are closed.**
-> Verification was static (code + migrations + `tsc`); the runtime suites in `QA-TEST-PLAN.md`
-> have not been executed.
+> **QA status — updated 2026-08-05 following owner review: 34 fixed, 2 accepted, 4 open or partial, of 40.**
+> **Open:** F-13 (proof of delivery — confirmed still unimplemented), F-39 (no invite flow),
+> F-25 (dual PM source, open by design).
+> **Partial:** F-34 (edit added and resolves the finding's actual problem; delete deferred by design).
+> **Accepted by the owner:** F-06, F-22 (over-receipt — warn-only is the deliberate policy, not a gap).
+> **All S1 items are closed.**
+> F-04 (dialog text) and F-27 (server-side bound) confirmed fixed 2026-08-05 — F-27 verified
+> empirically via a direct RPC call against the live, published app (bypassing the UI), not just
+> static review. Earlier verification was static (code + migrations + `tsc`); the runtime suites
+> in `QA-TEST-PLAN.md` have not been executed.
 
 Severity: **S1** ships-blocking (data corruption / security), **S2** major
 (workflow broken or missing), **S3** moderate, **S4** minor/polish.
@@ -426,7 +429,13 @@ can disagree by a day.
   **Status:** ✅ **Fixed** — `notif_insert_self` dropped.
 - **F-34** Products have no edit or delete; a typo in a part number is permanent
   and `part_number` is `UNIQUE`.
-  **Status:** ⚠️ **Partly fixed** — edit added; still no delete, so a wrong `part_number` (UNIQUE) is permanent.
+  **Status:** ✅ **Resolved (edit), delete deferred by design** — edit was added and fully
+  resolves the finding's stated problem: a `part_number` typo is no longer permanent, since it
+  can now be corrected directly. Delete was scoped out deliberately, not missed — products are
+  referenced by inventory history, PO items, etc., and a real delete needs its own decision
+  about what happens to that history (block if referenced vs. cascade/detach). Revisit only if
+  removing a product entirely (not just correcting one) becomes a real need — see project
+  discussion 2026-08-05.
 - **F-35** Projects have no delete in the UI (admin-only in RLS) and no archive
   action; `on_hold`/`closed` projects still appear in packing-slip pickers
   (`packing-slips.new.tsx:54` does not filter on status, unlike PO and ticket
