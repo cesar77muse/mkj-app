@@ -68,6 +68,13 @@ function POView() {
 
   const total = (items.data ?? []).reduce((s, l) => s + Number(l.qty) * Number(l.unit_cost), 0) + Number(po.data.additional_freight ?? 0);
   const assigneeUserId = po.data.assignee;
+  // partially_received/received are set automatically by refreshPoStatus()
+  // once a packing slip records a receipt — not manually selectable here.
+  const currentStatus = po.data.status;
+  const hasReceipts = currentStatus === "partially_received" || currentStatus === "received";
+  const statusOptions = hasReceipts
+    ? PO_STATUS_OPTIONS.filter((o) => o.value === currentStatus)
+    : PO_STATUS_OPTIONS.filter((o) => o.value !== "partially_received" && o.value !== "received");
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -79,12 +86,17 @@ function POView() {
         actions={
           <div className="flex items-center gap-2">
             <POStatusBadge status={po.data.status} />
-            <Select value={po.data.status} onValueChange={(v) => statusMut.mutate(v as POStatus)}>
-              <SelectTrigger className="h-8 w-44"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {PO_STATUS_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <div>
+              <Select value={po.data.status} onValueChange={(v) => statusMut.mutate(v as POStatus)} disabled={hasReceipts}>
+                <SelectTrigger className="h-8 w-44"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {statusOptions.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              {hasReceipts ? (
+                <p className="mt-1 text-xs text-muted-foreground">Set automatically from packing slips — edit or delete the slip to correct.</p>
+              ) : null}
+            </div>
             <Button size="sm" variant="outline" onClick={() => pdfMut.mutate()} disabled={pdfMut.isPending}>
               <FileText className="mr-1 h-4 w-4" />{pdfMut.isPending ? "Opening…" : "View PO"}
             </Button>
