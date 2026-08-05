@@ -62,7 +62,8 @@ export function PODeleteButton({
         <AlertDialogHeader>
           <AlertDialogTitle>Delete {poNumber ?? "this purchase order"}?</AlertDialogTitle>
           <AlertDialogDescription>
-            This permanently removes the purchase order and all of its line items. This action cannot be undone.
+            This permanently removes the purchase order, all of its line items, and every packing slip received
+            against it — any inventory those slips added will be reversed. This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
