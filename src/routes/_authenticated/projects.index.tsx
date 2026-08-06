@@ -84,19 +84,19 @@ function ProjectsList() {
                 </DialogHeader>
                 <div className="space-y-3">
                   <div>
-                    <Label htmlFor="mkj">Job #</Label>
-                    <Input id="mkj" value={mkj} onChange={(e) => setMkj(e.target.value)} placeholder="2403" />
+                    <Label htmlFor="mkj">Job # *</Label>
+                    <Input id="mkj" value={mkj} onChange={(e) => setMkj(e.target.value)} placeholder="2403" required />
                   </div>
                   <div>
-                    <Label htmlFor="pname">Name</Label>
-                    <Input id="pname" value={name} onChange={(e) => setName(e.target.value)} placeholder="37 Elevators Forte" />
+                    <Label htmlFor="pname">Name *</Label>
+                    <Input id="pname" value={name} onChange={(e) => setName(e.target.value)} placeholder="37 Elevators Forte" required />
                   </div>
                   <div>
-                    <Label htmlFor="contract">Contract number</Label>
-                    <Input id="contract" value={contract} onChange={(e) => setContract(e.target.value)} placeholder="E-34054" />
+                    <Label htmlFor="contract">Contract number *</Label>
+                    <Input id="contract" value={contract} onChange={(e) => setContract(e.target.value)} placeholder="E-34054" required />
                   </div>
                   <div>
-                    <Label htmlFor="pm">Project manager</Label>
+                    <Label htmlFor="pm">Project manager *</Label>
                     <ProjectManagerSelect id="pm" value={managerId} onChange={setManagerId} />
                   </div>
                   <div>
@@ -106,7 +106,7 @@ function ProjectsList() {
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-                  <Button onClick={() => createMut.mutate()} disabled={!mkj || !name || !managerId || createMut.isPending}>
+                  <Button onClick={() => createMut.mutate()} disabled={!mkj || !name || !contract || !managerId || createMut.isPending}>
 
                     {createMut.isPending ? "Creating…" : "Create"}
                   </Button>
