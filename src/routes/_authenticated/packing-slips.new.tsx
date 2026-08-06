@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { ArrowLeft, Check, ChevronsUpDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -204,6 +204,9 @@ function NewSlip() {
   return (
     <div className="mx-auto max-w-6xl">
       <PageHeader title="Add Packing Slip" description="Log what actually arrived. Inventory updates automatically." />
+      <Button variant="outline" className="mb-4" onClick={() => navigate({ to: "/packing-slips" })}>
+        <ArrowLeft className="mr-2 h-4 w-4" /> Back to Packing Slips
+      </Button>
       <Card><CardContent className="space-y-4 p-4">
         <div className="grid gap-3 md:grid-cols-2">
           <div>
