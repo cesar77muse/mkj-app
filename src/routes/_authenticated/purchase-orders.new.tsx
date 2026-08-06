@@ -123,6 +123,9 @@ function NewPO() {
   return (
     <div className="mx-auto max-w-5xl">
       <PageHeader title="New Purchase Order" description="Fill in the details, preview the PDF to double-check everything, then create the PO." />
+      <Button variant="outline" className="mb-4" onClick={() => navigate({ to: "/purchase-orders" })}>
+        <ArrowLeft className="mr-2 h-4 w-4" /> Back to Purchase Orders
+      </Button>
       <Card><CardContent className="space-y-4 p-4">
         <div className="grid gap-3 md:grid-cols-2">
           <div>
