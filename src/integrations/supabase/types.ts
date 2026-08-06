@@ -934,13 +934,6 @@ export type Database = {
         }
         Relationships: []
       }
-      v_project_last_updated: {
-        Row: {
-          last_updated: string | null
-          project_id: string | null
-        }
-        Relationships: []
-      }
       v_project_inventory: {
         Row: {
           on_hand: number | null
@@ -995,13 +988,13 @@ export type Database = {
       }
       create_packing_slip: {
         Args: {
-          _carrier: string | null
-          _notes: string | null
+          _carrier: string
+          _notes: string
           _po_id: string
           _project_id: string
           _received_date: string
           _status: string
-          _vendor_slip_number: string | null
+          _vendor_slip_number: string
         }
         Returns: {
           attachment_url: string | null
@@ -1033,7 +1026,6 @@ export type Database = {
           _bill_to: string
           _delivery_date: string
           _description: string
-          _new_supplier_name?: string
           _payment_terms: string
           _project_id: string
           _ship_to: string
@@ -1126,7 +1118,6 @@ export type Database = {
         Args: { _ticket_id: string }
         Returns: undefined
       }
-      gen_ps_number: { Args: { _mkj: string }; Returns: string }
       gen_ticket_number: { Args: never; Returns: string }
       has_any_role: { Args: { _user_id: string }; Returns: boolean }
       has_role: {
