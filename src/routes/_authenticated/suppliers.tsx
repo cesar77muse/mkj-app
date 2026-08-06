@@ -23,6 +23,15 @@ export const Route = createFileRoute("/_authenticated/suppliers")({
 type SupplierForm = { name: string; address: string; phone: string; contact_name: string; email: string };
 const emptyForm: SupplierForm = { name: "", address: "", phone: "", contact_name: "", email: "" };
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function formatPhone(raw: string) {
+  const digits = raw.replace(/\D/g, "").slice(0, 10);
+  if (digits.length < 4) return digits;
+  if (digits.length < 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+  return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+}
+
 function SuppliersPage() {
   const { data: roles = [] } = useRoles();
   const canWrite = canWriteRoles(roles);
@@ -106,13 +115,25 @@ function SuppliersPage() {
                 <div><Label>Address</Label><Textarea value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
                 <div className="grid grid-cols-2 gap-3">
                   <div><Label>Contact</Label><Input value={form.contact_name} onChange={(e) => setForm({ ...form, contact_name: e.target.value })} /></div>
-                  <div><Label>Phone</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
+                  <div>
+                    <Label>Phone</Label>
+                    <Input type="tel" inputMode="numeric" placeholder="646-692-1542" value={form.phone} onChange={(e) => setForm({ ...form, phone: formatPhone(e.target.value) })} />
+                  </div>
                 </div>
-                <div><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
+                <div>
+                  <Label>Email</Label>
+                  <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+                  {form.email.trim() && !EMAIL_RE.test(form.email.trim()) ? <p className="mt-1 text-xs text-destructive">Enter a valid email address.</p> : null}
+                </div>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-                <Button onClick={() => createMut.mutate()} disabled={!form.name.trim() || createMut.isPending}>{createMut.isPending ? "Adding…" : "Add"}</Button>
+                <Button
+                  onClick={() => createMut.mutate()}
+                  disabled={!form.name.trim() || (!!form.email.trim() && !EMAIL_RE.test(form.email.trim())) || createMut.isPending}
+                >
+                  {createMut.isPending ? "Adding…" : "Add"}
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -180,13 +201,25 @@ function SuppliersPage() {
             <div><Label>Address</Label><Textarea value={editForm.address} onChange={(e) => setEditForm({ ...editForm, address: e.target.value })} /></div>
             <div className="grid grid-cols-2 gap-3">
               <div><Label>Contact</Label><Input value={editForm.contact_name} onChange={(e) => setEditForm({ ...editForm, contact_name: e.target.value })} /></div>
-              <div><Label>Phone</Label><Input value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} /></div>
+              <div>
+                <Label>Phone</Label>
+                <Input type="tel" inputMode="numeric" placeholder="646-692-1542" value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: formatPhone(e.target.value) })} />
+              </div>
             </div>
-            <div><Label>Email</Label><Input type="email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} /></div>
+            <div>
+              <Label>Email</Label>
+              <Input type="email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} />
+              {editForm.email.trim() && !EMAIL_RE.test(editForm.email.trim()) ? <p className="mt-1 text-xs text-destructive">Enter a valid email address.</p> : null}
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditId(null)}>Cancel</Button>
-            <Button onClick={() => updateMut.mutate()} disabled={!editForm.name.trim() || updateMut.isPending}>{updateMut.isPending ? "Saving…" : "Save"}</Button>
+            <Button
+              onClick={() => updateMut.mutate()}
+              disabled={!editForm.name.trim() || (!!editForm.email.trim() && !EMAIL_RE.test(editForm.email.trim())) || updateMut.isPending}
+            >
+              {updateMut.isPending ? "Saving…" : "Save"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
