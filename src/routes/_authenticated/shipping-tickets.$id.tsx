@@ -134,8 +134,9 @@ function TicketView() {
               <Button size="sm" disabled={shipMut.isPending} onClick={() => shipMut.mutate()}>{shipMut.isPending ? "Marking shipped…" : "Mark shipped"}</Button>
             ) : null}
             {t.status === "shipped" ? (
-              <Button size="sm" variant="outline" onClick={() => deliveredMut.mutate()}>Mark delivered</Button>
+              <Button size="sm" variant="outline" onClick={openDeliverDialog}>Mark delivered</Button>
             ) : null}
+
             <UploadSignedTicketButton status={t.status} ticketNumber={t.ticket_number} variant="button" />
             <ShippingTicketDeleteButton
               ticketId={id}
