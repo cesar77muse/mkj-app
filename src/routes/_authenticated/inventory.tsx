@@ -54,13 +54,14 @@ function InventoryPage() {
     queryKey: ["inventory", "last-updated"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("v_project_last_updated")
+        .from("v_project_last_updated" as never)
         .select("project_id, last_updated");
       if (error) throw error;
       const map = new Map<string, string>();
-      for (const r of data ?? []) {
+      for (const r of (data ?? []) as unknown as Array<{ project_id: string | null; last_updated: string | null }>) {
         if (r.project_id && r.last_updated) map.set(r.project_id, r.last_updated);
       }
+
       return map;
     },
   });
