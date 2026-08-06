@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/page-header";
@@ -6,6 +7,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { FileText } from "lucide-react";
 import { openShippingTicketPdf } from "@/lib/shipping-ticket-pdf";
@@ -14,6 +20,9 @@ import { ShippingTicketDeleteButton } from "@/components/shipping-ticket-delete-
 import { UploadSignedTicketButton } from "@/components/upload-signed-ticket-button";
 import { ShippingTicketStatusBadge } from "@/components/shipping-ticket-status-badge";
 import { todayInBusinessTimezone } from "@/lib/date";
+import { useProfile, useSession } from "@/hooks/use-session";
+
+
 
 
 export const Route = createFileRoute("/_authenticated/shipping-tickets/$id")({
