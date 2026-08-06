@@ -23,16 +23,17 @@ register is verified fixed in production. The permission model came through roug
 45 authorisation probes without a single incorrect result — no privilege escalation,
 no cross-project leakage, no UI-only gate the database failed to back up.
 
-Of 11 live findings, **8 are closed**. The theme worth remembering: **7 of the 11 were
-deployment drift or data state, not application code.** The code was largely right;
-what was running didn't match it.
+Of 11 live findings, **6 are closed** and the remaining 5 are P3/informational — no
+P1 or P2 item is open. The theme worth remembering: **7 of the 11 were deployment
+drift or data state, not application code.** The code was largely right; what was
+running didn't match it.
 
 ### Status at a glance
 
 | ID | Severity | Finding | Status |
 |---|---|---|---|
-| **L-01** | P1 | `v_project_last_updated` missing → Inventory "Last updated" blank | ⚠️ **Owner reports fixed — needs confirmation** |
-| **L-02** | P1 | Users can forge notifications to themselves | ⚠️ **Owner reports fixed — needs confirmation** |
+| **L-01** | P1 | `v_project_last_updated` missing → Inventory "Last updated" blank | ✅ Fixed, confirmed live |
+| **L-02** | P1 | Users can forge notifications to themselves | ✅ Fixed, confirmed live |
 | **L-03** | P1 | PDF signed-URL TTL stuck at 120s | ✅ Fixed, confirmed live |
 | **L-04** | P2 | PM/Assignee show "Unassigned" for non-admins | ✅ Fixed, confirmed live |
 | **L-08** | P1 | `packing-slip-attachments` bucket missing | ✅ Fixed, confirmed live |
@@ -43,11 +44,11 @@ what was running didn't match it.
 | **L-07** | info | Two features visible but non-functional | 🔴 Open (by design, for now) |
 | **L-11** | info | RLS-blocked writes return success | 🔴 Open (hardening note) |
 
-> **On L-01 / L-02:** these were still failing on the 2026-08-06 remediation pass
-> (migrations `20260801222200` and `20260801222300` had not been applied). The owner
-> has since reported them fixed, but my session expired before I could re-run the
-> probes, so they are marked *needs confirmation* rather than closed. Both are
-> **30-second checks** — see H-01 and H-02 in the next section.
+> **L-01 / L-02 closed 2026-08-06.** Both migrations have now been applied and both
+> were re-verified live: `v_project_last_updated` returns real rows, and the Inventory
+> cards render `Last updated: 8/5/2026, 8:03:56 PM` instead of `—`; a direct
+> `POST /notifications` for the caller's own id now returns **`403` RLS** instead of
+> `201`. **Every P1 and P2 finding in this report is closed.**
 
 ---
 
@@ -59,14 +60,14 @@ need a second account or a human eye on a printed document.
 
 **Legend** — 🔴 must pass before the owner demo · 🟡 should pass · ⚪ nice to have
 
-### 2.1 Confirm the last two fixes 🔴
+### 2.1 Confirm the last two fixes — ✅ done 2026-08-06
 
-| | ID | Check | Pass looks like |
+| | ID | Check | Result |
 |---|---|---|---|
-| ⬜ | **H-01** | Open **Inventory**. Look at the project cards. | Each card shows a real date/time under "Last updated", **not** `—` |
-| ⬜ | **H-02** | Sign in as any user → **Notifications**. Confirm you only see genuine, system-generated items. | No stray `probe` / `qa` / `qa_final` rows; nothing fabricated |
+| ✅ | **H-01** | Inventory project cards show a real "Last updated" time | Both cards read `8/5/2026, 8:03:56 PM` — no longer `—` |
+| ✅ | **H-02** | A user cannot forge a notification to themselves | Direct `POST /notifications` → **`403` RLS** (was `201`) |
 
-If H-01 still shows `—`, migration `20260801222200` has not been applied.
+Verified by automated probe plus the rendered Inventory page. Nothing further needed.
 
 ### 2.2 Core forms — end to end through the real UI 🔴
 
@@ -198,16 +199,20 @@ checked. No user-facing impact today, but it is a live footgun for future code.
 
 ## 4. Closed findings — with evidence
 
-### L-01 — `v_project_last_updated` missing ⚠️ needs confirmation
-Migration `20260801222200` (F-31). Inventory's per-project "Last updated" query
-throws, React Query swallows it, and every card falls back to `—` for every user.
-Silent degradation, which is why it went unnoticed. **Confirm via H-01.**
+### L-01 — `v_project_last_updated` missing ✅
+Migration `20260801222200` (F-31). Inventory's per-project "Last updated" query threw,
+React Query swallowed it, and every card fell back to `—` for every user — silent
+degradation, which is why it went unnoticed for so long.
+**Fixed:** migration applied; the view returns rows and the cards render
+`Last updated: 8/5/2026, 8:03:56 PM`.
 
-### L-02 — Notification forgery ⚠️ needs confirmation
+### L-02 — Notification forgery ✅
 Migration `20260801222300` (F-33). `POST /notifications` with
-`recipient_user_id:<self>` returned `201`. Forging for *another* user was correctly
-refused, so blast radius is self-only — but fabricated "PO approved" messages
-undermine notifications as an audit signal. **Confirm via H-02.**
+`recipient_user_id:<self>` returned `201`. Forging for *another* user was already
+correctly refused, so blast radius was self-only — but fabricated "PO approved"
+messages undermine notifications as an audit signal.
+**Fixed:** `notif_insert_self` dropped; the same probe now returns **`403`**
+*"new row violates row-level security policy for table notifications"*.
 
 ### L-03 — PDF signed-URL TTL ✅
 Decoded a real `po-pdf` token for `MKJ2403EX001`: `exp - iat = 3600`. Both functions
@@ -451,7 +456,7 @@ testing were restored.
 
 ## 9. Recommended order
 
-1. **Confirm H-01 and H-02** — 30 seconds; closes the last two P1 items.
+1. ~~Confirm H-01 and H-02~~ — ✅ done 2026-08-06; all P1/P2 items now closed.
 2. **Run §2.4 (H-17/H-18)** — the only fix with no end-to-end verification.
 3. **Work §2.2** — the daily-use forms, especially **H-06**.
 4. Fix L-05 and L-06 — both small, both pure UI gating.
