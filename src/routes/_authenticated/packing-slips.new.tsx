@@ -149,9 +149,10 @@ function NewSlip() {
         _po_id: poDetail.data.po.id,
         _project_id: poDetail.data.po.project_id,
         _received_date: receivedDate,
-        _carrier: carrier || null,
-        _vendor_slip_number: vendorSlip || null,
-        _notes: notes || null,
+        _carrier: carrier || (null as never),
+        _vendor_slip_number: vendorSlip || (null as never),
+        _notes: notes || (null as never),
+
         _status: slipStatus,
       });
       if (error) throw error;
