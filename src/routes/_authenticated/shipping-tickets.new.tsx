@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { FileText, Plus, Trash } from "lucide-react";
+import { ArrowLeft, FileText, Plus, Trash } from "lucide-react";
 import { previewDraftShippingTicketPdf } from "@/lib/shipping-ticket-pdf";
 import { todayInBusinessTimezone } from "@/lib/date";
 
@@ -112,6 +112,9 @@ function NewTicket() {
   return (
     <div className="mx-auto max-w-5xl">
       <PageHeader title="New Shipping Ticket" description="Create a ticket to send items to a job site. Inventory is deducted when you mark it Shipped." />
+      <Button variant="outline" className="mb-4" onClick={() => navigate({ to: "/shipping-tickets" })}>
+        <ArrowLeft className="mr-2 h-4 w-4" /> Back to Shipping Tickets
+      </Button>
       <Card><CardContent className="space-y-4 p-4">
         <div className="grid gap-3 md:grid-cols-2">
           <div>
