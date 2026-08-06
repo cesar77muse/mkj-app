@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/page-header";
@@ -6,6 +7,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { FileText } from "lucide-react";
 import { openShippingTicketPdf } from "@/lib/shipping-ticket-pdf";
@@ -14,6 +20,9 @@ import { ShippingTicketDeleteButton } from "@/components/shipping-ticket-delete-
 import { UploadSignedTicketButton } from "@/components/upload-signed-ticket-button";
 import { ShippingTicketStatusBadge } from "@/components/shipping-ticket-status-badge";
 import { todayInBusinessTimezone } from "@/lib/date";
+import { useProfile, useSession } from "@/hooks/use-session";
+
+
 
 
 export const Route = createFileRoute("/_authenticated/shipping-tickets/$id")({
@@ -50,16 +59,53 @@ function TicketView() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const profile = useProfile();
+  const { email } = useSession();
+  const [deliverOpen, setDeliverOpen] = useState(false);
+  const [deliveredBy, setDeliveredBy] = useState("");
+  const [receivedBy, setReceivedBy] = useState("");
+  const [passNumber, setPassNumber] = useState("");
+  const [proofFile, setProofFile] = useState<File | null>(null);
+
+  function openDeliverDialog() {
+    setDeliveredBy(profile.data?.full_name ?? email ?? "");
+    setReceivedBy("");
+    setPassNumber("");
+    setProofFile(null);
+    setDeliverOpen(true);
+  }
+
   const deliveredMut = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("shipping_tickets").update({ status: "delivered", received_date: todayInBusinessTimezone() }).eq("id", id);
+      if (!proofFile) throw new Error("A photo or scan of the signed ticket is required");
+      const ext = proofFile.name.split(".").pop()?.toLowerCase() || "jpg";
+      const path = `${id}/proof.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("shipping-ticket-proofs")
+        .upload(path, proofFile, { upsert: true, contentType: proofFile.type || undefined });
+      if (upErr) throw upErr;
+      const { error } = await supabase
+        .from("shipping_tickets")
+        .update({
+          status: "delivered",
+          received_date: todayInBusinessTimezone(),
+          delivered_by: deliveredBy.trim(),
+          received_by: receivedBy.trim(),
+          pass_number: passNumber.trim() || null,
+          signature_url: path,
+        } as never)
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Marked delivered");
+      setDeliverOpen(false);
+      setProofFile(null);
       qc.invalidateQueries({ queryKey: ["ticket", id] });
     },
+    onError: (e: Error) => toast.error(e.message),
   });
+
 
   const pdfMut = useMutation({
     mutationFn: () => openShippingTicketPdf(id),
@@ -88,8 +134,9 @@ function TicketView() {
               <Button size="sm" disabled={shipMut.isPending} onClick={() => shipMut.mutate()}>{shipMut.isPending ? "Marking shipped…" : "Mark shipped"}</Button>
             ) : null}
             {t.status === "shipped" ? (
-              <Button size="sm" variant="outline" onClick={() => deliveredMut.mutate()}>Mark delivered</Button>
+              <Button size="sm" variant="outline" onClick={openDeliverDialog}>Mark delivered</Button>
             ) : null}
+
             <UploadSignedTicketButton status={t.status} ticketNumber={t.ticket_number} variant="button" />
             <ShippingTicketDeleteButton
               ticketId={id}
@@ -102,6 +149,51 @@ function TicketView() {
 
         }
       />
+
+      <Dialog open={deliverOpen} onOpenChange={(o) => { setDeliverOpen(o); if (!o) setProofFile(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Mark delivered {t.ticket_number}</DialogTitle>
+            <DialogDescription>
+              Record who delivered and received the shipment, and attach the signed delivery ticket.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3">
+            <div className="grid gap-1.5">
+              <Label htmlFor="delivered-by">Delivered by</Label>
+              <Input id="delivered-by" value={deliveredBy} onChange={(e) => setDeliveredBy(e.target.value)} />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="received-by">Received by</Label>
+              <Input id="received-by" value={receivedBy} onChange={(e) => setReceivedBy(e.target.value)} placeholder="Name of the person signing" />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="pass-number">Pass # (optional)</Label>
+              <Input id="pass-number" value={passNumber} onChange={(e) => setPassNumber(e.target.value)} />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="proof-file">Signed ticket photo or scan</Label>
+              <Input
+                id="proof-file"
+                type="file"
+                accept="application/pdf,image/*"
+                onChange={(e) => setProofFile(e.target.files?.[0] ?? null)}
+              />
+              {proofFile ? <p className="text-xs text-muted-foreground">{proofFile.name}</p> : null}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeliverOpen(false)}>Cancel</Button>
+            <Button
+              disabled={!deliveredBy.trim() || !receivedBy.trim() || !proofFile || deliveredMut.isPending}
+              onClick={() => deliveredMut.mutate()}
+            >
+              {deliveredMut.isPending ? "Saving…" : "Mark delivered"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Card><CardContent className="p-4 text-sm">
         <div className="grid gap-2 md:grid-cols-2">
           <div>Deliver to: <span className="font-medium">{t.deliver_to_name ?? "—"}</span></div>
