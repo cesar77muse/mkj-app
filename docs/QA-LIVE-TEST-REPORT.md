@@ -59,6 +59,29 @@ to back up.
 
 ---
 
+## 1.5 Owner remediation pass — 2026-08-06
+
+Re-verified empirically against the live environment (direct REST/RPC calls with a
+real session token — not source review, not the `list` endpoint for buckets, same
+methodology this report itself used). Full detail in each item's own section below;
+summary:
+
+| ID | Status | Evidence |
+|---|---|---|
+| **L-01** | ❌ Still open | `GET v_project_last_updated` → `404 PGRST205`, view does not exist live |
+| **L-02** | ❌ Still open | Direct `POST /notifications` with `recipient_user_id:<self>` → `201 Created`, forge still succeeds |
+| **L-03** | ✅ Fixed, confirmed live | Decoded a real `po-pdf` signed-URL token: `exp - iat = 3600` |
+| **L-04** | ✅ Fixed, confirmed live | Fix is `v_user_roles`, a new view mirroring the `v_project_directory`/F-15 pattern. Verified two ways after the owner published: (1) `GET v_user_roles` returns real rows directly against the live DB; (2) the live JS bundle's `assignee-select` and `project-manager-select` chunks were both re-fetched and confirmed to reference `v_user_roles`, replacing the old broken `user_roles` query. (Initial check caught this as "DB fixed, frontend not yet published" — owner published, re-checked, now fully confirmed.) |
+| **L-08** | ✅ Fixed, confirmed live | Both buckets exist — proved via upload attempt (`415 invalid_mime_type` on a disallowed file), the same "upload is authoritative, `list` is not" method this report used, not a `404 NoSuchBucket` |
+| **L-10** | ✅ Fixed, confirmed live | `project_managers` for 2403 now has exactly one row, matching `project_manager_id` (Rucha). Root cause note: the F-07 trigger only fires on an actual *change* to `project_manager_id` — since it was already correct, it never touched the stale rows; they required a direct one-off `DELETE`, which has been run. |
+
+**Not yet attempted this pass** (still exactly as originally reported, no new code written): L-05, L-06, L-07, L-09, L-11.
+
+**Outstanding actions before a clean re-run:**
+1. Run migrations `20260801222200` (L-01) and `20260801222300` (L-02) — still not applied, despite other migrations from the same batch being live. These are the only two items left blocking a fully clean re-run.
+
+---
+
 ## 2. P1 — Repository and live environment have diverged
 
 The repo is **not** a reliable description of what is running. Each item below is
@@ -66,6 +89,8 @@ fixed in code and absent in production.
 
 ### L-01 — `v_project_last_updated` was never created; Inventory "Last updated" is permanently blank
 *Migration `20260801222200` (F-31) not applied.*
+
+> **Status (2026-08-06):** ❌ **Still open, re-verified** — `GET v_project_last_updated` still returns `404 PGRST205` live. Migration `20260801222200` needs to be run.
 
 ```
 GET /rest/v1/v_project_last_updated
@@ -79,6 +104,8 @@ page degrades silently, which is why it went unnoticed.
 
 ### L-02 — Any user can still forge notifications addressed to themselves
 *Migration `20260801222300` (F-33) not applied.*
+
+> **Status (2026-08-06):** ❌ **Still open, re-verified** — repeated the exact same probe (direct `POST /notifications` with `recipient_user_id:<self>`), got `201 Created` again. Migration `20260801222300` needs to be run. (The probe row was marked read; it can't be deleted without direct DB access — no `DELETE` policy on `notifications`, same limitation noted elsewhere in this report for the `jbaidoo@` test rows.)
 
 ```
 POST /rest/v1/notifications {recipient_user_id:<self>, type:"qa", title:"probe"}
@@ -100,6 +127,8 @@ token claims: iat 1785972171, exp 1785972291  →  120s
 
 Leave a PO PDF tab open for two minutes, reload, and it breaks. **Fix:** redeploy
 `po-pdf` and `shipping-ticket-pdf`.
+
+> **Status (2026-08-06):** ✅ **Fixed, confirmed live** — generated a real signed URL for an actual PO (`MKJ2403EX001`), decoded its token: `exp - iat = 3600`. Both functions redeployed successfully.
 
 ### L-08 — The `packing-slip-attachments` bucket does not exist; F-40 is dead in production
 
@@ -128,6 +157,8 @@ the exact failure mode already documented in migration `20260801211252`, which w
 that bucket inserts from the SQL Editor silently do nothing on this project and must
 be created by hand in the Storage tab.
 
+> **Status (2026-08-06):** ✅ **Fixed, confirmed live** — re-ran the same "upload is authoritative" test this finding used. `packing-slip-attachments` and `shipping-ticket-proofs` (the F-13 bucket, same failure mode, not yet live-tested when this report was written) both now return `415 invalid_mime_type` on a disallowed file type — proving both buckets exist with their intended MIME restrictions, not `404 NoSuchBucket`. Created by hand via the Storage tab, matching this section's own documented workaround.
+
 ### Scope note — this is not "everything after a cut-off"
 
 `20260801222100` and `20260801222400` **are** live, while `222200` and `222300` are
@@ -139,6 +170,8 @@ reconcile the whole applied set against the repo.
 ## 3. P2 / P3 — Defects in the running application
 
 ### L-04 (P2) — Project Manager and Assignee show "Unassigned" for every non-admin
+
+> **Status (2026-08-06):** ✅ **Fixed, confirmed live (DB + frontend both verified).** Root cause fixed by adding `v_user_roles`, a view mirroring the exact `v_project_directory`/F-15 pattern — it bypasses `user_roles`' self-scoped RLS via Postgres view-owner semantics, gated by `has_any_role` so it stays restricted to real app users. Verified two ways: (1) `GET v_user_roles` returns real rows directly against the live DB; (2) the published JS bundle's `assignee-select` and `project-manager-select` chunks were both fetched fresh from the live site and confirmed to reference `v_user_roles`, not the old `user_roles` query. Could not test end-to-end as a non-admin (no second account available), but both halves of the fix are independently confirmed live and the mechanism is the same one already proven for `v_project_directory` elsewhere in this app.
 
 Not a blank field — the UI states a **wrong fact**.
 
@@ -191,6 +224,10 @@ check a project's PM field is that project's PM, and they are the one user for w
 it renders correctly.
 
 ### L-10 (P2) — Extra project-manager assignments cannot be removed from the UI
+
+> **Status (2026-08-06):** ✅ **Data fixed and confirmed live** — owner confirmed both extra rows were mistaken assignments (Cesar Hernandez should only manage 2601; Lucia Salinas is `warehouse_manager`, which already grants blanket access and needs no `project_managers` row at all). Removed via a direct one-off `DELETE` (the only remaining write path, since F-25 dropped all other direct-write access to this table). Re-verified live: `project_managers` for project 2403 now returns exactly **one** row, matching `project_manager_id` (Rucha). No UI/code change was made — this was purely a data fix, and the owner declined building an admin-only management control for now, since the write path that created this situation is already closed.
+>
+> **Root cause note confirmed:** the F-07 revocation trigger only fires on an actual *change* to `project_manager_id`. Since 2403's primary PM was already correct (Rucha), re-setting it to the same value was a no-op that never touched the stale rows — they were only removable via direct DB access, exactly as this finding originally concluded.
 
 The Users page no longer renders assignment checkboxes for managers. It shows a
 read-only list plus *"Set via each project's edit dialog — a project has one
