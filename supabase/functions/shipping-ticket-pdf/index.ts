@@ -88,6 +88,10 @@ function buildPdfData(t: any, items: RawItem[]): Omit<ShippingTicketPdfData, "lo
     shipBy: t.ship_by,
     contractNumber: t.projects?.contract_number ?? null,
     items: toLineItems(items),
+    deliveredBy: t.delivered_by,
+    receivedBy: t.received_by,
+    passNumber: t.pass_number,
+    receivedDate: formatDate(t.received_date),
   };
 }
 
@@ -105,6 +109,13 @@ function hashableFields(t: any, items: RawItem[]) {
     // Contract number is read live from the project (not snapshotted), so it
     // must be in the hash: if it changes, the cached PDF should invalidate.
     contract_number: t.projects?.contract_number ?? null,
+    // Proof-of-delivery fields must be hashed too: a ticket's PDF is often
+    // cached from before delivery (blank fill-in lines) -- without this,
+    // "Mark delivered" filling them in would never invalidate that cache.
+    delivered_by: t.delivered_by,
+    received_by: t.received_by,
+    pass_number: t.pass_number,
+    received_date: t.received_date,
     items: items.map((it) => ({
       part_number: it.products?.part_number ?? null,
       description: it.description,

@@ -35,14 +35,29 @@ export interface ShippingTicketPdfData {
   items: ShippingTicketPdfLineItem[];
   printedOn: string;
   logoBytes?: Uint8Array | null;
+  deliveredBy?: string | null;
+  receivedBy?: string | null;
+  passNumber?: string | null;
+  receivedDate?: string | null;
 }
 
-/** Draws one "Label: ____________" line for the proof-of-delivery block; the line is left blank — filled in by hand on the printed/scanned copy. */
-function drawFillLine(cursor: PdfCursor, label: string, x: number, y: number, lineWidth: number) {
+/**
+ * Draws one "Label: ____________" line for the proof-of-delivery block. If a
+ * captured value is given, it's printed where the line would be (the ticket
+ * went through the app's "Mark delivered" flow, which requires a photo/scan
+ * of the physically-signed copy — captured separately as an attachment, not
+ * embedded here). Otherwise the line stays blank, same as before, for
+ * tickets delivered before this capture existed.
+ */
+function drawFillLine(cursor: PdfCursor, label: string, value: string | null | undefined, x: number, y: number, lineWidth: number) {
   const labelSize = 8.5;
   drawText(cursor, label, x, y, { size: labelSize, bold: true });
   const labelWidth = 90;
-  drawLine(cursor, x + labelWidth, y - 2, x + labelWidth + lineWidth, y - 2, 0.75);
+  if (value) {
+    drawText(cursor, value, x + labelWidth, y, { size: labelSize });
+  } else {
+    drawLine(cursor, x + labelWidth, y - 2, x + labelWidth + lineWidth, y - 2, 0.75);
+  }
 }
 
 export async function renderShippingTicketPdf(data: ShippingTicketPdfData): Promise<Uint8Array> {
@@ -97,20 +112,24 @@ export async function renderShippingTicketPdf(data: ShippingTicketPdfData): Prom
   drawTable(cursor, columns, tableRows);
   cursor.y -= 20;
 
-  // Proof-of-delivery block: intentionally blank fill-in lines — these are
-  // captured by hand on delivery, not through the app (see also the planned
-  // future "attach signed/scanned ticket" feature).
+  // Proof-of-delivery block: prints captured values once "Mark delivered"
+  // has recorded them, otherwise falls back to blank fill-in lines exactly
+  // as before (for tickets delivered before this capture existed).
   ensureSpace(cursor, 90);
   const halfWidth = CONTENT_WIDTH / 2;
-  drawFillLine(cursor, "Delivered by:", MARGIN, cursor.y, halfWidth - 100);
+  drawFillLine(cursor, "Delivered by:", data.deliveredBy, MARGIN, cursor.y, halfWidth - 100);
   cursor.y -= 26;
-  drawFillLine(cursor, "Received by:", MARGIN, cursor.y, halfWidth - 160);
+  drawFillLine(cursor, "Received by:", data.receivedBy, MARGIN, cursor.y, halfWidth - 160);
   drawText(cursor, "Pass #", MARGIN + halfWidth - 60, cursor.y, { size: 8.5, bold: true });
-  drawLine(cursor, MARGIN + halfWidth - 20, cursor.y - 2, MARGIN + CONTENT_WIDTH, cursor.y - 2, 0.75);
+  if (data.passNumber) {
+    drawText(cursor, data.passNumber, MARGIN + halfWidth - 20, cursor.y, { size: 8.5 });
+  } else {
+    drawLine(cursor, MARGIN + halfWidth - 20, cursor.y - 2, MARGIN + CONTENT_WIDTH, cursor.y - 2, 0.75);
+  }
   cursor.y -= 26;
-  drawFillLine(cursor, "Print name:", MARGIN, cursor.y, halfWidth - 100);
+  drawFillLine(cursor, "Print name:", data.receivedBy, MARGIN, cursor.y, halfWidth - 100);
   cursor.y -= 26;
-  drawFillLine(cursor, "Date:", MARGIN, cursor.y, halfWidth - 100);
+  drawFillLine(cursor, "Date:", data.receivedDate, MARGIN, cursor.y, halfWidth - 100);
   cursor.y -= 20;
 
   drawFooters(cursor, data.printedOn);

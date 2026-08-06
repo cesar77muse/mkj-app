@@ -17,7 +17,6 @@ import { FileText } from "lucide-react";
 import { openShippingTicketPdf } from "@/lib/shipping-ticket-pdf";
 import { ShippingTicketEditDialog } from "@/components/shipping-ticket-edit-dialog";
 import { ShippingTicketDeleteButton } from "@/components/shipping-ticket-delete-button";
-import { UploadSignedTicketButton } from "@/components/upload-signed-ticket-button";
 import { ShippingTicketStatusBadge } from "@/components/shipping-ticket-status-badge";
 import { todayInBusinessTimezone } from "@/lib/date";
 import { useProfile, useSession } from "@/hooks/use-session";
@@ -137,7 +136,6 @@ function TicketView() {
               <Button size="sm" variant="outline" onClick={openDeliverDialog}>Mark delivered</Button>
             ) : null}
 
-            <UploadSignedTicketButton status={t.status} ticketNumber={t.ticket_number} variant="button" />
             <ShippingTicketDeleteButton
               ticketId={id}
               ticketNumber={t.ticket_number}

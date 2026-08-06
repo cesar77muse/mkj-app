@@ -12,7 +12,6 @@ import { toast } from "sonner";
 import { openShippingTicketPdf } from "@/lib/shipping-ticket-pdf";
 import { ShippingTicketEditDialog } from "@/components/shipping-ticket-edit-dialog";
 import { ShippingTicketDeleteButton } from "@/components/shipping-ticket-delete-button";
-import { UploadSignedTicketButton } from "@/components/upload-signed-ticket-button";
 import { ShippingTicketStatusBadge } from "@/components/shipping-ticket-status-badge";
 
 
@@ -105,7 +104,6 @@ function STList() {
                       <FileText className="mr-1 h-4 w-4" />
                       {pdfMut.isPending && pdfMut.variables === t.id ? "Opening…" : "View Ticket"}
                     </Button>
-                    <UploadSignedTicketButton status={t.status} ticketNumber={t.ticket_number} />
                     <ShippingTicketEditDialog ticketId={t.id} status={t.status} />
                     <ShippingTicketDeleteButton ticketId={t.id} ticketNumber={t.ticket_number} status={t.status} />
 
