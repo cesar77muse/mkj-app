@@ -59,16 +59,53 @@ function TicketView() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const profile = useProfile();
+  const { email } = useSession();
+  const [deliverOpen, setDeliverOpen] = useState(false);
+  const [deliveredBy, setDeliveredBy] = useState("");
+  const [receivedBy, setReceivedBy] = useState("");
+  const [passNumber, setPassNumber] = useState("");
+  const [proofFile, setProofFile] = useState<File | null>(null);
+
+  function openDeliverDialog() {
+    setDeliveredBy(profile.data?.full_name ?? email ?? "");
+    setReceivedBy("");
+    setPassNumber("");
+    setProofFile(null);
+    setDeliverOpen(true);
+  }
+
   const deliveredMut = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("shipping_tickets").update({ status: "delivered", received_date: todayInBusinessTimezone() }).eq("id", id);
+      if (!proofFile) throw new Error("A photo or scan of the signed ticket is required");
+      const ext = proofFile.name.split(".").pop()?.toLowerCase() || "jpg";
+      const path = `${id}/proof.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("shipping-ticket-proofs")
+        .upload(path, proofFile, { upsert: true, contentType: proofFile.type || undefined });
+      if (upErr) throw upErr;
+      const { error } = await supabase
+        .from("shipping_tickets")
+        .update({
+          status: "delivered",
+          received_date: todayInBusinessTimezone(),
+          delivered_by: deliveredBy.trim(),
+          received_by: receivedBy.trim(),
+          pass_number: passNumber.trim() || null,
+          signature_url: path,
+        } as never)
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Marked delivered");
+      setDeliverOpen(false);
+      setProofFile(null);
       qc.invalidateQueries({ queryKey: ["ticket", id] });
     },
+    onError: (e: Error) => toast.error(e.message),
   });
+
 
   const pdfMut = useMutation({
     mutationFn: () => openShippingTicketPdf(id),
