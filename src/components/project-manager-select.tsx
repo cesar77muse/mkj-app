@@ -14,10 +14,12 @@ export function useManagers() {
   return useQuery({
     queryKey: ["manager-users"],
     queryFn: async (): Promise<ManagerOption[]> => {
+      // v_user_roles, not user_roles directly: the raw table is self-scoped
+      // RLS, which would collapse this to "just me" for any non-admin (L-04).
       const { data: roleRows, error: roleErr } = await supabase
-        .from("user_roles").select("user_id").eq("role", "manager");
+        .from("v_user_roles").select("user_id").eq("role", "manager");
       if (roleErr) throw roleErr;
-      const ids = (roleRows ?? []).map((r) => r.user_id);
+      const ids = (roleRows ?? []).map((r) => r.user_id).filter((id): id is string => !!id);
       if (ids.length === 0) return [];
       // user_directory exposes names only — emails stay restricted to the owner and admins
       const { data, error } = await supabase

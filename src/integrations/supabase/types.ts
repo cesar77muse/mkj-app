@@ -934,6 +934,20 @@ export type Database = {
         }
         Relationships: []
       }
+      v_project_last_updated: {
+        Row: {
+          last_updated: string | null
+          project_id: string | null
+        }
+        Relationships: []
+      }
+      v_user_roles: {
+        Row: {
+          role: Database["public"]["Enums"]["app_role"] | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
       v_project_inventory: {
         Row: {
           on_hand: number | null
