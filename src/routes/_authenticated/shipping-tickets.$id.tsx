@@ -149,6 +149,51 @@ function TicketView() {
 
         }
       />
+
+      <Dialog open={deliverOpen} onOpenChange={(o) => { setDeliverOpen(o); if (!o) setProofFile(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Mark delivered {t.ticket_number}</DialogTitle>
+            <DialogDescription>
+              Record who delivered and received the shipment, and attach the signed delivery ticket.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3">
+            <div className="grid gap-1.5">
+              <Label htmlFor="delivered-by">Delivered by</Label>
+              <Input id="delivered-by" value={deliveredBy} onChange={(e) => setDeliveredBy(e.target.value)} />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="received-by">Received by</Label>
+              <Input id="received-by" value={receivedBy} onChange={(e) => setReceivedBy(e.target.value)} placeholder="Name of the person signing" />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="pass-number">Pass # (optional)</Label>
+              <Input id="pass-number" value={passNumber} onChange={(e) => setPassNumber(e.target.value)} />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="proof-file">Signed ticket photo or scan</Label>
+              <Input
+                id="proof-file"
+                type="file"
+                accept="application/pdf,image/*"
+                onChange={(e) => setProofFile(e.target.files?.[0] ?? null)}
+              />
+              {proofFile ? <p className="text-xs text-muted-foreground">{proofFile.name}</p> : null}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeliverOpen(false)}>Cancel</Button>
+            <Button
+              disabled={!deliveredBy.trim() || !receivedBy.trim() || !proofFile || deliveredMut.isPending}
+              onClick={() => deliveredMut.mutate()}
+            >
+              {deliveredMut.isPending ? "Saving…" : "Mark delivered"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Card><CardContent className="p-4 text-sm">
         <div className="grid gap-2 md:grid-cols-2">
           <div>Deliver to: <span className="font-medium">{t.deliver_to_name ?? "—"}</span></div>
