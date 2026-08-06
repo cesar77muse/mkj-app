@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { FileText, Plus, Trash } from "lucide-react";
+import { ArrowLeft, FileText, Plus, Trash } from "lucide-react";
 import { previewDraftPurchaseOrderPdf } from "@/lib/po-pdf";
 import { AssigneeSelect } from "@/components/assignee-select";
 
@@ -123,6 +123,9 @@ function NewPO() {
   return (
     <div className="mx-auto max-w-5xl">
       <PageHeader title="New Purchase Order" description="Fill in the details, preview the PDF to double-check everything, then create the PO." />
+      <Button variant="outline" className="mb-4" onClick={() => navigate({ to: "/purchase-orders" })}>
+        <ArrowLeft className="mr-2 h-4 w-4" /> Back to Purchase Orders
+      </Button>
       <Card><CardContent className="space-y-4 p-4">
         <div className="grid gap-3 md:grid-cols-2">
           <div>

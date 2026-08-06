@@ -934,20 +934,6 @@ export type Database = {
         }
         Relationships: []
       }
-      v_project_last_updated: {
-        Row: {
-          last_updated: string | null
-          project_id: string | null
-        }
-        Relationships: []
-      }
-      v_user_roles: {
-        Row: {
-          role: Database["public"]["Enums"]["app_role"] | null
-          user_id: string | null
-        }
-        Relationships: []
-      }
       v_project_inventory: {
         Row: {
           on_hand: number | null
@@ -977,6 +963,43 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      v_project_last_updated: {
+        Row: {
+          last_updated: string | null
+          project_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_adjustments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_adjustments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_project_directory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_user_roles: {
+        Row: {
+          role: Database["public"]["Enums"]["app_role"] | null
+          user_id: string | null
+        }
+        Insert: {
+          role?: Database["public"]["Enums"]["app_role"] | null
+          user_id?: string | null
+        }
+        Update: {
+          role?: Database["public"]["Enums"]["app_role"] | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
     }
     Functions: {
