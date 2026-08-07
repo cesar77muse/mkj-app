@@ -141,7 +141,7 @@ function POList() {
                   </div>
                 </TableCell>
               </TableRow>
-            )) : <TableRow><TableCell colSpan={7} className="py-6 text-center text-sm text-muted-foreground">No purchase orders yet.</TableCell></TableRow>}
+            )) : <TableRow><TableCell colSpan={8} className="py-6 text-center text-sm text-muted-foreground">No purchase orders yet.</TableCell></TableRow>}
           </TableBody>
         </Table>
       </CardContent></Card>
