@@ -7,7 +7,7 @@ import { useRoles } from "@/hooks/use-session";
 import { ROLE_LABELS, highestRole } from "@/lib/roles";
 import { daysAgoInBusinessTimezone } from "@/lib/date";
 import { Badge } from "@/components/ui/badge";
-import { FolderKanban, ClipboardList, Truck, Package, ArrowLeftRight } from "lucide-react";
+import { FolderKanban, ClipboardList, Truck, Package, ArrowLeftRight, AlertTriangle } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — MKJ Ops" }] }),
