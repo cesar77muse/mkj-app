@@ -75,6 +75,7 @@ function POView() {
   // once a packing slip records a receipt — not manually selectable here.
   const currentStatus = po.data.status;
   const hasReceipts = currentStatus === "partially_received" || currentStatus === "received";
+  const procoreNeeded = needsProcoreEntry(currentStatus, !!po.data.entered_in_procore);
   const statusOptions = hasReceipts
     ? PO_STATUS_OPTIONS.filter((o) => o.value === currentStatus)
     : PO_STATUS_OPTIONS.filter((o) => o.value !== "partially_received" && o.value !== "received");
