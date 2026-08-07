@@ -80,6 +80,7 @@ function POView() {
     <div className="mx-auto max-w-5xl">
       <PageHeader
         title={`Purchase Order ${po.data.po_number}`}
+        backTo="/purchase-orders"
         description={
           <>Project <Link className="font-mono text-primary hover:underline" to="/projects/$mkj" params={{ mkj: po.data.projects?.mkj_number ?? "" }}>{po.data.projects?.mkj_number}</Link> — {po.data.projects?.name}</> as unknown as string
         }

@@ -1063,6 +1063,7 @@ export type Database = {
           _bill_to: string
           _delivery_date: string
           _description: string
+          _new_supplier_name?: string
           _payment_terms: string
           _project_id: string
           _ship_to: string
