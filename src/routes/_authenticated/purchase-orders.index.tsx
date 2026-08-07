@@ -29,7 +29,7 @@ function POList() {
       // truncated one, instead of silently dropping anything past the limit.
       const { data } = await supabase
         .from("purchase_orders")
-        .select("id, po_number, status, delivery_date, created_at, projects:project_id(mkj_number, name), suppliers:supplier_id(name)")
+        .select("id, po_number, status, delivery_date, entered_in_procore, created_at, projects:project_id(mkj_number, name), suppliers:supplier_id(name)")
         .order("created_at", { ascending: false })
         .limit(PO_LIST_LIMIT + 1);
       const rows = data ?? [];
