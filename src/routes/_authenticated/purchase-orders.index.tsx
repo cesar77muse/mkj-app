@@ -102,7 +102,7 @@ function POList() {
       <Card><CardContent className="p-0">
         <Table>
           <TableHeader><TableRow>
-            <TableHead>PO #</TableHead><TableHead>Project</TableHead><TableHead>Supplier</TableHead><TableHead>Status</TableHead><TableHead>Expected</TableHead><TableHead>Received</TableHead><TableHead className="text-right">Actions</TableHead>
+            <TableHead>PO #</TableHead><TableHead>Project</TableHead><TableHead>Supplier</TableHead><TableHead>Status</TableHead><TableHead>Procore</TableHead><TableHead>Expected</TableHead><TableHead>Received</TableHead><TableHead className="text-right">Actions</TableHead>
           </TableRow></TableHeader>
           <TableBody>
             {filtered.length > 0 ? filtered.map((po) => (
