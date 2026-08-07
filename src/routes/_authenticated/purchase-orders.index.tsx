@@ -11,7 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { FileText, Plus, Search } from "lucide-react";
+import { AlertTriangle, Check, FileText, Plus, Search } from "lucide-react";
 import { openPurchaseOrderPdf } from "@/lib/po-pdf";
 import { needsProcoreEntry } from "@/components/po-procore-checkbox";
 
