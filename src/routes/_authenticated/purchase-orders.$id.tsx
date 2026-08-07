@@ -14,6 +14,9 @@ import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
 import { openPurchaseOrderPdf } from "@/lib/po-pdf";
 import { assigneeLabel, useAssignableUsers } from "@/components/assignee-select";
+import { PoProcoreCheckbox, needsProcoreEntry } from "@/components/po-procore-checkbox";
+import { Label } from "@/components/ui/label";
+import { AlertTriangle } from "lucide-react";
 
 type POStatus = Database["public"]["Enums"]["po_status"];
 
