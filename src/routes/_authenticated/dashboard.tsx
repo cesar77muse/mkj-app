@@ -39,12 +39,13 @@ function Dashboard() {
   const stats = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
-      const [projects, pos, tickets, slips, borrow] = await Promise.all([
+      const [projects, pos, tickets, slips, borrow, procore] = await Promise.all([
         supabase.from("projects").select("*", { count: "exact", head: true }).eq("status", "active"),
         supabase.from("purchase_orders").select("*", { count: "exact", head: true }).in("status", ["draft", "approved", "executed", "partially_received"]),
         supabase.from("shipping_tickets").select("*", { count: "exact", head: true }).in("status", ["draft", "ready"]),
         supabase.from("packing_slips").select("*", { count: "exact", head: true }).gte("received_date", daysAgoInBusinessTimezone(7)),
         supabase.from("borrow_requests").select("*", { count: "exact", head: true }).eq("status", "pending"),
+        supabase.from("purchase_orders").select("*", { count: "exact", head: true }).in("status", ["executed", "partially_received", "received"]).eq("entered_in_procore", false),
       ]);
       return {
         activeProjects: projects.count ?? 0,
@@ -52,6 +53,7 @@ function Dashboard() {
         openTickets: tickets.count ?? 0,
         slipsWeek: slips.count ?? 0,
         pendingBorrow: borrow.count ?? 0,
+        notInProcore: procore.count ?? 0,
       };
     },
   });
