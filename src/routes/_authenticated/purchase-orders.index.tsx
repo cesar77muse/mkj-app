@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { FileText, Plus, Search } from "lucide-react";
 import { openPurchaseOrderPdf } from "@/lib/po-pdf";
+import { PoProcoreCheckbox, needsProcoreEntry } from "@/components/po-procore-checkbox";
 
 export const Route = createFileRoute("/_authenticated/purchase-orders/")({
   head: () => ({ meta: [{ title: "Purchase Orders — MKJ Ops" }] }),
