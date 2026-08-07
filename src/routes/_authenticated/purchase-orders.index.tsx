@@ -112,6 +112,17 @@ function POList() {
                 <TableCell><span className="font-mono text-xs">{po.projects?.mkj_number}</span></TableCell>
                 <TableCell>{po.suppliers?.name ?? "—"}</TableCell>
                 <TableCell><POStatusBadge status={po.status} /></TableCell>
+                <TableCell>
+                  {needsProcoreEntry(po.status, po.entered_in_procore) ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-status-partial px-2.5 py-0.5 text-xs font-medium text-status-partial-foreground">
+                      <AlertTriangle className="h-3 w-3" aria-hidden />Not in Procore
+                    </span>
+                  ) : po.entered_in_procore ? (
+                    <span className="inline-flex items-center gap-1 text-xs text-muted-foreground"><Check className="h-4 w-4" aria-hidden />Entered</span>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </TableCell>
                 <TableCell>{po.delivery_date ?? "—"}</TableCell>
                 <TableCell>{receipts.data?.[po.id] ?? "—"}</TableCell>
                 <TableCell className="text-right">
