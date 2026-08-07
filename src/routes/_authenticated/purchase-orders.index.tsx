@@ -11,8 +11,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { FileText, Plus, Search } from "lucide-react";
+import { AlertTriangle, Check, FileText, Plus, Search } from "lucide-react";
 import { openPurchaseOrderPdf } from "@/lib/po-pdf";
+import { needsProcoreEntry } from "@/components/po-procore-checkbox";
 
 export const Route = createFileRoute("/_authenticated/purchase-orders/")({
   head: () => ({ meta: [{ title: "Purchase Orders — MKJ Ops" }] }),
@@ -29,7 +30,7 @@ function POList() {
       // truncated one, instead of silently dropping anything past the limit.
       const { data } = await supabase
         .from("purchase_orders")
-        .select("id, po_number, status, delivery_date, created_at, projects:project_id(mkj_number, name), suppliers:supplier_id(name)")
+        .select("id, po_number, status, delivery_date, entered_in_procore, created_at, projects:project_id(mkj_number, name), suppliers:supplier_id(name)")
         .order("created_at", { ascending: false })
         .limit(PO_LIST_LIMIT + 1);
       const rows = data ?? [];
@@ -101,7 +102,7 @@ function POList() {
       <Card><CardContent className="p-0">
         <Table>
           <TableHeader><TableRow>
-            <TableHead>PO #</TableHead><TableHead>Project</TableHead><TableHead>Supplier</TableHead><TableHead>Status</TableHead><TableHead>Expected</TableHead><TableHead>Received</TableHead><TableHead className="text-right">Actions</TableHead>
+            <TableHead>PO #</TableHead><TableHead>Project</TableHead><TableHead>Supplier</TableHead><TableHead>Status</TableHead><TableHead>Procore</TableHead><TableHead>Expected</TableHead><TableHead>Received</TableHead><TableHead className="text-right">Actions</TableHead>
           </TableRow></TableHeader>
           <TableBody>
             {filtered.length > 0 ? filtered.map((po) => (
@@ -111,6 +112,17 @@ function POList() {
                 <TableCell><span className="font-mono text-xs">{po.projects?.mkj_number}</span></TableCell>
                 <TableCell>{po.suppliers?.name ?? "—"}</TableCell>
                 <TableCell><POStatusBadge status={po.status} /></TableCell>
+                <TableCell>
+                  {needsProcoreEntry(po.status, po.entered_in_procore) ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-status-partial px-2.5 py-0.5 text-xs font-medium text-status-partial-foreground">
+                      <AlertTriangle className="h-3 w-3" aria-hidden />Not in Procore
+                    </span>
+                  ) : po.entered_in_procore ? (
+                    <span className="inline-flex items-center gap-1 text-xs text-muted-foreground"><Check className="h-4 w-4" aria-hidden />Entered</span>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </TableCell>
                 <TableCell>{po.delivery_date ?? "—"}</TableCell>
                 <TableCell>{receipts.data?.[po.id] ?? "—"}</TableCell>
                 <TableCell className="text-right">
@@ -129,7 +141,7 @@ function POList() {
                   </div>
                 </TableCell>
               </TableRow>
-            )) : <TableRow><TableCell colSpan={7} className="py-6 text-center text-sm text-muted-foreground">No purchase orders yet.</TableCell></TableRow>}
+            )) : <TableRow><TableCell colSpan={8} className="py-6 text-center text-sm text-muted-foreground">No purchase orders yet.</TableCell></TableRow>}
           </TableBody>
         </Table>
       </CardContent></Card>

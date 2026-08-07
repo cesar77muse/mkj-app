@@ -14,6 +14,9 @@ import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
 import { openPurchaseOrderPdf } from "@/lib/po-pdf";
 import { assigneeLabel, useAssignableUsers } from "@/components/assignee-select";
+import { PoProcoreCheckbox, needsProcoreEntry } from "@/components/po-procore-checkbox";
+import { Label } from "@/components/ui/label";
+import { AlertTriangle } from "lucide-react";
 
 type POStatus = Database["public"]["Enums"]["po_status"];
 
@@ -72,6 +75,7 @@ function POView() {
   // once a packing slip records a receipt — not manually selectable here.
   const currentStatus = po.data.status;
   const hasReceipts = currentStatus === "partially_received" || currentStatus === "received";
+  const procoreNeeded = needsProcoreEntry(currentStatus, !!po.data.entered_in_procore);
   const statusOptions = hasReceipts
     ? PO_STATUS_OPTIONS.filter((o) => o.value === currentStatus)
     : PO_STATUS_OPTIONS.filter((o) => o.value !== "partially_received" && o.value !== "received");
@@ -115,6 +119,17 @@ function POView() {
       />
 
 
+      {procoreNeeded ? (
+        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-md bg-status-partial px-4 py-3 text-sm text-status-partial-foreground">
+          <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
+          <span>This PO is executed but has not been entered in Procore yet.</span>
+          <span className="ml-auto flex items-center gap-2">
+            <PoProcoreCheckbox id="po-procore" poId={id} entered={!!po.data.entered_in_procore} />
+            <Label htmlFor="po-procore" className="cursor-pointer">Entered in Procore</Label>
+          </span>
+        </div>
+      ) : null}
+
       <div className="grid gap-4 md:grid-cols-2">
         <Card><CardContent className="p-4 text-sm">
           <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Supplier</div>
@@ -129,7 +144,14 @@ function POView() {
           <div>Expected delivery: {po.data.delivery_date ?? "—"}</div>
           <div>Last received: {slips.data?.[0]?.received_date ?? "—"}</div>
           <div>Payment terms: {po.data.payment_terms ?? "—"}</div>
+          {procoreNeeded ? null : (
+            <div className="mt-3 flex items-center gap-2">
+              <PoProcoreCheckbox id="po-procore" poId={id} entered={!!po.data.entered_in_procore} />
+              <Label htmlFor="po-procore" className="cursor-pointer font-normal">Entered in Procore</Label>
+            </div>
+          )}
         </CardContent></Card>
+
       </div>
 
       <Card className="mt-4"><CardContent className="p-0">

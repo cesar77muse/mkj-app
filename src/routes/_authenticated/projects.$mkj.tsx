@@ -82,6 +82,7 @@ function ProjectDetail() {
       <PageHeader
         title={`${p.mkj_number} — ${p.name}`}
         description={p.contract_number ? `Contract ${p.contract_number}` : undefined}
+        backTo="/projects"
         actions={
           <div className="flex items-center gap-2">
             <Badge variant={p.status === "active" ? "default" : "secondary"}>{p.status}</Badge>
