@@ -118,6 +118,17 @@ function POView() {
       />
 
 
+      {procoreNeeded ? (
+        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-md bg-status-partial px-4 py-3 text-sm text-status-partial-foreground">
+          <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
+          <span>This PO is executed but has not been entered in Procore yet.</span>
+          <span className="ml-auto flex items-center gap-2">
+            <PoProcoreCheckbox id="po-procore" poId={id} entered={!!po.data.entered_in_procore} />
+            <Label htmlFor="po-procore" className="cursor-pointer">Entered in Procore</Label>
+          </span>
+        </div>
+      ) : null}
+
       <div className="grid gap-4 md:grid-cols-2">
         <Card><CardContent className="p-4 text-sm">
           <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Supplier</div>
@@ -132,7 +143,14 @@ function POView() {
           <div>Expected delivery: {po.data.delivery_date ?? "—"}</div>
           <div>Last received: {slips.data?.[0]?.received_date ?? "—"}</div>
           <div>Payment terms: {po.data.payment_terms ?? "—"}</div>
+          {procoreNeeded ? null : (
+            <div className="mt-3 flex items-center gap-2">
+              <PoProcoreCheckbox id="po-procore" poId={id} entered={!!po.data.entered_in_procore} />
+              <Label htmlFor="po-procore" className="cursor-pointer font-normal">Entered in Procore</Label>
+            </div>
+          )}
         </CardContent></Card>
+
       </div>
 
       <Card className="mt-4"><CardContent className="p-0">
