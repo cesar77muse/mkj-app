@@ -55,6 +55,7 @@ function SlipView() {
       <PageHeader
         title={`Packing Slip ${slip.data.slip_number}`}
         description={`Received ${slip.data.received_date}`}
+        backTo="/packing-slips"
         actions={
           <div className="flex items-center gap-2">
             <POStatusBadge status={slip.data.status} />
