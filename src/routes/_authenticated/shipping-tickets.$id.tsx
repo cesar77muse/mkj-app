@@ -122,6 +122,7 @@ function TicketView() {
       <PageHeader
         title={`Shipping Ticket ${t.ticket_number}`}
         description={`Project ${t.projects?.mkj_number} — ${t.projects?.name}`}
+        backTo="/shipping-tickets"
         actions={
           <div className="flex items-center gap-2">
             <ShippingTicketStatusBadge status={t.status} />
