@@ -7,7 +7,7 @@ import { useRoles } from "@/hooks/use-session";
 import { ROLE_LABELS, highestRole } from "@/lib/roles";
 import { daysAgoInBusinessTimezone } from "@/lib/date";
 import { Badge } from "@/components/ui/badge";
-import { FolderKanban, ClipboardList, Truck, Package, ArrowLeftRight } from "lucide-react";
+import { FolderKanban, ClipboardList, Truck, Package, ArrowLeftRight, AlertTriangle } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — MKJ Ops" }] }),
@@ -39,12 +39,13 @@ function Dashboard() {
   const stats = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
-      const [projects, pos, tickets, slips, borrow] = await Promise.all([
+      const [projects, pos, tickets, slips, borrow, procore] = await Promise.all([
         supabase.from("projects").select("*", { count: "exact", head: true }).eq("status", "active"),
         supabase.from("purchase_orders").select("*", { count: "exact", head: true }).in("status", ["draft", "approved", "executed", "partially_received"]),
         supabase.from("shipping_tickets").select("*", { count: "exact", head: true }).in("status", ["draft", "ready"]),
         supabase.from("packing_slips").select("*", { count: "exact", head: true }).gte("received_date", daysAgoInBusinessTimezone(7)),
         supabase.from("borrow_requests").select("*", { count: "exact", head: true }).eq("status", "pending"),
+        supabase.from("purchase_orders").select("*", { count: "exact", head: true }).in("status", ["executed", "partially_received", "received"]).eq("entered_in_procore", false),
       ]);
       return {
         activeProjects: projects.count ?? 0,
@@ -52,6 +53,7 @@ function Dashboard() {
         openTickets: tickets.count ?? 0,
         slipsWeek: slips.count ?? 0,
         pendingBorrow: borrow.count ?? 0,
+        notInProcore: procore.count ?? 0,
       };
     },
   });
@@ -76,9 +78,10 @@ function Dashboard() {
         actions={top ? <Badge variant="secondary">{ROLE_LABELS[top]}</Badge> : null}
       />
 
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
         <StatCard label="Active Projects" value={stats.data?.activeProjects ?? "—"} to="/projects" icon={FolderKanban} />
         <StatCard label="Open POs" value={stats.data?.openPOs ?? "—"} to="/purchase-orders" icon={ClipboardList} />
+        <StatCard label="Not in Procore" value={stats.data?.notInProcore ?? "—"} to="/purchase-orders" icon={AlertTriangle} />
         <StatCard label="Packing Slips (7d)" value={stats.data?.slipsWeek ?? "—"} to="/packing-slips" icon={Package} />
         <StatCard label="Tickets to Ship" value={stats.data?.openTickets ?? "—"} to="/shipping-tickets" icon={Truck} />
         <StatCard label="Pending Borrows" value={stats.data?.pendingBorrow ?? "—"} to="/borrow-requests" icon={ArrowLeftRight} />

@@ -588,6 +588,7 @@ export type Database = {
           created_by: string | null
           delivery_date: string | null
           description: string | null
+          entered_in_procore: boolean
           id: string
           payment_terms: string | null
           po_number: string
@@ -610,6 +611,7 @@ export type Database = {
           created_by?: string | null
           delivery_date?: string | null
           description?: string | null
+          entered_in_procore?: boolean
           id?: string
           payment_terms?: string | null
           po_number: string
@@ -632,6 +634,7 @@ export type Database = {
           created_by?: string | null
           delivery_date?: string | null
           description?: string | null
+          entered_in_procore?: boolean
           id?: string
           payment_terms?: string | null
           po_number?: string
@@ -1079,6 +1082,7 @@ export type Database = {
           created_by: string | null
           delivery_date: string | null
           description: string | null
+          entered_in_procore: boolean
           id: string
           payment_terms: string | null
           po_number: string
