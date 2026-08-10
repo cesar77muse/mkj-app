@@ -212,6 +212,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           <UserMenu />
         </header>
         <main className="flex-1 p-4 md:p-6">{children}</main>
+        <footer className="shrink-0 border-t bg-background px-4 py-3 text-center text-xs text-muted-foreground md:px-6">
+          © 2026 JCL Industries. All rights reserved.
+        </footer>
       </div>
     </div>
   );
