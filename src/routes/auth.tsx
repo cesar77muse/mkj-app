@@ -126,6 +126,9 @@ function AuthPage() {
             </Tabs>
           </CardContent>
         </Card>
+        <p className="mt-6 text-center text-xs text-muted-foreground">
+          © 2026 JCL Industries. All rights reserved.
+        </p>
       </div>
     </div>
   );
