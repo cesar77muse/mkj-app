@@ -52,6 +52,7 @@ const NAV: NavItem[] = [
   { to: "/suppliers", label: "Suppliers", icon: Building2, warehouseOnly: true },
   { to: "/users", label: "Users & Roles", icon: Users, adminOnly: true },
   { to: "/bulk-upload", label: "Bulk Upload", icon: Upload, adminOnly: true },
+  { to: "/future-development", label: "Future Development", icon: Rocket },
 ];
 
 function NavList({ onNavigate }: { onNavigate?: () => void }) {
