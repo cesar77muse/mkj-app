@@ -17,6 +17,7 @@ import { Route as AuthenticatedSuppliersRouteImport } from './routes/_authentica
 import { Route as AuthenticatedProductsRouteImport } from './routes/_authenticated/products'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedInventoryRouteImport } from './routes/_authenticated/inventory'
+import { Route as AuthenticatedFutureDevelopmentRouteImport } from './routes/_authenticated/future-development'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedBulkUploadRouteImport } from './routes/_authenticated/bulk-upload'
 import { Route as AuthenticatedBorrowRequestsRouteImport } from './routes/_authenticated/borrow-requests'
@@ -73,6 +74,12 @@ const AuthenticatedInventoryRoute = AuthenticatedInventoryRouteImport.update({
   path: '/inventory',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedFutureDevelopmentRoute =
+  AuthenticatedFutureDevelopmentRouteImport.update({
+    id: '/future-development',
+    path: '/future-development',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -169,6 +176,7 @@ export interface FileRoutesByFullPath {
   '/borrow-requests': typeof AuthenticatedBorrowRequestsRoute
   '/bulk-upload': typeof AuthenticatedBulkUploadRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/future-development': typeof AuthenticatedFutureDevelopmentRoute
   '/inventory': typeof AuthenticatedInventoryRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/products': typeof AuthenticatedProductsRoute
@@ -193,6 +201,7 @@ export interface FileRoutesByTo {
   '/borrow-requests': typeof AuthenticatedBorrowRequestsRoute
   '/bulk-upload': typeof AuthenticatedBulkUploadRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/future-development': typeof AuthenticatedFutureDevelopmentRoute
   '/inventory': typeof AuthenticatedInventoryRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/products': typeof AuthenticatedProductsRoute
@@ -219,6 +228,7 @@ export interface FileRoutesById {
   '/_authenticated/borrow-requests': typeof AuthenticatedBorrowRequestsRoute
   '/_authenticated/bulk-upload': typeof AuthenticatedBulkUploadRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/future-development': typeof AuthenticatedFutureDevelopmentRoute
   '/_authenticated/inventory': typeof AuthenticatedInventoryRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/products': typeof AuthenticatedProductsRoute
@@ -245,6 +255,7 @@ export interface FileRouteTypes {
     | '/borrow-requests'
     | '/bulk-upload'
     | '/dashboard'
+    | '/future-development'
     | '/inventory'
     | '/notifications'
     | '/products'
@@ -269,6 +280,7 @@ export interface FileRouteTypes {
     | '/borrow-requests'
     | '/bulk-upload'
     | '/dashboard'
+    | '/future-development'
     | '/inventory'
     | '/notifications'
     | '/products'
@@ -294,6 +306,7 @@ export interface FileRouteTypes {
     | '/_authenticated/borrow-requests'
     | '/_authenticated/bulk-upload'
     | '/_authenticated/dashboard'
+    | '/_authenticated/future-development'
     | '/_authenticated/inventory'
     | '/_authenticated/notifications'
     | '/_authenticated/products'
@@ -374,6 +387,13 @@ declare module '@tanstack/react-router' {
       path: '/inventory'
       fullPath: '/inventory'
       preLoaderRoute: typeof AuthenticatedInventoryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/future-development': {
+      id: '/_authenticated/future-development'
+      path: '/future-development'
+      fullPath: '/future-development'
+      preLoaderRoute: typeof AuthenticatedFutureDevelopmentRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
@@ -489,6 +509,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedBorrowRequestsRoute: typeof AuthenticatedBorrowRequestsRoute
   AuthenticatedBulkUploadRoute: typeof AuthenticatedBulkUploadRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedFutureDevelopmentRoute: typeof AuthenticatedFutureDevelopmentRoute
   AuthenticatedInventoryRoute: typeof AuthenticatedInventoryRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedProductsRoute: typeof AuthenticatedProductsRoute
@@ -512,6 +533,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBorrowRequestsRoute: AuthenticatedBorrowRequestsRoute,
   AuthenticatedBulkUploadRoute: AuthenticatedBulkUploadRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedFutureDevelopmentRoute: AuthenticatedFutureDevelopmentRoute,
   AuthenticatedInventoryRoute: AuthenticatedInventoryRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedProductsRoute: AuthenticatedProductsRoute,
