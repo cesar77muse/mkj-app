@@ -68,7 +68,7 @@ function ProductsPage() {
         unit: unit.trim() || "ea",
         reorder_point: rp,
         ...(serialsOn ? { is_serialized: serialized } : {}),
-      });
+      } as never);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -104,7 +104,7 @@ function ProductsPage() {
         .update({
           part_number: ePn.trim(), description: eDesc.trim(), unit: eUnit.trim() || "ea", reorder_point: eRp,
           ...(serialsOn ? { is_serialized: eSerialized } : {}),
-        })
+        } as never)
         .eq("id", editing.id);
       if (error) throw error;
     },
