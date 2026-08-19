@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +14,7 @@ import { POStatusBadge } from "@/components/po-status-badge";
 import { PackingSlipEditDialog } from "@/components/packing-slip-edit-dialog";
 import { PackingSlipDeleteButton } from "@/components/packing-slip-delete-button";
 import { getPackingSlipAttachmentUrl, uploadPackingSlipAttachment } from "@/lib/packing-slip-attachments";
+import { fetchSlipItemSerials, useSerialSupport } from "@/lib/serials";
 
 export const Route = createFileRoute("/_authenticated/packing-slips/$id")({
   head: () => ({ meta: [{ title: "Packing Slip — MKJ Ops" }] }),
@@ -30,6 +32,13 @@ function SlipView() {
   const items = useQuery({
     queryKey: ["ps-items", id],
     queryFn: async () => (await supabase.from("packing_slip_items").select("*, products:product_id(part_number)").eq("slip_id", id)).data ?? [],
+  });
+
+  const serialsOn = useSerialSupport().data === true;
+  const itemSerials = useQuery({
+    queryKey: ["ps-item-serials", id],
+    enabled: serialsOn && (items.data?.length ?? 0) > 0,
+    queryFn: () => fetchSlipItemSerials((items.data ?? []).map((i) => i.id)),
   });
 
   const viewAttachmentMut = useMutation({
@@ -132,14 +141,32 @@ function SlipView() {
           <TableBody>
             {(items.data ?? []).map((l) => {
               const bo = Math.max(0, Number(l.qty_ordered) - Number(l.qty_received));
+              const serials = itemSerials.data?.get(l.id) ?? [];
               return (
-                <TableRow key={l.id}>
+                <Fragment key={l.id}>
+                <TableRow>
                   <TableCell>{l.description}</TableCell>
                   <TableCell className="text-right">{Number(l.qty_ordered)}</TableCell>
                   <TableCell className="text-right">{Number(l.qty_received)}</TableCell>
                   <TableCell className="text-right">{bo > 0 ? <Badge variant="destructive">{bo}</Badge> : bo}</TableCell>
                   <TableCell>{l.condition}</TableCell>
                 </TableRow>
+                {serialsOn && serials.length > 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="bg-muted/30 py-2">
+                      <div className="flex flex-wrap items-center gap-1 text-xs">
+                        <span className="mr-1 text-muted-foreground">Serials:</span>
+                        {serials.map((s) => (
+                          <span key={s} className="rounded-full bg-background px-2 py-0.5 font-mono text-[10px]">{s}</span>
+                        ))}
+                        {serials.length < Number(l.qty_received) ? (
+                          <span className="text-muted-foreground">· {Number(l.qty_received) - serials.length} not recorded</span>
+                        ) : null}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : null}
+                </Fragment>
               );
             })}
           </TableBody>

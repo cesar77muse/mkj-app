@@ -5,6 +5,8 @@ export type DraftTicketLine = {
   description: string;
   qty_shipped: number;
   qty_backordered: number;
+  /** Serial numbers picked for this line; omitted for non-serialized parts. */
+  serials?: string[];
 };
 
 export type DraftTicketPdfInput = {

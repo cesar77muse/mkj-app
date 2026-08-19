@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Pencil } from "lucide-react";
+import { Fragment, useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ChevronDown, ChevronRight, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useRoles } from "@/hooks/use-session";
 import { isWarehouseOrAdmin } from "@/lib/roles";
 import { refreshPoStatus, resolveProductId, slipStatusFor, syncSlipInventory } from "@/lib/receiving";
+import { SerialNumberInputs } from "@/components/serial-number-inputs";
+import {
+  countFilled, fetchSlipItemSerials, resizeSerials, saveSlipItemSerials, useSerialSupport, useSerializedProducts,
+} from "@/lib/serials";
 
 type SlipItem = {
   id: string;
@@ -47,6 +51,28 @@ export function PackingSlipEditDialog({
   const [notes, setNotes] = useState(slip.notes ?? "");
   const [status, setStatus] = useState(slip.status);
   const [lines, setLines] = useState<SlipItem[]>(items);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [serials, setSerials] = useState<Record<string, string[]>>({});
+
+  const serialsOn = useSerialSupport().data === true;
+  const serializedProducts = useSerializedProducts(serialsOn);
+  const isSerialized = (productId: string | null) =>
+    serialsOn && !!productId && (serializedProducts.data?.has(productId) ?? false);
+
+  const existingSerials = useQuery({
+    queryKey: ["ps-item-serials", slip.id],
+    enabled: open && serialsOn,
+    queryFn: () => fetchSlipItemSerials(items.map((i) => i.id)),
+  });
+
+  useEffect(() => {
+    if (!open) return;
+    const map: Record<string, string[]> = {};
+    for (const i of items) {
+      map[i.id] = resizeSerials(existingSerials.data?.get(i.id) ?? [], Number(i.qty_received));
+    }
+    setSerials(map);
+  }, [open, items, existingSerials.data]);
 
   useEffect(() => {
     if (!open) return;
@@ -73,6 +99,9 @@ export function PackingSlipEditDialog({
       }
 
       for (const l of resolved) {
+        if (serialsOn && isSerialized(l.product_id)) {
+          await saveSlipItemSerials(l.id, serials[l.id] ?? []);
+        }
         const { error } = await supabase
           .from("packing_slip_items")
           .update({ qty_received: l.qty_received, condition: l.condition, product_id: l.product_id })
@@ -147,9 +176,33 @@ export function PackingSlipEditDialog({
           <TableBody>
             {lines.map((l, i) => {
               const bo = Math.max(0, l.qty_ordered - l.qty_received);
+              const serialLine = isSerialized(l.product_id);
+              const isOpen = expanded.has(l.id);
               return (
-                <TableRow key={l.id}>
-                  <TableCell>{l.description}</TableCell>
+                <Fragment key={l.id}>
+                <TableRow>
+                  <TableCell>
+                    {serialLine ? (
+                      <button
+                        type="button"
+                        aria-label={isOpen ? "Hide serial numbers" : "Edit serial numbers"}
+                        className="mr-1 align-middle text-muted-foreground"
+                        onClick={() => setExpanded((s) => {
+                          const next = new Set(s);
+                          if (next.has(l.id)) next.delete(l.id); else next.add(l.id);
+                          return next;
+                        })}
+                      >
+                        {isOpen ? <ChevronDown className="inline h-3.5 w-3.5" /> : <ChevronRight className="inline h-3.5 w-3.5" />}
+                      </button>
+                    ) : null}
+                    {l.description}
+                    {serialLine ? (
+                      <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                        {countFilled(serials[l.id] ?? [])}/{l.qty_received} serials
+                      </span>
+                    ) : null}
+                  </TableCell>
                   <TableCell className="text-right">{l.qty_ordered}</TableCell>
                   <TableCell>
                     <Input
@@ -158,6 +211,7 @@ export function PackingSlipEditDialog({
                       onChange={(e) => {
                         const v = Math.max(0, Math.trunc(Number(e.target.value) || 0));
                         setLines((ls) => ls.map((x, idx) => (idx === i ? { ...x, qty_received: v } : x)));
+                        setSerials((m) => ({ ...m, [l.id]: resizeSerials(m[l.id] ?? [], v) }));
                         setStatus(slipStatusFor(lines.map((x, idx) => (idx === i ? { ...x, qty_received: v } : x))));
                       }}
                     />
@@ -174,6 +228,18 @@ export function PackingSlipEditDialog({
                     </Select>
                   </TableCell>
                 </TableRow>
+                {serialLine && isOpen ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="bg-muted/30">
+                      <SerialNumberInputs
+                        idPrefix={`ps-edit-${l.id}`}
+                        values={serials[l.id] ?? []}
+                        onChange={(next) => setSerials((m) => ({ ...m, [l.id]: next }))}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ) : null}
+                </Fragment>
               );
             })}
           </TableBody>

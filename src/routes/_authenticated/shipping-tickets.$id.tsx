@@ -1,9 +1,11 @@
+import { Fragment } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent } from "@/components/ui/card";
+import { fetchTicketItemSerials, useSerialSupport } from "@/lib/serials";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,9 +40,17 @@ function TicketView() {
     queryFn: async () => (await supabase.from("shipping_tickets").select("*, projects:project_id(mkj_number, name, contract_number)").eq("id", id).maybeSingle()).data,
 
   });
+  const serialsOn = useSerialSupport().data === true;
+
   const items = useQuery({
     queryKey: ["ticket-items", id],
     queryFn: async () => (await supabase.from("shipping_ticket_items").select("*").eq("ticket_id", id)).data ?? [],
+  });
+
+  const itemSerials = useQuery({
+    queryKey: ["ticket-item-serials", id],
+    enabled: serialsOn && (items.data?.length ?? 0) > 0,
+    queryFn: () => fetchTicketItemSerials((items.data ?? []).map((i) => i.id)),
   });
 
   const shipMut = useMutation({
@@ -213,13 +223,30 @@ function TicketView() {
             <TableHead className="text-right">Backordered</TableHead>
           </TableRow></TableHeader>
           <TableBody>
-            {(items.data ?? []).map((l) => (
-              <TableRow key={l.id}>
+            {(items.data ?? []).map((l) => {
+              const serials = itemSerials.data?.get(l.id) ?? [];
+              return (
+              <Fragment key={l.id}>
+              <TableRow>
                 <TableCell>{l.description}</TableCell>
                 <TableCell className="text-right">{Number(l.qty_shipped)}</TableCell>
                 <TableCell className="text-right">{Number(l.qty_backordered) > 0 ? <Badge variant="destructive">{Number(l.qty_backordered)}</Badge> : 0}</TableCell>
               </TableRow>
-            ))}
+              {serialsOn && serials.length > 0 ? (
+                <TableRow>
+                  <TableCell colSpan={3} className="bg-muted/30 py-2">
+                    <div className="flex flex-wrap items-center gap-1 text-xs">
+                      <span className="mr-1 text-muted-foreground">Serials:</span>
+                      {serials.map((sn) => (
+                        <span key={sn} className="rounded-full bg-background px-2 py-0.5 font-mono text-[10px]">{sn}</span>
+                      ))}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : null}
+              </Fragment>
+              );
+            })}
           </TableBody>
         </Table>
       </CardContent></Card>
