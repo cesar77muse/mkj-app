@@ -340,6 +340,7 @@ export type Database = {
           created_at: string
           description: string
           id: string
+          is_serialized: boolean
           part_number: string
           reorder_point: number
           unit: string
@@ -349,6 +350,7 @@ export type Database = {
           created_at?: string
           description: string
           id?: string
+          is_serialized?: boolean
           part_number: string
           reorder_point?: number
           unit?: string
@@ -358,6 +360,7 @@ export type Database = {
           created_at?: string
           description?: string
           id?: string
+          is_serialized?: boolean
           part_number?: string
           reorder_point?: number
           unit?: string
