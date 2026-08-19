@@ -13,8 +13,10 @@ import { Pencil, Plus, Trash } from "lucide-react";
 import { useRoles } from "@/hooks/use-session";
 import { isAdmin, isWarehouseOrAdmin, type AppRole } from "@/lib/roles";
 import { SHIPPING_TICKET_STATUSES } from "@/components/shipping-ticket-status-badge";
+import { SerialPickerDialog } from "@/components/serial-picker-dialog";
+import { fetchTicketItemSerials, saveTicketItemSerials, useSerialSupport, useSerializedProducts } from "@/lib/serials";
 
-type Line = { id?: string; product_id: string; description: string; qty_shipped: number; qty_backordered: number };
+type Line = { id?: string; product_id: string; description: string; qty_shipped: number; qty_backordered: number; serials: string[] };
 
 /** Admins can edit any ticket; warehouse managers only while it is not delivered. */
 export function canEditTicket(roles: AppRole[], status: string): boolean {
@@ -72,6 +74,17 @@ function TicketEditForm({ ticketId, onDone }: { ticketId: string; onDone: () => 
   const [lines, setLines] = useState<Line[]>([]);
   const [removed, setRemoved] = useState<string[]>([]);
 
+  const serialsOn = useSerialSupport().data === true;
+  const serializedProducts = useSerializedProducts(serialsOn);
+  const isSerialized = (productId: string) =>
+    serialsOn && !!productId && (serializedProducts.data?.has(productId) ?? false);
+
+  const existingSerials = useQuery({
+    queryKey: ["ticket-item-serials", ticketId],
+    enabled: serialsOn && (itemsQ.data?.length ?? 0) > 0,
+    queryFn: () => fetchTicketItemSerials((itemsQ.data ?? []).map((i) => i.id)),
+  });
+
   useEffect(() => {
     if (!ticket.data) return;
     setShipDate(ticket.data.ship_date ?? "");
@@ -91,8 +104,9 @@ function TicketEditForm({ ticketId, onDone }: { ticketId: string; onDone: () => 
       description: l.description ?? "",
       qty_shipped: Number(l.qty_shipped),
       qty_backordered: Number(l.qty_backordered),
+      serials: existingSerials.data?.get(l.id) ?? [],
     })));
-  }, [itemsQ.data]);
+  }, [itemsQ.data, existingSerials.data]);
 
   const save = useMutation({
     mutationFn: async () => {
@@ -129,17 +143,27 @@ function TicketEditForm({ ticketId, onDone }: { ticketId: string; onDone: () => 
           qty_shipped: l.qty_shipped,
           qty_backordered: l.qty_backordered,
         };
-        if (l.id) {
-          const { error } = await supabase.from("shipping_ticket_items").update(payload).eq("id", l.id);
+        let lineId = l.id;
+        if (lineId) {
+          const { error } = await supabase.from("shipping_ticket_items").update(payload).eq("id", lineId);
           if (error) throw error;
         } else {
-          const { error } = await supabase.from("shipping_ticket_items").insert({ ...payload, ticket_id: ticketId });
+          const { data: created, error } = await supabase
+            .from("shipping_ticket_items")
+            .insert({ ...payload, ticket_id: ticketId })
+            .select("id")
+            .single();
           if (error) throw error;
+          lineId = created.id;
+        }
+        if (serialsOn && lineId && isSerialized(l.product_id)) {
+          await saveTicketItemSerials(lineId, l.serials);
         }
       }
     },
     onSuccess: () => {
       toast.success("Shipping ticket updated");
+      qc.invalidateQueries({ queryKey: ["ticket-item-serials", ticketId] });
       qc.invalidateQueries({ queryKey: ["tickets"] });
       qc.invalidateQueries({ queryKey: ["ticket", ticketId] });
       qc.invalidateQueries({ queryKey: ["ticket-items", ticketId] });
@@ -190,25 +214,40 @@ function TicketEditForm({ ticketId, onDone }: { ticketId: string; onDone: () => 
       <div>
         <div className="mb-2 flex items-center justify-between">
           <h3 className="text-sm font-semibold">Line items</h3>
-          <Button size="sm" variant="outline" onClick={() => setLines((ls) => [...ls, { product_id: "", description: "", qty_shipped: 1, qty_backordered: 0 }])}><Plus className="mr-1 h-4 w-4" />Add line</Button>
+          <Button size="sm" variant="outline" onClick={() => setLines((ls) => [...ls, { product_id: "", description: "", qty_shipped: 1, qty_backordered: 0, serials: [] }])}><Plus className="mr-1 h-4 w-4" />Add line</Button>
         </div>
         <Table>
           <TableHeader><TableRow>
             <TableHead>Product</TableHead><TableHead>Description</TableHead>
-            <TableHead className="w-24 text-right">Shipped</TableHead><TableHead className="w-24 text-right">Backordered</TableHead><TableHead className="w-10" />
+            <TableHead className="w-24 text-right">Shipped</TableHead><TableHead className="w-24 text-right">Backordered</TableHead>{serialsOn ? <TableHead>Serials</TableHead> : null}<TableHead className="w-10" />
           </TableRow></TableHeader>
           <TableBody>
             {lines.map((l, i) => (
               <TableRow key={l.id ?? `new-${i}`}>
                 <TableCell>
-                  <Select value={l.product_id} onValueChange={(v) => updateLine(i, { product_id: v, description: products.data?.find((p) => p.id === v)?.description ?? l.description })}>
+                  <Select value={l.product_id} onValueChange={(v) => updateLine(i, { product_id: v, serials: [], description: products.data?.find((p) => p.id === v)?.description ?? l.description })}>
                     <SelectTrigger className="h-8 w-48"><SelectValue placeholder="Select part" /></SelectTrigger>
                     <SelectContent>{products.data?.map((p) => <SelectItem key={p.id} value={p.id}>{p.part_number}</SelectItem>)}</SelectContent>
                   </Select>
                 </TableCell>
                 <TableCell><Input value={l.description} onChange={(e) => updateLine(i, { description: e.target.value })} /></TableCell>
-                <TableCell><Input type="number" step={1} min={0} inputMode="numeric" className="text-right" value={l.qty_shipped} onChange={(e) => updateLine(i, { qty_shipped: Math.max(0, Math.trunc(Number(e.target.value) || 0)) })} /></TableCell>
+                <TableCell><Input type="number" step={1} min={0} inputMode="numeric" className="text-right" value={l.qty_shipped} onChange={(e) => { const q = Math.max(0, Math.trunc(Number(e.target.value) || 0)); updateLine(i, { qty_shipped: q, serials: l.serials.slice(0, q) }); }} /></TableCell>
                 <TableCell><Input type="number" step={1} min={0} inputMode="numeric" className="text-right" value={l.qty_backordered} onChange={(e) => updateLine(i, { qty_backordered: Math.max(0, Math.trunc(Number(e.target.value) || 0)) })} /></TableCell>
+                {serialsOn ? (
+                  <TableCell>
+                    {isSerialized(l.product_id) && ticket.data?.project_id ? (
+                      <SerialPickerDialog
+                        projectId={ticket.data.project_id}
+                        productId={l.product_id}
+                        qty={l.qty_shipped}
+                        selected={l.serials}
+                        onChange={(next) => updateLine(i, { serials: next })}
+                      />
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                ) : null}
                 <TableCell><Button variant="ghost" size="icon" onClick={() => removeLine(i)}><Trash className="h-4 w-4" /></Button></TableCell>
               </TableRow>
             ))}
