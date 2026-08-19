@@ -37,6 +37,9 @@ function ProductsPage() {
   const [desc, setDesc] = useState("");
   const [unit, setUnit] = useState("ea");
   const [rp, setRp] = useState<number>(0);
+  const [serialized, setSerialized] = useState(false);
+  // Serial tracking only shows once the backend schema is in place.
+  const serialsOn = useSerialSupport().data === true;
 
   const products = useQuery({
     queryKey: ["products"],
@@ -64,13 +67,14 @@ function ProductsPage() {
         description: desc.trim(),
         unit: unit.trim() || "ea",
         reorder_point: rp,
+        ...(serialsOn ? { is_serialized: serialized } : {}),
       });
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Product added");
       setOpen(false);
-      setPn(""); setDesc(""); setUnit("ea"); setRp(0);
+      setPn(""); setDesc(""); setUnit("ea"); setRp(0); setSerialized(false);
       qc.invalidateQueries({ queryKey: ["products"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -81,6 +85,7 @@ function ProductsPage() {
   const [eDesc, setEDesc] = useState("");
   const [eUnit, setEUnit] = useState("ea");
   const [eRp, setERp] = useState<number>(0);
+  const [eSerialized, setESerialized] = useState(false);
 
   function openEdit(p: Product) {
     setEditing(p);
@@ -88,6 +93,7 @@ function ProductsPage() {
     setEDesc(p.description);
     setEUnit(p.unit);
     setERp(p.reorder_point);
+    setESerialized(!!p.is_serialized);
   }
 
   const editMut = useMutation({
@@ -95,7 +101,10 @@ function ProductsPage() {
       if (!editing) return;
       const { error } = await supabase
         .from("products")
-        .update({ part_number: ePn.trim(), description: eDesc.trim(), unit: eUnit.trim() || "ea", reorder_point: eRp })
+        .update({
+          part_number: ePn.trim(), description: eDesc.trim(), unit: eUnit.trim() || "ea", reorder_point: eRp,
+          ...(serialsOn ? { is_serialized: eSerialized } : {}),
+        })
         .eq("id", editing.id);
       if (error) throw error;
     },
@@ -124,6 +133,15 @@ function ProductsPage() {
                   <div><Label htmlFor="unit">Unit</Label><Input id="unit" value={unit} onChange={(e) => setUnit(e.target.value)} /></div>
                   <div><Label htmlFor="rp">Reorder point</Label><Input id="rp" type="number" min={0} step={1} inputMode="numeric" value={rp} onChange={(e) => setRp(Math.max(0, Math.trunc(Number(e.target.value) || 0)))} /></div>
                 </div>
+                {serialsOn ? (
+                  <label className="flex items-start gap-2 rounded-md border p-3">
+                    <Checkbox checked={serialized} onCheckedChange={(v) => setSerialized(v === true)} />
+                    <span className="text-sm">
+                      Serialized part
+                      <span className="block text-xs text-muted-foreground">Prompt for serial numbers when receiving and shipping this part.</span>
+                    </span>
+                  </label>
+                ) : null}
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
@@ -147,7 +165,7 @@ function ProductsPage() {
       <Card><CardContent className="p-0">
         <Table>
           <TableHeader><TableRow>
-            <TableHead>Part #</TableHead><TableHead>Description</TableHead><TableHead>Unit</TableHead><TableHead className="text-right">Reorder point</TableHead><TableHead />
+            <TableHead>Part #</TableHead><TableHead>Description</TableHead><TableHead>Unit</TableHead>{serialsOn ? <TableHead>Serials</TableHead> : null}<TableHead className="text-right">Reorder point</TableHead><TableHead />
           </TableRow></TableHeader>
           <TableBody>
             {filtered.length > 0 ? filtered.map((p) => (
@@ -155,6 +173,11 @@ function ProductsPage() {
                 <TableCell className="font-mono">{p.part_number}</TableCell>
                 <TableCell>{p.description}</TableCell>
                 <TableCell>{p.unit}</TableCell>
+                {serialsOn ? (
+                  <TableCell>
+                    {(p as Product).is_serialized ? <Badge variant="secondary">Serialized</Badge> : <span className="text-xs text-muted-foreground">—</span>}
+                  </TableCell>
+                ) : null}
                 <TableCell className="text-right">{p.reorder_point}</TableCell>
                 <TableCell className="text-right">
                   {canWrite ? (
@@ -164,7 +187,7 @@ function ProductsPage() {
                   ) : null}
                 </TableCell>
               </TableRow>
-            )) : <TableRow><TableCell colSpan={5} className="py-6 text-center text-sm text-muted-foreground">{term ? "No matches." : "No products yet."}</TableCell></TableRow>}
+            )) : <TableRow><TableCell colSpan={serialsOn ? 6 : 5} className="py-6 text-center text-sm text-muted-foreground">{term ? "No matches." : "No products yet."}</TableCell></TableRow>}
           </TableBody>
         </Table>
       </CardContent></Card>
@@ -179,6 +202,15 @@ function ProductsPage() {
               <div><Label htmlFor="e-unit">Unit</Label><Input id="e-unit" value={eUnit} onChange={(e) => setEUnit(e.target.value)} /></div>
               <div><Label htmlFor="e-rp">Reorder point</Label><Input id="e-rp" type="number" min={0} step={1} inputMode="numeric" value={eRp} onChange={(e) => setERp(Math.max(0, Math.trunc(Number(e.target.value) || 0)))} /></div>
             </div>
+            {serialsOn ? (
+              <label className="flex items-start gap-2 rounded-md border p-3">
+                <Checkbox checked={eSerialized} onCheckedChange={(v) => setESerialized(v === true)} />
+                <span className="text-sm">
+                  Serialized part
+                  <span className="block text-xs text-muted-foreground">Prompt for serial numbers when receiving and shipping this part.</span>
+                </span>
+              </label>
+            ) : null}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditing(null)}>Cancel</Button>
