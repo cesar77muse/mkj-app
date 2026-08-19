@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Check, ChevronsUpDown } from "lucide-react";
+import { Fragment, useEffect, useMemo, useState } from "react";
+import { ArrowLeft, Check, ChevronDown, ChevronRight, ChevronsUpDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,6 +19,8 @@ import { todayInBusinessTimezone } from "@/lib/date";
 import { uploadPackingSlipAttachment } from "@/lib/packing-slip-attachments";
 import { toast } from "sonner";
 import { z } from "zod";
+import { SerialNumberInputs } from "@/components/serial-number-inputs";
+import { countFilled, resizeSerials, saveSlipItemSerials, useSerialSupport, useSerializedProducts } from "@/lib/serials";
 
 const searchSchema = z.object({ po: z.string().optional() });
 
@@ -37,6 +39,7 @@ type Line = {
   qty_already: number;
   qty_received: number;
   condition: string;
+  serials: string[];
 };
 
 function NewSlip() {
@@ -51,6 +54,12 @@ function NewSlip() {
   const [notes, setNotes] = useState("");
   const [attachment, setAttachment] = useState<File | null>(null);
   const [lines, setLines] = useState<Line[]>([]);
+  const [expanded, setExpanded] = useState<Set<number>>(new Set());
+
+  const serialsOn = useSerialSupport().data === true;
+  const serializedProducts = useSerializedProducts(serialsOn);
+  const isSerialized = (productId: string | null) =>
+    serialsOn && !!productId && (serializedProducts.data?.has(productId) ?? false);
 
   const projects = useQuery({
     queryKey: ["projects-for-slip"],
@@ -113,6 +122,7 @@ function NewSlip() {
           qty_already: already,
           qty_received: remaining,
           condition: "ok",
+          serials: resizeSerials([], remaining),
         };
       }));
     }
@@ -177,8 +187,21 @@ function NewSlip() {
         description: l.description, qty_ordered: l.qty_ordered, qty_received: l.qty_received, condition: l.condition,
       }));
       if (items.length > 0) {
-        const { error: iErr } = await supabase.from("packing_slip_items").insert(items);
+        const { data: inserted, error: iErr } = await supabase
+          .from("packing_slip_items")
+          .insert(items)
+          .select("id, po_item_id");
         if (iErr) throw iErr;
+
+        if (serialsOn) {
+          const idByPoItem = new Map<string, string>();
+          for (const row of inserted ?? []) if (row.po_item_id) idByPoItem.set(row.po_item_id, row.id);
+          for (const { line, product_id } of resolved) {
+            if (!isSerialized(product_id) || !line.po_item_id) continue;
+            const slipItemId = idByPoItem.get(line.po_item_id);
+            if (slipItemId) await saveSlipItemSerials(slipItemId, line.serials);
+          }
+        }
       }
 
       await syncSlipInventory({
@@ -299,10 +322,36 @@ function NewSlip() {
                     const total = l.qty_already + l.qty_received;
                     const backorder = Math.max(0, l.qty_ordered - total);
                     const over = total > l.qty_ordered;
+                    const serialLine = isSerialized(l.product_id);
+                    const isOpen = expanded.has(i);
                     return (
-                      <TableRow key={i}>
-                        <TableCell className="font-mono text-xs">{l.part_number ?? "—"}</TableCell>
-                        <TableCell>{l.description}</TableCell>
+                      <Fragment key={i}>
+                      <TableRow>
+                        <TableCell className="font-mono text-xs">
+                          {serialLine ? (
+                            <button
+                              type="button"
+                              aria-label={isOpen ? "Hide serial numbers" : "Enter serial numbers"}
+                              className="mr-1 align-middle text-muted-foreground"
+                              onClick={() => setExpanded((s) => {
+                                const next = new Set(s);
+                                if (next.has(i)) next.delete(i); else next.add(i);
+                                return next;
+                              })}
+                            >
+                              {isOpen ? <ChevronDown className="inline h-3.5 w-3.5" /> : <ChevronRight className="inline h-3.5 w-3.5" />}
+                            </button>
+                          ) : null}
+                          {l.part_number ?? "—"}
+                        </TableCell>
+                        <TableCell>
+                          {l.description}
+                          {serialLine ? (
+                            <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                              {countFilled(l.serials)}/{l.qty_received} serials
+                            </span>
+                          ) : null}
+                        </TableCell>
                         <TableCell className="text-right">{l.qty_ordered}</TableCell>
                         <TableCell className="text-right text-muted-foreground">{l.qty_already}</TableCell>
                         <TableCell>
@@ -315,7 +364,7 @@ function NewSlip() {
                             value={l.qty_received}
                             onChange={(e) => {
                               const v = Math.max(0, Math.trunc(Number(e.target.value) || 0));
-                              setLines((ls) => ls.map((x, idx) => idx === i ? { ...x, qty_received: v } : x));
+                              setLines((ls) => ls.map((x, idx) => idx === i ? { ...x, qty_received: v, serials: resizeSerials(x.serials, v) } : x));
                             }}
                           />
                         </TableCell>
@@ -343,6 +392,18 @@ function NewSlip() {
                           </Select>
                         </TableCell>
                       </TableRow>
+                      {serialLine && isOpen ? (
+                        <TableRow>
+                          <TableCell colSpan={8} className="bg-muted/30">
+                            <SerialNumberInputs
+                              idPrefix={`ps-new-${i}`}
+                              values={l.serials}
+                              onChange={(next) => setLines((ls) => ls.map((x, idx) => (idx === i ? { ...x, serials: next } : x)))}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ) : null}
+                      </Fragment>
                     );
                   })}
                 </TableBody>
