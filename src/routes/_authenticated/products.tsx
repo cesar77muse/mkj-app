@@ -8,13 +8,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/page-header";
 import { toast } from "sonner";
 import { Plus, Search, Pencil } from "lucide-react";
 import { useRoles } from "@/hooks/use-session";
 import { isWarehouseOrAdmin } from "@/lib/roles";
+import { useSerialSupport } from "@/lib/serials";
 
-type Product = { id: string; part_number: string; description: string; unit: string; reorder_point: number };
+type Product = {
+  id: string; part_number: string; description: string; unit: string; reorder_point: number;
+  is_serialized?: boolean | null;
+};
 
 export const Route = createFileRoute("/_authenticated/products")({
   head: () => ({ meta: [{ title: "Products — MKJ Ops" }] }),
