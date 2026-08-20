@@ -13,6 +13,10 @@ import { fetchProjectSerials } from "@/lib/serials";
 /**
  * Picks specific on-hand serials for a shipping-ticket line. Selection is
  * capped at the shipped quantity; picking fewer is allowed (warned, not blocked).
+ *
+ * `candidates` overrides the on-hand lookup for callers whose candidate list
+ * isn't "everything this project holds" — returning a borrow, where the only
+ * valid choices are the units that particular request still has out.
  */
 export function SerialPickerDialog({
   projectId,
@@ -21,6 +25,8 @@ export function SerialPickerDialog({
   selected,
   onChange,
   disabled,
+  candidates,
+  hint,
 }: {
   projectId: string;
   productId: string;
@@ -28,6 +34,8 @@ export function SerialPickerDialog({
   selected: string[];
   onChange: (next: string[]) => void;
   disabled?: boolean;
+  candidates?: string[];
+  hint?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState("");
@@ -35,17 +43,17 @@ export function SerialPickerDialog({
 
   const available = useQuery({
     queryKey: ["serials-available", projectId, productId],
-    enabled: open && !!projectId && !!productId,
+    enabled: open && !candidates && !!projectId && !!productId,
     queryFn: async () => (await fetchProjectSerials({ projectId, productId })).map((s) => s.serial),
   });
 
   // Serials already on the line stay listed even if stock moved on since.
   const options = useMemo(() => {
-    const all = Array.from(new Set([...(available.data ?? []), ...selected]));
+    const all = Array.from(new Set([...(candidates ?? available.data ?? []), ...selected]));
     all.sort((a, b) => a.localeCompare(b));
     const term = filter.trim().toLowerCase();
     return term ? all.filter((s) => s.toLowerCase().includes(term)) : all;
-  }, [available.data, selected, filter]);
+  }, [candidates, available.data, selected, filter]);
 
   function toggle(serial: string) {
     setDraft((d) => {
@@ -93,16 +101,18 @@ export function SerialPickerDialog({
           <DialogHeader>
             <DialogTitle>Select serial numbers</DialogTitle>
             <DialogDescription>
-              Pick up to {qty} serial number(s) currently on hand for this project.
+              {hint ?? `Pick up to ${qty} serial number(s) currently on hand for this project.`}
             </DialogDescription>
           </DialogHeader>
 
           <Input value={filter} onChange={(e) => setFilter(e.target.value)} placeholder="Filter serials…" />
 
           <div className="space-y-1">
-            {available.isLoading ? <p className="text-sm text-muted-foreground">Loading…</p> : null}
-            {!available.isLoading && options.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No serials recorded on hand for this part.</p>
+            {!candidates && available.isLoading ? <p className="text-sm text-muted-foreground">Loading…</p> : null}
+            {(candidates || !available.isLoading) && options.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                {candidates ? "No serials outstanding on this request." : "No serials recorded on hand for this part."}
+              </p>
             ) : null}
             {options.map((s) => {
               const checked = draft.includes(s);

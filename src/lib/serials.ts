@@ -13,11 +13,13 @@ import { supabase } from "@/integrations/supabase/client";
  *   products.is_serialized                      boolean not null default false
  *   packing_slip_item_serials(id, slip_item_id, serial)
  *   shipping_ticket_item_serials(id, ticket_item_id, serial)
+ *   borrow_request_serials(id, request_id, serial, returned_at)
  *   v_project_serials(project_id, product_id, serial, status)   -- status: 'in_stock' | 'shipped'
  */
 export const SERIAL_TABLES = {
   slipItemSerials: "packing_slip_item_serials",
   ticketItemSerials: "shipping_ticket_item_serials",
+  borrowSerials: "borrow_request_serials",
   projectSerials: "v_project_serials",
 } as const;
 
@@ -151,5 +153,33 @@ export function useInventorySerials(enabled: boolean) {
       for (const [, list] of map) list.sort((a, b) => a.localeCompare(b));
       return map;
     },
+  });
+}
+
+export type BorrowSerial = { serial: string; returned_at: string | null };
+
+/**
+ * Units named on a borrow request. Rows with returned_at still set to null
+ * are the ones physically sitting at the borrowing project — v_project_serials
+ * lists those under that project, not the lender.
+ *
+ * Written only by decide_borrow_request / return_borrowed_stock (both take an
+ * optional _serials array), so there is no save helper here.
+ */
+export async function fetchBorrowSerials(requestId: string): Promise<BorrowSerial[]> {
+  const { data, error } = await db
+    .from(SERIAL_TABLES.borrowSerials)
+    .select("serial, returned_at")
+    .eq("request_id", requestId)
+    .order("serial");
+  if (error) return [];
+  return (data ?? []) as BorrowSerial[];
+}
+
+export function useBorrowSerials(requestId: string | null | undefined, enabled: boolean) {
+  return useQuery({
+    queryKey: ["borrow-serials", requestId],
+    enabled: enabled && !!requestId,
+    queryFn: () => fetchBorrowSerials(requestId!),
   });
 }

@@ -60,10 +60,36 @@ async function loadLogoBytes(serviceClient: SupabaseClient): Promise<Uint8Array 
 }
 
 interface RawItem {
+  id: string;
   description: string;
   qty_shipped: number;
   qty_backordered: number;
   products: { part_number: string } | null;
+  /** Filled in by loadSerials(); the embedded select can't reach the serial table. */
+  serials?: string[];
+}
+
+/**
+ * Serials captured for each ticket line, keyed by line id. Read through the
+ * caller's client like everything else here, so stis_select RLS applies.
+ * A missing table (function deployed ahead of the serial migration) is
+ * treated as "no serials" rather than a failed render.
+ */
+async function loadSerials(client: SupabaseClient, itemIds: string[]): Promise<Map<string, string[]>> {
+  const map = new Map<string, string[]>();
+  if (itemIds.length === 0) return map;
+
+  const { data, error } = await client
+    .from("shipping_ticket_item_serials")
+    .select("ticket_item_id, serial")
+    .in("ticket_item_id", itemIds)
+    .order("serial");
+  if (error) return map;
+
+  for (const row of (data ?? []) as { ticket_item_id: string; serial: string }[]) {
+    map.set(row.ticket_item_id, [...(map.get(row.ticket_item_id) ?? []), row.serial]);
+  }
+  return map;
 }
 
 function toLineItems(items: RawItem[]): ShippingTicketPdfLineItem[] {
@@ -72,6 +98,7 @@ function toLineItems(items: RawItem[]): ShippingTicketPdfLineItem[] {
     description: it.description,
     qtyShipped: Number(it.qty_shipped),
     qtyBackordered: Number(it.qty_backordered),
+    serials: it.serials ?? [],
   }));
 }
 
@@ -121,6 +148,9 @@ function hashableFields(t: any, items: RawItem[]) {
       description: it.description,
       qty_shipped: it.qty_shipped,
       qty_backordered: it.qty_backordered,
+      // Serials are part of what the PDF prints, so editing them has to
+      // invalidate the cached copy the same way a quantity change does.
+      serials: it.serials ?? [],
     })),
   };
 }
@@ -130,6 +160,7 @@ interface DraftLine {
   description: string;
   qty_shipped: number;
   qty_backordered: number;
+  serials?: string[] | null;
 }
 
 interface DraftPayload {
@@ -159,6 +190,7 @@ function buildPdfDataFromDraft(draft: DraftPayload): Omit<ShippingTicketPdfData,
       description: l.description,
       qtyShipped: Number(l.qty_shipped),
       qtyBackordered: Number(l.qty_backordered),
+      serials: l.serials ?? [],
     })),
   };
 }
@@ -200,14 +232,20 @@ Deno.serve(async (req) => {
     if (tErr) throw tErr;
     if (!ticket) return json({ error: "Not found" }, 404); // RLS-filtered rows land here too — same response either way.
 
-    const { data: items, error: itemsErr } = await callerClient
+    const { data: itemRows, error: itemsErr } = await callerClient
       .from("shipping_ticket_items")
-      .select("description, qty_shipped, qty_backordered, products:product_id(part_number)")
+      .select("id, description, qty_shipped, qty_backordered, products:product_id(part_number)")
       .eq("ticket_id", ticketId)
       .order("id");
     if (itemsErr) throw itemsErr;
 
-    const contentHash = await computeContentHash(hashableFields(ticket, items ?? []));
+    const serialsByItem = await loadSerials(callerClient, (itemRows ?? []).map((i) => i.id));
+    const items = ((itemRows ?? []) as unknown as RawItem[]).map((it) => ({
+      ...it,
+      serials: serialsByItem.get(it.id) ?? [],
+    }));
+
+    const contentHash = await computeContentHash(hashableFields(ticket, items));
 
     const { data: cached } = await callerClient
       .from("shipping_ticket_pdfs")
@@ -218,7 +256,7 @@ Deno.serve(async (req) => {
     const storagePath = cached?.storage_path ?? `${ticketId}.pdf`;
 
     if (!cached || cached.content_hash !== contentHash) {
-      const pdfData = buildPdfData(ticket, items ?? []);
+      const pdfData = buildPdfData(ticket, items);
       const logoBytes = await loadLogoBytes(serviceClient);
       const bytes = await renderShippingTicketPdf({
         ...pdfData,

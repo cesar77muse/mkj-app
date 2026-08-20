@@ -35,6 +35,27 @@ guardrails.
 2. Paste in **`seed_demo_data.sql`**, run once.
 3. It's wrapped in one transaction — if anything fails, nothing is left
    half-applied.
+4. Optional, for the serial-number walkthrough: paste in
+   **`seed_demo_serials.sql`** and run it once as well. It needs both
+   serial migrations applied first, and it must run *after*
+   `seed_demo_data.sql` (it builds on the demo products). Running it twice
+   is harmless — it detects its own rows and does nothing.
+
+### What the serial add-on creates
+
+Six demo parts get flagged **Serialized** (the two switches, server
+chassis, RAID controller, storage drive, TPM); every other demo part is
+explicitly not serialized. It then adds two receipts that actually carry
+serials — 2403 receives 3 switches and 4 TPMs (only 3 TPM serials
+recorded, deliberately, to show the soft "1 not recorded" state), 2601
+receives 2 server chassis — one shipping ticket with a picked serial, and
+one borrow where 2601 takes a switch from 2403 **by serial**, so that unit
+shows up under 2601 in Inventory until it's returned.
+
+The main seed's stock comes from opening-balance ledger rows, which have
+no packing slip behind them — and a serial only exists because a slip
+recorded it. That's why this add-on creates real receipts instead of just
+flipping flags: without them every serial screen would be empty.
 
 ## The one manual step (Storage can't be reached from SQL)
 

@@ -18,6 +18,9 @@ import { Plus } from "lucide-react";
 import { useRoles, useSession } from "@/hooks/use-session";
 import { isWarehouseOrAdmin } from "@/lib/roles";
 import { BorrowHistory } from "@/components/borrow-history";
+import { SerialPickerDialog } from "@/components/serial-picker-dialog";
+import { useBorrowSerials, useSerialSupport, useSerializedProducts } from "@/lib/serials";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/borrow-requests")({
   head: () => ({ meta: [{ title: "Borrow Requests — MKJ Ops" }] }),
@@ -154,19 +157,42 @@ function BorrowPage() {
   const [reason, setReason] = useState("");
   const [neededBy, setNeededBy] = useState("");
 
+  // Serial tracking only appears once the backend schema is in place, and
+  // only for parts flagged serialized — same gate as receiving/shipping.
+  const serialsOn = useSerialSupport().data === true;
+  const serializedProducts = useSerializedProducts(serialsOn);
+  const isSerialized = (productId?: string | null) =>
+    serialsOn && !!productId && (serializedProducts.data?.has(productId) ?? false);
+
   const [approving, setApproving] = useState<Req | null>(null);
   const [approveQty, setApproveQty] = useState(1);
+  const [approveSerials, setApproveSerials] = useState<string[]>([]);
   const [note, setNote] = useState("");
+  const openApprove = (r: Req) => {
+    setApproving(r);
+    setApproveQty(Number(r.qty_requested));
+    setApproveSerials([]);
+    setNote("");
+  };
 
   const [returning, setReturning] = useState<Req | null>(null);
   const [returnQty, setReturnQty] = useState(1);
+  const [returnSerials, setReturnSerials] = useState<string[]>([]);
   const [returnNote, setReturnNote] = useState("");
   const outstanding = returning ? Math.max(0, Number(returning.qty_approved ?? 0) - Number(returning.qty_returned ?? 0)) : 0;
   const openReturn = (r: Req) => {
     setReturning(r);
     setReturnQty(Math.max(1, Number(r.qty_approved ?? 0) - Number(r.qty_returned ?? 0)));
+    setReturnSerials([]);
     setReturnNote("");
   };
+
+  // Which specific units this request still has out — the only valid
+  // choices when returning, and what the detail panel lists.
+  const returningSerials = useBorrowSerials(returning?.id, serialsOn && isSerialized(returning?.product_id));
+  const returnCandidates = (returningSerials.data ?? []).filter((s) => !s.returned_at).map((s) => s.serial);
+
+  const focusedSerials = useBorrowSerials(focused?.id, serialsOn && isSerialized(focused?.product_id));
 
   const onHand = useQuery({
     queryKey: ["onhand", sourceId, productId],
@@ -196,21 +222,27 @@ function BorrowPage() {
   });
 
   const returnStock = useMutation({
-    mutationFn: async ({ req, qty, note }: { req: Req; qty: number; note?: string }) => {
+    mutationFn: async ({ req, qty, note, serials }: { req: Req; qty: number; note?: string; serials?: string[] }) => {
       const { error } = await supabase.rpc("return_borrowed_stock" as never, {
         _request_id: req.id,
         _qty: qty,
         _note: note || null,
+        // Left out entirely when nothing was picked, so the call still
+        // works against the pre-serial signature if this deploy happens to
+        // land before the migration.
+        ...(serials && serials.length > 0 ? { _serials: serials } : {}),
       } as never);
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Return recorded — stock moved back to the lending project");
-      setReturning(null); setReturnNote("");
+      setReturning(null); setReturnNote(""); setReturnSerials([]);
       qc.invalidateQueries({ queryKey: ["borrow-requests"] });
       qc.invalidateQueries({ queryKey: ["inventory"] });
       qc.invalidateQueries({ queryKey: ["borrow-history"] });
       qc.invalidateQueries({ queryKey: ["notifications"] });
+      qc.invalidateQueries({ queryKey: ["borrow-serials"] });
+      qc.invalidateQueries({ queryKey: ["inventory-serials"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -236,22 +268,25 @@ function BorrowPage() {
   });
 
   const decide = useMutation({
-    mutationFn: async ({ req, status, qty_approved, note }: { req: Req; status: "approved" | "denied" | "partially_approved"; qty_approved?: number; note?: string }) => {
+    mutationFn: async ({ req, status, qty_approved, note, serials }: { req: Req; status: "approved" | "denied" | "partially_approved"; qty_approved?: number; note?: string; serials?: string[] }) => {
       const { error } = await supabase.rpc("decide_borrow_request", {
         _request_id: req.id,
         _status: status,
         _qty_approved: (qty_approved ?? null) as unknown as number,
         _note: (note || null) as unknown as string,
-      });
+        ...(serials && serials.length > 0 ? { _serials: serials } : {}),
+      } as never);
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Decision recorded — both projects have been notified");
-      setApproving(null); setNote("");
+      setApproving(null); setNote(""); setApproveSerials([]);
       qc.invalidateQueries({ queryKey: ["borrow-requests"] });
       qc.invalidateQueries({ queryKey: ["inventory"] });
       qc.invalidateQueries({ queryKey: ["borrow-history"] });
       qc.invalidateQueries({ queryKey: ["notifications"] });
+      qc.invalidateQueries({ queryKey: ["borrow-serials"] });
+      qc.invalidateQueries({ queryKey: ["inventory-serials"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -359,7 +394,7 @@ function BorrowPage() {
                 <TableCell className="space-x-1 text-right">
                   {canDecide(r) ? (
                     <>
-                      <Button size="sm" onClick={() => { setApproving(r); setApproveQty(Number(r.qty_requested)); setNote(""); }}>Approve</Button>
+                      <Button size="sm" onClick={() => openApprove(r)}>Approve</Button>
                       <Button size="sm" variant="outline" onClick={() => decide.mutate({ req: r, status: "denied" })}>Deny</Button>
                     </>
                   ) : null}
@@ -399,6 +434,23 @@ function BorrowPage() {
                   {approveQty < Number(approving.qty_requested) ? " — this will be recorded as a partial approval." : ""}
                 </p>
               </div>
+              {isSerialized(approving.product_id) ? (
+                <div>
+                  <Label>Serial numbers being sent</Label>
+                  <SerialPickerDialog
+                    projectId={approving.source_project_id}
+                    productId={approving.product_id}
+                    qty={approveQty}
+                    selected={approveSerials.slice(0, approveQty)}
+                    onChange={setApproveSerials}
+                    hint={`Pick up to ${approveQty} unit(s) held by ${approving.source?.mkj_number ?? "the lending project"}.`}
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Naming units is optional — the transfer goes through either way, but only named
+                    serials follow the stock to {approving.target?.mkj_number}.
+                  </p>
+                </div>
+              ) : null}
               <div><Label>Note (optional)</Label><Textarea value={note} onChange={(e) => setNote(e.target.value)} /></div>
             </div>
           ) : null}
@@ -411,6 +463,7 @@ function BorrowPage() {
                 status: approveQty < Number(approving.qty_requested) ? "partially_approved" : "approved",
                 qty_approved: approveQty,
                 note,
+                serials: approveSerials.slice(0, approveQty),
               })}
             >{decide.isPending ? "Saving…" : "Approve & transfer"}</Button>
           </DialogFooter>
@@ -440,6 +493,20 @@ function BorrowPage() {
                   {returnQty > outstanding ? " — exceeds the outstanding amount." : returnQty > (returnOnHand.data ?? 0) ? " — exceeds on-hand stock." : returnQty < outstanding ? " — this will be recorded as a partial return." : ""}
                 </p>
               </div>
+              {isSerialized(returning.product_id) && returnCandidates.length > 0 ? (
+                <div>
+                  <Label>Serial numbers coming back</Label>
+                  <SerialPickerDialog
+                    projectId={returning.target_project_id}
+                    productId={returning.product_id}
+                    qty={returnQty}
+                    selected={returnSerials.slice(0, returnQty)}
+                    onChange={setReturnSerials}
+                    candidates={returnCandidates}
+                    hint={`Pick up to ${returnQty} of the unit(s) this request still has out.`}
+                  />
+                </div>
+              ) : null}
               <div><Label>Note (optional)</Label><Textarea value={returnNote} onChange={(e) => setReturnNote(e.target.value)} /></div>
             </div>
           ) : null}
@@ -447,7 +514,7 @@ function BorrowPage() {
             <Button variant="outline" onClick={() => setReturning(null)}>Cancel</Button>
             <Button
               disabled={returnStock.isPending || !returning || returnQty > outstanding || returnQty > (returnOnHand.data ?? 0)}
-              onClick={() => returning && returnStock.mutate({ req: returning, qty: returnQty, note: returnNote })}
+              onClick={() => returning && returnStock.mutate({ req: returning, qty: returnQty, note: returnNote, serials: returnSerials.slice(0, returnQty) })}
             >{returnStock.isPending ? "Saving…" : "Return stock"}</Button>
           </DialogFooter>
         </DialogContent>
@@ -467,6 +534,26 @@ function BorrowPage() {
               {Number(focused.qty_returned ?? 0) > 0 ? (
                 <div><span className="text-muted-foreground">Returned: </span>{Number(focused.qty_returned ?? 0)} of {Number(focused.qty_approved ?? 0)}</div>
               ) : null}
+              {isSerialized(focused.product_id) && (focusedSerials.data ?? []).length > 0 ? (
+                <div>
+                  <span className="text-muted-foreground">Serial numbers: </span>
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {(focusedSerials.data ?? []).map((s) => (
+                      <span
+                        key={s.serial}
+                        className={cn(
+                          "inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[10px]",
+                          s.returned_at ? "bg-muted text-muted-foreground" : "bg-accent",
+                        )}
+                        title={s.returned_at ? `Returned ${new Date(s.returned_at).toLocaleString()}` : `At ${focused.target?.mkj_number ?? "the borrowing project"}`}
+                      >
+                        {s.serial}
+                        <span className="font-sans">{s.returned_at ? "returned" : `at ${focused.target?.mkj_number ?? "borrower"}`}</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
               <div><span className="text-muted-foreground">Status: </span><Badge variant={statusVariant(focused.status)}>{STATUS_LABEL[focused.status] ?? focused.status}</Badge></div>
               <div><span className="text-muted-foreground">Requested by: </span>{personLabel(focused.requester)} on {new Date(focused.created_at).toLocaleString()}</div>
               <div><span className="text-muted-foreground">Needed by: </span>{focused.needed_by ?? "—"}</div>
@@ -482,7 +569,7 @@ function BorrowPage() {
               <div className="flex gap-2 pt-2">
                 {canDecide(focused) ? (
                   <>
-                    <Button size="sm" onClick={() => { setApproving(focused); setApproveQty(Number(focused.qty_requested)); setNote(""); navigate({ search: { request: undefined } }); }}>Approve</Button>
+                    <Button size="sm" onClick={() => { openApprove(focused); navigate({ search: { request: undefined } }); }}>Approve</Button>
                     <Button size="sm" variant="outline" onClick={() => decide.mutate({ req: focused, status: "denied" })}>Deny</Button>
                   </>
                 ) : null}

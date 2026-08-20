@@ -20,6 +20,8 @@ export interface ShippingTicketPdfLineItem {
   description: string;
   qtyShipped: number;
   qtyBackordered: number;
+  /** Serial numbers picked for this line. Empty/absent for non-serialized parts. */
+  serials?: string[] | null;
 }
 
 export interface ShippingTicketPdfData {
@@ -103,9 +105,14 @@ export async function renderShippingTicketPdf(data: ShippingTicketPdfData): Prom
     { key: "qtyShipped", header: "Shipped", width: 70, align: "right" },
     { key: "qtyBackordered", header: "Backordered", width: 70, align: "right" },
   ];
+  // Serials ride along under the description rather than in a column of
+  // their own: a line can carry a dozen of them, and drawTable already
+  // wraps on "\n" and grows the row to fit.
   const tableRows = data.items.map((it) => ({
     partNumber: it.partNumber ?? "",
-    description: it.description,
+    description: (it.serials ?? []).length > 0
+      ? `${it.description}\nS/N: ${(it.serials ?? []).join(", ")}`
+      : it.description,
     qtyShipped: String(it.qtyShipped),
     qtyBackordered: String(it.qtyBackordered),
   }));
