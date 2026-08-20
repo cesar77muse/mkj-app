@@ -210,6 +210,35 @@ function ProjectDetail() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="packing-slips" className="pt-4">
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Slip #</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>PO #</TableHead>
+                    <TableHead>Vendor Slip #</TableHead>
+                    <TableHead>Received</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {slips.data && slips.data.length > 0 ? slips.data.map((s) => (
+                    <TableRow key={s.id}>
+                      <TableCell><Link className="font-mono text-primary hover:underline" to="/packing-slips/$id" params={{ id: s.id }}>{s.slip_number}</Link></TableCell>
+                      <TableCell><Badge variant="secondary">{s.status}</Badge></TableCell>
+                      <TableCell>{(s.purchase_orders as { po_number?: string } | null)?.po_number ?? "—"}</TableCell>
+                      <TableCell>{s.vendor_slip_number ?? "—"}</TableCell>
+                      <TableCell>{s.received_date}</TableCell>
+                    </TableRow>
+                  )) : <TableRow><TableCell colSpan={5} className="py-6 text-center text-sm text-muted-foreground">No packing slips yet.</TableCell></TableRow>}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="tickets" className="pt-4">
           <Card>
             <CardContent className="p-0">
