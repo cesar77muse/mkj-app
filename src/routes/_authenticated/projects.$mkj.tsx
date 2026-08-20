@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { Fragment, useState } from "react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/page-header";
 import { POStatusBadge } from "@/components/po-status-badge";
@@ -10,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ProjectEditDialog } from "@/components/project-edit-dialog";
 import { BorrowHistory } from "@/components/borrow-history";
+import { useInventorySerials, useSerialSupport } from "@/lib/serials";
 
 import { managerLabel, useManagers } from "@/components/project-manager-select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -23,6 +26,10 @@ export const Route = createFileRoute("/_authenticated/projects/$mkj")({
 function ProjectDetail() {
   const { mkj } = Route.useParams();
   const { data: managers = [] } = useManagers();
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  const serialsOn = useSerialSupport().data === true;
+  const serialsByRow = useInventorySerials(serialsOn);
 
   const pdfMut = useMutation({
     mutationFn: (poId: string) => openPurchaseOrderPdf(poId),
@@ -148,19 +155,56 @@ function ProjectDetail() {
                 </TableHeader>
                 <TableBody>
                   {inventory.data && inventory.data.length > 0 ? (
-                    inventory.data.map((r) => (
-                      <TableRow key={r.product_id}>
-                        <TableCell className="font-mono">{r.products?.part_number}</TableCell>
-                        <TableCell>{r.products?.description}</TableCell>
-                        <TableCell className="text-right font-semibold">
-                          {Number(r.on_hand)}
-                          {r.products && Number(r.on_hand) <= (r.products.reorder_point ?? 0) ? (
-                            <Badge variant="destructive" className="ml-2">Low</Badge>
+                    inventory.data.map((r) => {
+                      const key = `${p.id}:${r.product_id}`;
+                      const serials = serialsByRow.data?.get(key) ?? [];
+                      const isOpen = expanded.has(key);
+                      return (
+                        <Fragment key={r.product_id}>
+                          <TableRow>
+                            <TableCell className="font-mono">
+                              {serialsOn && serials.length > 0 ? (
+                                <button
+                                  type="button"
+                                  aria-label={isOpen ? "Hide serial numbers" : "Show serial numbers"}
+                                  className="mr-1 align-middle text-muted-foreground"
+                                  onClick={() => setExpanded((s) => {
+                                    const next = new Set(s);
+                                    if (next.has(key)) next.delete(key); else next.add(key);
+                                    return next;
+                                  })}
+                                >
+                                  {isOpen ? <ChevronDown className="inline h-3.5 w-3.5" /> : <ChevronRight className="inline h-3.5 w-3.5" />}
+                                </button>
+                              ) : null}
+                              {r.products?.part_number}
+                              {serialsOn && serials.length > 0 ? (
+                                <Badge variant="secondary" className="ml-2">{serials.length} serials</Badge>
+                              ) : null}
+                            </TableCell>
+                            <TableCell>{r.products?.description}</TableCell>
+                            <TableCell className="text-right font-semibold">
+                              {Number(r.on_hand)}
+                              {r.products && Number(r.on_hand) <= (r.products.reorder_point ?? 0) ? (
+                                <Badge variant="destructive" className="ml-2">Low</Badge>
+                              ) : null}
+                            </TableCell>
+                            <TableCell className="text-right text-muted-foreground">{r.products?.reorder_point ?? 0}</TableCell>
+                          </TableRow>
+                          {serialsOn && isOpen ? (
+                            <TableRow>
+                              <TableCell colSpan={4} className="bg-muted/30">
+                                <div className="flex flex-wrap gap-1">
+                                  {serials.map((s) => (
+                                    <span key={s} className="rounded-full bg-background px-2 py-0.5 font-mono text-[10px]">{s}</span>
+                                  ))}
+                                </div>
+                              </TableCell>
+                            </TableRow>
                           ) : null}
-                        </TableCell>
-                        <TableCell className="text-right text-muted-foreground">{r.products?.reorder_point ?? 0}</TableCell>
-                      </TableRow>
-                    ))
+                        </Fragment>
+                      );
+                    })
                   ) : (
                     <TableRow><TableCell colSpan={4} className="py-6 text-center text-sm text-muted-foreground">No inventory yet.</TableCell></TableRow>
                   )}
