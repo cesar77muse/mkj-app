@@ -73,6 +73,19 @@ function ProjectDetail() {
     },
   });
 
+  const slips = useQuery({
+    queryKey: ["packing-slips", project.data?.id],
+    enabled: !!project.data,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("packing_slips")
+        .select("id, slip_number, status, received_date, vendor_slip_number, purchase_orders:po_id(po_number)")
+        .eq("project_id", project.data!.id)
+        .order("received_date", { ascending: false });
+      return data ?? [];
+    },
+  });
+
   if (project.isLoading) return <p className="text-sm text-muted-foreground">Loading…</p>;
   if (!project.data) return <p className="text-sm text-muted-foreground">Project not found.</p>;
   const p = project.data;
