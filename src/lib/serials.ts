@@ -4,17 +4,23 @@ import { supabase } from "@/integrations/supabase/client";
 /**
  * Serial-number tracking (frontend layer).
  *
- * The schema below is owned by the backend work happening separately, so it is
- * NOT in the generated Supabase types yet. Every read here is written to fail
- * soft: if a table/column is missing the UI simply behaves as it did before
- * serials existed (`useSerialSupport()` returns false and all serial UI hides).
+ * Every read here fails soft: if a table or column is missing the UI behaves
+ * exactly as it did before serials existed (`useSerialSupport()` returns false
+ * and all serial UI hides). That gate is kept even now that the schema is live,
+ * so a frontend deploy can never get ahead of the database.
  *
- * Expected schema:
+ * Schema (see the …_serial_number_tracking and …_borrow_request_serials
+ * migrations; product_id on the two capture tables is trigger-filled, so
+ * inserts only ever send the parent id and the serial):
  *   products.is_serialized                      boolean not null default false
  *   packing_slip_item_serials(id, slip_item_id, serial)
  *   shipping_ticket_item_serials(id, ticket_item_id, serial)
  *   borrow_request_serials(id, request_id, serial, returned_at)
  *   v_project_serials(project_id, product_id, serial, status)   -- status: 'in_stock' | 'shipped'
+ *
+ * The loose client below predates the generated types and is still what these
+ * helpers use: it keeps the dynamic select strings simple and the fail-soft
+ * behavior intact.
  */
 export const SERIAL_TABLES = {
   slipItemSerials: "packing_slip_item_serials",
