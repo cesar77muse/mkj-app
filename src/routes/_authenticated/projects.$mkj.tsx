@@ -26,6 +26,10 @@ export const Route = createFileRoute("/_authenticated/projects/$mkj")({
 function ProjectDetail() {
   const { mkj } = Route.useParams();
   const { data: managers = [] } = useManagers();
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  const serialsOn = useSerialSupport().data === true;
+  const serialsByRow = useInventorySerials(serialsOn);
 
   const pdfMut = useMutation({
     mutationFn: (poId: string) => openPurchaseOrderPdf(poId),
