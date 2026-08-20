@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      borrow_request_serials: {
+        Row: {
+          id: string
+          lent_at: string
+          lent_by: string | null
+          product_id: string
+          request_id: string
+          returned_at: string | null
+          returned_by: string | null
+          serial: string
+        }
+        Insert: {
+          id?: string
+          lent_at?: string
+          lent_by?: string | null
+          product_id: string
+          request_id: string
+          returned_at?: string | null
+          returned_by?: string | null
+          serial: string
+        }
+        Update: {
+          id?: string
+          lent_at?: string
+          lent_by?: string | null
+          product_id?: string
+          request_id?: string
+          returned_at?: string | null
+          returned_by?: string | null
+          serial?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "borrow_request_serials_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "borrow_request_serials_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "borrow_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       borrow_requests: {
         Row: {
           created_at: string
@@ -206,6 +254,48 @@ export type Database = {
           type?: string
         }
         Relationships: []
+      }
+      packing_slip_item_serials: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          product_id: string | null
+          serial: string
+          slip_item_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          product_id?: string | null
+          serial: string
+          slip_item_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          product_id?: string | null
+          serial?: string
+          slip_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "packing_slip_item_serials_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "packing_slip_item_serials_slip_item_id_fkey"
+            columns: ["slip_item_id"]
+            isOneToOne: false
+            referencedRelation: "packing_slip_items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       packing_slip_items: {
         Row: {
@@ -676,6 +766,48 @@ export type Database = {
           },
         ]
       }
+      shipping_ticket_item_serials: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          product_id: string | null
+          serial: string
+          ticket_item_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          product_id?: string | null
+          serial: string
+          ticket_item_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          product_id?: string | null
+          serial?: string
+          ticket_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shipping_ticket_item_serials_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipping_ticket_item_serials_ticket_item_id_fkey"
+            columns: ["ticket_item_id"]
+            isOneToOne: false
+            referencedRelation: "shipping_ticket_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shipping_ticket_items: {
         Row: {
           description: string
@@ -992,6 +1124,23 @@ export type Database = {
           },
         ]
       }
+      v_project_serials: {
+        Row: {
+          product_id: string | null
+          project_id: string | null
+          serial: string | null
+          status: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "packing_slip_item_serials_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_user_roles: {
         Row: {
           role: Database["public"]["Enums"]["app_role"] | null
@@ -1153,6 +1302,7 @@ export type Database = {
           _note: string
           _qty_approved: number
           _request_id: string
+          _serials?: string[]
           _status: string
         }
         Returns: undefined
@@ -1179,7 +1329,12 @@ export type Database = {
         Returns: boolean
       }
       return_borrowed_stock: {
-        Args: { _note?: string; _qty: number; _request_id: string }
+        Args: {
+          _note?: string
+          _qty: number
+          _request_id: string
+          _serials?: string[]
+        }
         Returns: undefined
       }
       reverse_shipping_ticket_inventory: {
