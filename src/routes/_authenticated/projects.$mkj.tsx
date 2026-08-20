@@ -109,6 +109,7 @@ function ProjectDetail() {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="inventory">Inventory</TabsTrigger>
           <TabsTrigger value="pos">Purchase Orders</TabsTrigger>
+          <TabsTrigger value="packing-slips">Packing Slips</TabsTrigger>
           <TabsTrigger value="tickets">Shipping Tickets</TabsTrigger>
         </TabsList>
 
