@@ -16,9 +16,9 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 function StatCard({ label, value, to, icon: Icon }: { label: string; value: number | string; to: string; icon: React.ComponentType<{ className?: string }> }) {
   return (
-    <Link to={to} className="block">
-      <Card className="transition-shadow hover:shadow-md">
-        <CardContent className="flex items-center gap-4 p-4">
+    <Link to={to} className="block h-full">
+      <Card className="h-full transition-shadow hover:shadow-md">
+        <CardContent className="flex h-full items-center gap-4 p-4">
           <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-primary">
             <Icon className="h-5 w-5" />
           </div>
