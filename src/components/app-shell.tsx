@@ -202,8 +202,8 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-64 p-0">
-              <div className="flex h-16 items-center justify-center border-b bg-white px-3">
+            <SheetContent side="left" className="w-64 bg-sidebar p-0">
+              <div className="flex h-16 items-center justify-center border-b border-sidebar-border bg-sidebar px-3">
                 <img src={mkjLogo.url} alt="MKJ Communications" className="h-10 w-auto object-contain" />
               </div>
               <NavList />
