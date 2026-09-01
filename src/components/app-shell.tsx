@@ -202,7 +202,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-64 bg-sidebar p-0">
+            <SheetContent side="left" className="w-64 bg-sidebar p-0" closeClassName="text-sidebar-foreground">
               <div className="flex h-16 items-center justify-center border-b border-sidebar-border bg-sidebar px-3">
                 <img src={mkjLogo.url} alt="MKJ Communications" className="h-10 w-auto object-contain" />
               </div>
