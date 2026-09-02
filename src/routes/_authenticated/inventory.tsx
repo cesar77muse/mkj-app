@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Fragment, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,9 +7,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronRight, Search } from "lucide-react";
 import { BorrowHistory } from "@/components/borrow-history";
 import { useInventorySerials, useSerialSupport } from "@/lib/serials";
+import { cn } from "@/lib/utils";
 
 
 export const Route = createFileRoute("/_authenticated/inventory")({
@@ -27,6 +29,7 @@ type InvRow = {
 
 function InventoryPage() {
   const [q, setQ] = useState("");
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const serialsOn = useSerialSupport().data === true;
@@ -75,8 +78,12 @@ function InventoryPage() {
 
   const filtered = useMemo(() => {
     if (!inv.data) return [];
-    if (!term) return inv.data;
-    return inv.data.filter((r) => {
+    let rows = inv.data;
+    if (selectedProjectId) {
+      rows = rows.filter((r) => r.project_id === selectedProjectId);
+    }
+    if (!term) return rows;
+    return rows.filter((r) => {
       const hay = [
         r.projects?.mkj_number,
         r.projects?.name,
@@ -89,7 +96,7 @@ function InventoryPage() {
         .toLowerCase();
       return hay.includes(term);
     });
-  }, [inv.data, term, serialsByRow.data]);
+  }, [inv.data, term, selectedProjectId, serialsByRow.data]);
 
   const projectCards = useMemo(() => {
     const seen = new Map<string, { id: string; mkj: string; name: string }>();
@@ -116,23 +123,40 @@ function InventoryPage() {
       </div>
 
       {projectCards.length > 0 ? (
-        <div className="mb-6 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-          {projectCards.map((p) => {
-            const updated = lastUpdated.data?.get(p.id);
-            return (
-              <Link key={p.id} to="/projects/$mkj" params={{ mkj: p.mkj }}>
-                <Card className="h-full transition-shadow hover:shadow-md">
-                  <CardContent className="p-4">
-                    <div className="font-mono text-sm font-semibold text-primary">{p.mkj}</div>
-                    <div className="mt-1 font-medium">{p.name}</div>
-                    <div className="mt-2 text-xs text-muted-foreground">
-                      Last updated: {updated ? new Date(updated).toLocaleString() : "—"}
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            );
-          })}
+        <div className="mb-4 flex flex-wrap items-center gap-3">
+          <div className="grid flex-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+            {projectCards.map((p) => {
+              const updated = lastUpdated.data?.get(p.id);
+              const active = selectedProjectId === p.id;
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setSelectedProjectId(active ? null : p.id)}
+                  className="text-left"
+                  aria-pressed={active}
+                >
+                  <Card className={cn(
+                    "h-full transition-all hover:shadow-md",
+                    active ? "ring-2 ring-primary ring-offset-1" : "",
+                  )}>
+                    <CardContent className="p-4">
+                      <div className="font-mono text-sm font-semibold text-primary">{p.mkj}</div>
+                      <div className="mt-1 font-medium">{p.name}</div>
+                      <div className="mt-2 text-xs text-muted-foreground">
+                        Last updated: {updated ? new Date(updated).toLocaleString() : "—"}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </button>
+              );
+            })}
+          </div>
+          {selectedProjectId ? (
+            <Button variant="outline" size="sm" onClick={() => setSelectedProjectId(null)}>
+              Clear filter
+            </Button>
+          ) : null}
         </div>
       ) : null}
 
