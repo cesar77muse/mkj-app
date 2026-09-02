@@ -206,7 +206,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <div className="flex h-16 items-center justify-center border-b border-sidebar-border bg-sidebar px-3">
                 <img src={mkjLogo.url} alt="MKJ Communications" className="h-10 w-auto object-contain" />
               </div>
-              <NavList />
+              <NavList onNavigate={() => {}} />
             </SheetContent>
           </Sheet>
           <div className="flex-1" />
