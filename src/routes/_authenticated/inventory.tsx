@@ -76,8 +76,12 @@ function InventoryPage() {
 
   const filtered = useMemo(() => {
     if (!inv.data) return [];
-    if (!term) return inv.data;
-    return inv.data.filter((r) => {
+    let rows = inv.data;
+    if (selectedProjectId) {
+      rows = rows.filter((r) => r.project_id === selectedProjectId);
+    }
+    if (!term) return rows;
+    return rows.filter((r) => {
       const hay = [
         r.projects?.mkj_number,
         r.projects?.name,
@@ -90,7 +94,7 @@ function InventoryPage() {
         .toLowerCase();
       return hay.includes(term);
     });
-  }, [inv.data, term, serialsByRow.data]);
+  }, [inv.data, term, selectedProjectId, serialsByRow.data]);
 
   const projectCards = useMemo(() => {
     const seen = new Map<string, { id: string; mkj: string; name: string }>();
