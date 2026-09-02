@@ -27,6 +27,7 @@ type InvRow = {
 
 function InventoryPage() {
   const [q, setQ] = useState("");
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const serialsOn = useSerialSupport().data === true;
