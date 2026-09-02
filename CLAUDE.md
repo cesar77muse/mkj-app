@@ -129,3 +129,9 @@ When working on tasks:
 
 Avoid assuming requirements that were not provided.
 Ask questions when requirements are unclear.
+
+---
+
+# Pending Decisions
+
+- **Email confirmation on sign-up**: Supabase's "Confirm email" toggle (Dashboard → Authentication → Providers → Email) is still active, even though it was supposedly disabled from the Lovable UI at some point. `signUp` in [src/routes/auth.tsx](src/routes/auth.tsx) already assumes confirmation is required (shows a "check your email" toast). Leaving as-is for now. When we separate from Lovable, this won't break on its own — Supabase sends these emails itself, independent of Lovable — but its built-in email sending is rate-limited (~2-3/hour), so before a real launch we'll need to either configure custom SMTP (Resend, Postmark, etc.) or make a deliberate call to disable email confirmation.
