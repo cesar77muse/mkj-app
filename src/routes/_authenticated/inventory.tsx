@@ -121,23 +121,40 @@ function InventoryPage() {
       </div>
 
       {projectCards.length > 0 ? (
-        <div className="mb-6 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-          {projectCards.map((p) => {
-            const updated = lastUpdated.data?.get(p.id);
-            return (
-              <Link key={p.id} to="/projects/$mkj" params={{ mkj: p.mkj }}>
-                <Card className="h-full transition-shadow hover:shadow-md">
-                  <CardContent className="p-4">
-                    <div className="font-mono text-sm font-semibold text-primary">{p.mkj}</div>
-                    <div className="mt-1 font-medium">{p.name}</div>
-                    <div className="mt-2 text-xs text-muted-foreground">
-                      Last updated: {updated ? new Date(updated).toLocaleString() : "—"}
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            );
-          })}
+        <div className="mb-4 flex flex-wrap items-center gap-3">
+          <div className="grid flex-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+            {projectCards.map((p) => {
+              const updated = lastUpdated.data?.get(p.id);
+              const active = selectedProjectId === p.id;
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setSelectedProjectId(active ? null : p.id)}
+                  className="text-left"
+                  aria-pressed={active}
+                >
+                  <Card className={cn(
+                    "h-full transition-all hover:shadow-md",
+                    active ? "ring-2 ring-primary ring-offset-1" : "",
+                  )}>
+                    <CardContent className="p-4">
+                      <div className="font-mono text-sm font-semibold text-primary">{p.mkj}</div>
+                      <div className="mt-1 font-medium">{p.name}</div>
+                      <div className="mt-2 text-xs text-muted-foreground">
+                        Last updated: {updated ? new Date(updated).toLocaleString() : "—"}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </button>
+              );
+            })}
+          </div>
+          {selectedProjectId ? (
+            <Button variant="outline" size="sm" onClick={() => setSelectedProjectId(null)}>
+              Clear filter
+            </Button>
+          ) : null}
         </div>
       ) : null}
 
