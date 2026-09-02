@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -185,6 +185,7 @@ function UserMenu() {
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
+  const [mobileOpen, setMobileOpen] = useState(false);
   return (
     <div className="flex min-h-screen bg-muted/30">
       <aside className="sticky top-0 hidden h-screen w-60 shrink-0 border-r bg-sidebar md:block">
@@ -196,7 +197,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b bg-background/95 px-4 backdrop-blur">
-          <Sheet>
+          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="md:hidden" aria-label="Open menu">
                 <Menu className="h-5 w-5" />
@@ -206,7 +207,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <div className="flex h-16 items-center justify-center border-b border-sidebar-border bg-sidebar px-3">
                 <img src={mkjLogo.url} alt="MKJ Communications" className="h-10 w-auto object-contain" />
               </div>
-              <NavList />
+              <NavList onNavigate={() => setMobileOpen(false)} />
             </SheetContent>
           </Sheet>
           <div className="flex-1" />
