@@ -1,7 +1,42 @@
-project_id = "beoggpwowmwzqmtuidvl"
+project_id = "ujajblobqudgmdcterwe"
 
 [functions.po-pdf]
 verify_jwt = true
 
 [functions.shipping-ticket-pdf]
 verify_jwt = true
+
+# Branded auth emails. Generated HTML lives in supabase/templates/ (built from
+# _layout.html by build.mjs). This block is what `supabase start` uses locally;
+# the live project is updated with
+# supabase/maintenance/push_auth_email_templates.sh, which PATCHes only the
+# mailer_* fields via the Management API.
+#
+# Do NOT run `supabase config push` to apply this — that pushes the whole [auth]
+# section and would reset every remote auth setting not written here (site URL,
+# redirect URLs, password policy, rate limits) to CLI defaults.
+
+# Confirm signup
+[auth.email.template.confirmation]
+subject = "Confirm your email address — MKJ Ops"
+content_path = "./supabase/templates/confirmation.html"
+
+# Reset password
+[auth.email.template.recovery]
+subject = "Reset your MKJ Ops password"
+content_path = "./supabase/templates/recovery.html"
+
+# Magic link
+[auth.email.template.magic_link]
+subject = "Your MKJ Ops sign-in link"
+content_path = "./supabase/templates/magic_link.html"
+
+# Invite user
+[auth.email.template.invite]
+subject = "You've been invited to MKJ Ops"
+content_path = "./supabase/templates/invite.html"
+
+# Change email address
+[auth.email.template.email_change]
+subject = "Confirm your new email address — MKJ Ops"
+content_path = "./supabase/templates/email_change.html"

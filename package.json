@@ -11,6 +11,8 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
+    "emails": "node supabase/templates/build.mjs",
+    "emails:check": "node supabase/templates/build.mjs --check",
     "lint": "eslint .",
     "format": "prettier --write ."
   },
