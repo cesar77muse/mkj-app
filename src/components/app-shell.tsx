@@ -19,7 +19,7 @@ import {
   Rocket,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import mkjLogo from "@/assets/mkj-logo.jpg.asset.json";
+import mkjLogo from "@/assets/mkj-logo.jpg";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
@@ -190,7 +190,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="flex min-h-screen bg-muted/30">
       <aside className="sticky top-0 hidden h-screen w-60 shrink-0 border-r bg-sidebar md:block">
         <div className="flex h-16 items-center justify-center border-b border-sidebar-border bg-white px-3">
-          <img src={mkjLogo.url} alt="MKJ Communications" className="h-10 w-auto object-contain" />
+          <img src={mkjLogo} alt="MKJ Communications" className="h-10 w-auto object-contain" />
         </div>
         <NavList />
       </aside>
@@ -205,7 +205,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </SheetTrigger>
             <SheetContent side="left" className="w-64 bg-sidebar p-0" closeClassName="text-sidebar-foreground">
               <div className="flex h-16 items-center justify-center border-b border-sidebar-border bg-sidebar px-3">
-                <img src={mkjLogo.url} alt="MKJ Communications" className="h-10 w-auto object-contain" />
+                <img src={mkjLogo} alt="MKJ Communications" className="h-10 w-auto object-contain" />
               </div>
               <NavList onNavigate={() => setMobileOpen(false)} />
             </SheetContent>

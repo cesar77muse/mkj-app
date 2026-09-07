@@ -12,4 +12,10 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // Lovable's shared config defaults Nitro to the cloudflare-module preset
+  // (only overridden when not running inside Lovable's own build sandbox).
+  // We deploy on Vercel now, so pin it explicitly.
+  nitro: {
+    preset: "vercel",
+  },
 });

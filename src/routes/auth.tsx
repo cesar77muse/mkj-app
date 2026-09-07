@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import mkjLogo from "@/assets/mkj-logo.jpg.asset.json";
+import mkjLogo from "@/assets/mkj-logo.jpg";
 import { PasswordRequirements } from "@/components/password-requirements";
 import { PASSWORD_MIN_LENGTH, isPasswordValid } from "@/lib/password-policy";
 
@@ -73,7 +73,7 @@ function AuthPage() {
       <div className="w-full max-w-md">
         <Link to="/" className="mb-8 flex flex-col items-center justify-center gap-3">
           <div className="flex h-12 items-center justify-center rounded-lg bg-white px-3">
-            <img src={mkjLogo.url} alt="MKJ Communications" className="h-9 w-auto object-contain" />
+            <img src={mkjLogo} alt="MKJ Communications" className="h-9 w-auto object-contain" />
           </div>
           <span className="text-2xl font-semibold tracking-tight">MKJ Ops</span>
         </Link>
