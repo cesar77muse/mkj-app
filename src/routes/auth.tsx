@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link, ClientOnly } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,19 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
+// This route is ssr: false — the server can't render sign-in state (session
+// check, form) meaningfully anyway. Defer mounting AuthPageContent (and its
+// hooks) until after hydration so the server/client first paint matches;
+// see https://tanstack.com/start/latest/docs/framework/react/guide/hydration-errors
 function AuthPage() {
+  return (
+    <ClientOnly fallback={null}>
+      <AuthPageContent />
+    </ClientOnly>
+  );
+}
+
+function AuthPageContent() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");

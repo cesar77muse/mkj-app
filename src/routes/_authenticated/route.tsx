@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { createFileRoute, ClientOnly, Outlet, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/app-shell";
 
@@ -9,9 +9,14 @@ export const Route = createFileRoute("/_authenticated")({
     if (error || !data.user) throw redirect({ to: "/auth" });
     return { user: data.user };
   },
+  // ssr: false — defer mounting until after hydration so the server/client
+  // first paint matches; see
+  // https://tanstack.com/start/latest/docs/framework/react/guide/hydration-errors
   component: () => (
-    <AppShell>
-      <Outlet />
-    </AppShell>
+    <ClientOnly fallback={null}>
+      <AppShell>
+        <Outlet />
+      </AppShell>
+    </ClientOnly>
   ),
 });
