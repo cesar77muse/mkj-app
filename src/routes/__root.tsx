@@ -74,6 +74,17 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   );
 }
 
+// OG/Twitter image tags need absolute URLs — crawlers do not resolve relative
+// paths reliably. Set VITE_SITE_URL to the production domain; preview deploys and
+// local dev fall back to whatever origin the page is actually served from.
+const SITE_URL = (
+  import.meta.env.VITE_SITE_URL ||
+  (typeof process !== "undefined" ? process.env.SITE_URL : "") ||
+  (typeof window !== "undefined" ? window.location.origin : "")
+).replace(/\/+$/, "");
+
+const OG_IMAGE = `${SITE_URL}/og-image.png`;
+
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
     meta: [
@@ -88,7 +99,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:title", content: "MKJ Ops" },
       { property: "og:description", content: "Project-scoped ops for POs, inventory, and shipping." },
       { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "MKJ Ops" },
+      { property: "og:image", content: OG_IMAGE },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { property: "og:image:alt", content: "MKJ Communications — systems integration" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: OG_IMAGE },
+      { name: "theme-color", content: "#16324d" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
