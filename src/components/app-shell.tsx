@@ -16,6 +16,7 @@ import {
   Menu,
   LogOut,
   Settings,
+  KeyRound,
   Rocket,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,6 +32,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { RequestPasswordResetDialog } from "@/components/request-password-reset-dialog";
 import { useProfile, useRoles, useSession } from "@/hooks/use-session";
 import { isAdmin, isWarehouseOrAdmin, highestRole, ROLE_LABELS } from "@/lib/roles";
 import { cn } from "@/lib/utils";
@@ -145,6 +147,7 @@ function UserMenu() {
   const navigate = useNavigate();
   const top = highestRole(roles);
   const displayName = profile?.full_name?.trim() || email || "";
+  const [resetOpen, setResetOpen] = useState(false);
 
   async function signOut() {
     await qc.cancelQueries();
@@ -154,33 +157,42 @@ function UserMenu() {
   }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="h-9 gap-2 px-2">
-          <div className="hidden text-right sm:block">
-            <div className="text-xs font-medium leading-none">{displayName}</div>
-            {top ? <div className="mt-0.5 text-[10px] text-muted-foreground">{ROLE_LABELS[top]}</div> : null}
-          </div>
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
-            {(displayName || "?").slice(0, 1).toUpperCase()}
-          </div>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel>
-          <div className="text-sm font-medium">{displayName}</div>
-          {top ? <div className="mt-0.5"><Badge variant="secondary">{ROLE_LABELS[top]}</Badge></div> : null}
-        </DropdownMenuLabel>
+    // The dialog sits outside <DropdownMenu> on purpose: Radix restores focus to
+    // the trigger as the menu closes, which fights a dialog rendered inside it.
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="h-9 gap-2 px-2">
+            <div className="hidden text-right sm:block">
+              <div className="text-xs font-medium leading-none">{displayName}</div>
+              {top ? <div className="mt-0.5 text-[10px] text-muted-foreground">{ROLE_LABELS[top]}</div> : null}
+            </div>
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+              {(displayName || "?").slice(0, 1).toUpperCase()}
+            </div>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuLabel>
+            <div className="text-sm font-medium">{displayName}</div>
+            {top ? <div className="mt-0.5"><Badge variant="secondary">{ROLE_LABELS[top]}</Badge></div> : null}
+          </DropdownMenuLabel>
 
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => navigate({ to: "/account-settings" })}>
-          <Settings className="mr-2 h-4 w-4" /> Account settings
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={signOut}>
-          <LogOut className="mr-2 h-4 w-4" /> Sign out
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => navigate({ to: "/account-settings" })}>
+            <Settings className="mr-2 h-4 w-4" /> Account settings
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setResetOpen(true)} disabled={!email}>
+            <KeyRound className="mr-2 h-4 w-4" /> Reset password
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={signOut}>
+            <LogOut className="mr-2 h-4 w-4" /> Sign out
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <RequestPasswordResetDialog open={resetOpen} onOpenChange={setResetOpen} fixedEmail={email} />
+    </>
   );
 }
 

@@ -19,24 +19,23 @@ carry a `do not edit` banner and `npm run emails:check` fails if they are stale.
 | File | Supabase template | Triggered today by |
 | --- | --- | --- |
 | `confirmation.html` | Confirm signup | **The app** — the sign-up form in [`auth.tsx`](../../src/routes/auth.tsx) |
-| `recovery.html` | Reset password | Dashboard only — no "forgot password" link in the app |
+| `recovery.html` | Reset password | **The app** — "Forgot password?" on the sign-in page, and "Reset password" in the user menu |
 | `invite.html` | Invite user | Dashboard only — Authentication → Users → Invite |
 | `magic_link.html` | Magic link | Nothing — the app signs in with a password |
 | `email_change.html` | Change email address | Nothing — the app has no change-email UI |
 
-Only sign-up has an app-side trigger. The other four are still worth branding —
-an admin can send any of them from the Dashboard, and they're what the app grows
-into — but two of them have gaps worth knowing about before you rely on them:
+Sign-up and password reset have app-side triggers; the other three are
+Dashboard-only today. Both reset entry points go through
+[`RequestPasswordResetDialog`](../../src/components/request-password-reset-dialog.tsx)
+and land on [`/auth/reset`](../../src/routes/auth_.reset.tsx).
 
-- **Password reset dead-ends.** The app has no route that handles a recovery
-  link. Clicking one signs the user in and drops them on the dashboard, and
-  Account Settings asks for the *current* password to set a new one — which is
-  exactly what someone resetting their password doesn't have. Branding the email
-  didn't create this; it's true of Supabase's default template too. Fixing it
-  means a `/auth/reset` route that reads the recovery session and calls
-  `updateUser({ password })`.
-- **Invite lands on the same gap** — an invited user needs somewhere to set a
-  first password.
+That redirect only works if `/auth/reset` is on the project's allow-list —
+Dashboard → Authentication → URL Configuration → Redirect URLs. Without it
+Supabase silently falls back to the Site URL and the link drops the user on the
+dashboard instead of the reset form.
+
+**The invite flow still has a gap**: an invited user arrives with a session and
+no password, and nothing routes them to a page where they can set one.
 
 ## Design
 

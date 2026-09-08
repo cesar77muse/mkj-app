@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import mkjLogo from "@/assets/mkj-logo.jpg";
 import { PasswordRequirements } from "@/components/password-requirements";
+import { RequestPasswordResetDialog } from "@/components/request-password-reset-dialog";
 import { PASSWORD_MIN_LENGTH, isPasswordValid } from "@/lib/password-policy";
 
 export const Route = createFileRoute("/auth")({
@@ -41,6 +42,7 @@ function AuthPageContent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [resetOpen, setResetOpen] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -108,7 +110,12 @@ function AuthPageContent() {
                     <Input id="email-in" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="pw-in">Password</Label>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="pw-in">Password</Label>
+                      <button type="button" onClick={() => setResetOpen(true)} className="text-xs font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">
+                        Forgot password?
+                      </button>
+                    </div>
                     <Input id="pw-in" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" />
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>{loading ? "Signing in…" : "Sign in"}</Button>
@@ -138,6 +145,8 @@ function AuthPageContent() {
             </Tabs>
           </CardContent>
         </Card>
+        <RequestPasswordResetDialog open={resetOpen} onOpenChange={setResetOpen} defaultEmail={email} />
+
         <p className="mt-6 text-center text-xs text-muted-foreground">
           © 2026 JCL Industries. All rights reserved.
         </p>

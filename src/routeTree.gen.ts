@@ -22,6 +22,7 @@ import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authen
 import { Route as AuthenticatedProductsRouteImport } from './routes/_authenticated/products'
 import { Route as AuthenticatedSuppliersRouteImport } from './routes/_authenticated/suppliers'
 import { Route as AuthenticatedUsersRouteImport } from './routes/_authenticated/users'
+import { Route as AuthResetRouteImport } from './routes/auth_.reset'
 import { Route as AuthenticatedPackingSlipsIndexRouteImport } from './routes/_authenticated/packing-slips.index'
 import { Route as AuthenticatedPackingSlipsIdRouteImport } from './routes/_authenticated/packing-slips.$id'
 import { Route as AuthenticatedPackingSlipsNewRouteImport } from './routes/_authenticated/packing-slips.new'
@@ -101,6 +102,11 @@ const AuthenticatedUsersRoute = AuthenticatedUsersRouteImport.update({
   id: '/users',
   path: '/users',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthResetRoute = AuthResetRouteImport.update({
+  id: '/auth_/reset',
+  path: '/auth/reset',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedPackingSlipsIndexRoute =
   AuthenticatedPackingSlipsIndexRouteImport.update({
@@ -182,6 +188,7 @@ export interface FileRoutesByFullPath {
   '/products': typeof AuthenticatedProductsRoute
   '/suppliers': typeof AuthenticatedSuppliersRoute
   '/users': typeof AuthenticatedUsersRoute
+  '/auth/reset': typeof AuthResetRoute
   '/packing-slips/$id': typeof AuthenticatedPackingSlipsIdRoute
   '/packing-slips/new': typeof AuthenticatedPackingSlipsNewRoute
   '/projects/$mkj': typeof AuthenticatedProjectsMkjRoute
@@ -207,6 +214,7 @@ export interface FileRoutesByTo {
   '/products': typeof AuthenticatedProductsRoute
   '/suppliers': typeof AuthenticatedSuppliersRoute
   '/users': typeof AuthenticatedUsersRoute
+  '/auth/reset': typeof AuthResetRoute
   '/packing-slips/$id': typeof AuthenticatedPackingSlipsIdRoute
   '/packing-slips/new': typeof AuthenticatedPackingSlipsNewRoute
   '/projects/$mkj': typeof AuthenticatedProjectsMkjRoute
@@ -234,6 +242,7 @@ export interface FileRoutesById {
   '/_authenticated/products': typeof AuthenticatedProductsRoute
   '/_authenticated/suppliers': typeof AuthenticatedSuppliersRoute
   '/_authenticated/users': typeof AuthenticatedUsersRoute
+  '/auth_/reset': typeof AuthResetRoute
   '/_authenticated/packing-slips/$id': typeof AuthenticatedPackingSlipsIdRoute
   '/_authenticated/packing-slips/new': typeof AuthenticatedPackingSlipsNewRoute
   '/_authenticated/projects/$mkj': typeof AuthenticatedProjectsMkjRoute
@@ -261,6 +270,7 @@ export interface FileRouteTypes {
     | '/products'
     | '/suppliers'
     | '/users'
+    | '/auth/reset'
     | '/packing-slips/$id'
     | '/packing-slips/new'
     | '/projects/$mkj'
@@ -286,6 +296,7 @@ export interface FileRouteTypes {
     | '/products'
     | '/suppliers'
     | '/users'
+    | '/auth/reset'
     | '/packing-slips/$id'
     | '/packing-slips/new'
     | '/projects/$mkj'
@@ -312,6 +323,7 @@ export interface FileRouteTypes {
     | '/_authenticated/products'
     | '/_authenticated/suppliers'
     | '/_authenticated/users'
+    | '/auth_/reset'
     | '/_authenticated/packing-slips/$id'
     | '/_authenticated/packing-slips/new'
     | '/_authenticated/projects/$mkj'
@@ -329,6 +341,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  AuthResetRoute: typeof AuthResetRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -423,6 +436,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/users'
       preLoaderRoute: typeof AuthenticatedUsersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/auth_/reset': {
+      id: '/auth_/reset'
+      path: '/auth/reset'
+      fullPath: '/auth/reset'
+      preLoaderRoute: typeof AuthResetRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/packing-slips/': {
       id: '/_authenticated/packing-slips/'
@@ -560,6 +580,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  AuthResetRoute: AuthResetRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
