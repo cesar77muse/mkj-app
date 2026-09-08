@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, Link, ClientOnly } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,6 +43,8 @@ function AuthPageContent() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [resetOpen, setResetOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("signin");
+  const submitting = useRef(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -52,8 +54,11 @@ function AuthPageContent() {
 
   async function signIn(e: React.FormEvent) {
     e.preventDefault();
+    if (submitting.current) return;
+    submitting.current = true;
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
+    submitting.current = false;
     setLoading(false);
     if (error) return toast.error(error.message);
     toast.success("Welcome back");
@@ -62,7 +67,9 @@ function AuthPageContent() {
 
   async function signUp(e: React.FormEvent) {
     e.preventDefault();
+    if (submitting.current) return;
     if (!isPasswordValid(password)) return toast.error("Password does not meet the requirements.");
+    submitting.current = true;
     setLoading(true);
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -72,6 +79,7 @@ function AuthPageContent() {
         data: { full_name: fullName },
       },
     });
+    submitting.current = false;
     setLoading(false);
     if (error) return toast.error(error.message);
     if (data.session) {
@@ -80,6 +88,7 @@ function AuthPageContent() {
       return;
     }
     toast.success("Account created. Check your email to confirm before signing in.");
+    setActiveTab("signin");
   }
 
   return (
@@ -98,7 +107,7 @@ function AuthPageContent() {
             <CardDescription>Access the operations dashboard.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="signin">
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="signin">Sign in</TabsTrigger>
                 <TabsTrigger value="signup">Create account</TabsTrigger>
