@@ -39,6 +39,7 @@ function AuthPage() {
 function AuthPageContent() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [tab, setTab] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
@@ -79,7 +80,10 @@ function AuthPageContent() {
       navigate({ to: "/dashboard", replace: true });
       return;
     }
-    toast.success("Account created. Check your email to confirm before signing in.");
+    toast.success("Account created. Check your email to confirm, then sign in below.");
+    setFullName("");
+    setPassword("");
+    setTab("signin");
   }
 
   return (
@@ -98,7 +102,7 @@ function AuthPageContent() {
             <CardDescription>Access the operations dashboard.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="signin">
+            <Tabs value={tab} onValueChange={(v) => setTab(v as "signin" | "signup")}>
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="signin">Sign in</TabsTrigger>
                 <TabsTrigger value="signup">Create account</TabsTrigger>
