@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import mkjLogo from "@/assets/mkj-logo.jpg";
+import mkjLogo from "@/assets/mkj-logo-navy.png";
 import { PasswordRequirements } from "@/components/password-requirements";
 import { RequestPasswordResetDialog } from "@/components/request-password-reset-dialog";
 import { firstPasswordError, isPasswordValid } from "@/lib/password-policy";
@@ -163,8 +163,8 @@ function ResetPasswordPageContent() {
     <div className="flex min-h-screen items-center justify-center bg-muted/40 px-4">
       <div className="w-full max-w-md">
         <Link to="/" className="mb-8 flex flex-col items-center justify-center gap-3">
-          <div className="flex h-12 items-center justify-center rounded-lg bg-white px-3">
-            <img src={mkjLogo} alt="MKJ Communications" className="h-9 w-auto object-contain" />
+          <div className="flex h-14 items-center justify-center rounded-lg bg-brand-navy px-5">
+            <img src={mkjLogo} alt="MKJ Communications" className="h-8 w-auto object-contain" />
           </div>
           <span className="text-2xl font-semibold tracking-tight">MKJ Ops</span>
         </Link>

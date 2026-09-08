@@ -69,6 +69,7 @@
   --color-status-received: var(--status-received);
   --color-status-received-foreground: var(--status-received-foreground);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-brand-navy: var(--brand-navy);
 }
 
 :root {
@@ -115,6 +116,9 @@
   --status-received: oklch(0.92 0.09 150);
   --status-received-foreground: oklch(0.42 0.13 150);
   --sidebar-ring: oklch(0.64 0.18 42);
+  /* Exact navy of the MKJ logo artwork (#16324d) — fixed in both themes so the
+     logo's own background blends into whatever surface it sits on. */
+  --brand-navy: oklch(0.31 0.06 250);
 }
 
 
@@ -162,6 +166,7 @@
   --status-received: oklch(0.33 0.09 150);
   --status-received-foreground: oklch(0.87 0.12 152);
   --sidebar-ring: oklch(0.551 0.027 264.364);
+  --brand-navy: oklch(0.31 0.06 250);
 }
 
 @layer base {
