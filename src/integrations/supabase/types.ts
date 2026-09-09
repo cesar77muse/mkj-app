@@ -54,6 +54,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "borrow_request_serials_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_products_with_cost"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "borrow_request_serials_request_id_fkey"
             columns: ["request_id"]
             isOneToOne: false
@@ -135,6 +142,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "borrow_requests_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_products_with_cost"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "borrow_requests_source_project_id_fkey"
             columns: ["source_project_id"]
             isOneToOne: false
@@ -204,6 +218,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_adjustments_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_products_with_cost"
             referencedColumns: ["id"]
           },
           {
@@ -289,6 +310,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "packing_slip_item_serials_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_products_with_cost"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "packing_slip_item_serials_slip_item_id_fkey"
             columns: ["slip_item_id"]
             isOneToOne: false
@@ -341,6 +369,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "packing_slip_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_products_with_cost"
             referencedColumns: ["id"]
           },
           {
@@ -638,6 +673,13 @@ export type Database = {
             referencedRelation: "products"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "purchase_order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_products_with_cost"
+            referencedColumns: ["id"]
+          },
         ]
       }
       purchase_order_pdfs: {
@@ -800,6 +842,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "shipping_ticket_item_serials_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_products_with_cost"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "shipping_ticket_item_serials_ticket_item_id_fkey"
             columns: ["ticket_item_id"]
             isOneToOne: false
@@ -839,6 +888,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipping_ticket_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_products_with_cost"
             referencedColumns: ["id"]
           },
           {
@@ -972,6 +1028,144 @@ export type Database = {
           },
         ]
       }
+      supplier_price_history: {
+        Row: {
+          id: string
+          previous_unit_cost: number | null
+          product_id: string
+          recorded_at: string
+          recorded_by: string | null
+          source_name: string | null
+          supplier_id: string | null
+          supplier_price_id: string | null
+          unit: string
+          unit_cost: number
+        }
+        Insert: {
+          id?: string
+          previous_unit_cost?: number | null
+          product_id: string
+          recorded_at?: string
+          recorded_by?: string | null
+          source_name?: string | null
+          supplier_id?: string | null
+          supplier_price_id?: string | null
+          unit?: string
+          unit_cost: number
+        }
+        Update: {
+          id?: string
+          previous_unit_cost?: number | null
+          product_id?: string
+          recorded_at?: string
+          recorded_by?: string | null
+          source_name?: string | null
+          supplier_id?: string | null
+          supplier_price_id?: string | null
+          unit?: string
+          unit_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_price_history_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_price_history_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_products_with_cost"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_price_history_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_price_history_supplier_price_id_fkey"
+            columns: ["supplier_price_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_prices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_prices: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          is_preferred: boolean
+          notes: string | null
+          price_updated_at: string
+          product_id: string
+          source_label: string | null
+          supplier_id: string | null
+          supplier_sku: string | null
+          unit: string
+          unit_cost: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_preferred?: boolean
+          notes?: string | null
+          price_updated_at?: string
+          product_id: string
+          source_label?: string | null
+          supplier_id?: string | null
+          supplier_sku?: string | null
+          unit?: string
+          unit_cost: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_preferred?: boolean
+          notes?: string | null
+          price_updated_at?: string
+          product_id?: string
+          source_label?: string | null
+          supplier_id?: string | null
+          supplier_sku?: string | null
+          unit?: string
+          unit_cost?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_prices_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_prices_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_products_with_cost"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_prices_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppliers: {
         Row: {
           address: string | null
@@ -1054,6 +1248,36 @@ export type Database = {
       }
     }
     Views: {
+      v_products_with_cost: {
+        Row: {
+          cost_updated_at: string | null
+          created_at: string | null
+          default_cost: number | null
+          default_cost_unit: string | null
+          default_is_preferred: boolean | null
+          default_source: string | null
+          default_supplier_id: string | null
+          description: string | null
+          id: string | null
+          is_serialized: boolean | null
+          max_cost: number | null
+          min_cost: number | null
+          part_number: string | null
+          price_count: number | null
+          reorder_point: number | null
+          unit: string | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_prices_supplier_id_fkey"
+            columns: ["default_supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_project_directory: {
         Row: {
           id: string | null
@@ -1084,6 +1308,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_adjustments_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_products_with_cost"
             referencedColumns: ["id"]
           },
           {
@@ -1137,6 +1368,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "packing_slip_item_serials_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_products_with_cost"
             referencedColumns: ["id"]
           },
         ]

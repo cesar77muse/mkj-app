@@ -11,15 +11,27 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/page-header";
+import { ProductPricesDialog } from "@/components/product-prices-dialog";
 import { toast } from "sonner";
-import { Plus, Search, Pencil } from "lucide-react";
+import { Plus, Search, Pencil, DollarSign } from "lucide-react";
 import { useRoles } from "@/hooks/use-session";
-import { isWarehouseOrAdmin } from "@/lib/roles";
+import { isWarehouseOrAdmin, canWrite as canSeeCostRoles } from "@/lib/roles";
 import { useSerialSupport } from "@/lib/serials";
 
 type Product = {
   id: string; part_number: string; description: string; unit: string; reorder_point: number;
   is_serialized?: boolean | null;
+};
+
+// Row shape of v_products_with_cost: products plus the one cost to show,
+// derived from supplier_prices rather than stored. See
+// supabase/migrations/20260908235000_supplier_prices.sql.
+type ProductWithCost = Product & {
+  default_cost: number | null;
+  default_cost_unit: string | null;
+  cost_updated_at: string | null;
+  default_source: string | null;
+  price_count: number | null;
 };
 
 export const Route = createFileRoute("/_authenticated/products")({
@@ -30,6 +42,11 @@ export const Route = createFileRoute("/_authenticated/products")({
 function ProductsPage() {
   const { data: roles = [] } = useRoles();
   const canWrite = isWarehouseOrAdmin(roles);
+  // Same predicate as supplier_prices' SELECT policy (can_write: admin,
+  // warehouse_manager, manager). Engineers never see cost data -- and even
+  // without this check the view would just come back with nulls for them,
+  // since it's security_invoker and RLS hides the price rows either way.
+  const canSeeCost = canSeeCostRoles(roles);
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
@@ -40,13 +57,14 @@ function ProductsPage() {
   const [serialized, setSerialized] = useState(false);
   // Serial tracking only shows once the backend schema is in place.
   const serialsOn = useSerialSupport().data === true;
+  const [pricesFor, setPricesFor] = useState<ProductWithCost | null>(null);
 
   const products = useQuery({
-    queryKey: ["products"],
+    queryKey: ["products-with-cost"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("products").select("*").order("part_number");
+      const { data, error } = await supabase.from("v_products_with_cost").select("*").order("part_number");
       if (error) throw error;
-      return data;
+      return data as ProductWithCost[];
     },
   });
 
@@ -75,7 +93,7 @@ function ProductsPage() {
       toast.success("Product added");
       setOpen(false);
       setPn(""); setDesc(""); setUnit("ea"); setRp(0); setSerialized(false);
-      qc.invalidateQueries({ queryKey: ["products"] });
+      qc.invalidateQueries({ queryKey: ["products-with-cost"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -111,7 +129,7 @@ function ProductsPage() {
     onSuccess: () => {
       toast.success("Product updated");
       setEditing(null);
-      qc.invalidateQueries({ queryKey: ["products"] });
+      qc.invalidateQueries({ queryKey: ["products-with-cost"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -165,7 +183,9 @@ function ProductsPage() {
       <Card><CardContent className="p-0">
         <Table>
           <TableHeader><TableRow>
-            <TableHead>Part #</TableHead><TableHead>Description</TableHead><TableHead>Unit</TableHead>{serialsOn ? <TableHead>Serials</TableHead> : null}<TableHead className="text-right">Reorder point</TableHead><TableHead />
+            <TableHead>Part #</TableHead><TableHead>Description</TableHead><TableHead>Unit</TableHead>{serialsOn ? <TableHead>Serials</TableHead> : null}<TableHead className="text-right">Reorder point</TableHead>
+            {canSeeCost ? <><TableHead className="text-right">Cost</TableHead><TableHead>Updated</TableHead></> : null}
+            <TableHead />
           </TableRow></TableHeader>
           <TableBody>
             {filtered.length > 0 ? filtered.map((p) => (
@@ -179,15 +199,37 @@ function ProductsPage() {
                   </TableCell>
                 ) : null}
                 <TableCell className="text-right">{p.reorder_point}</TableCell>
+                {canSeeCost ? (
+                  <>
+                    <TableCell className="text-right">
+                      {p.default_cost != null ? (
+                        <div className="font-mono">
+                          ${Number(p.default_cost).toFixed(2)}/{p.default_cost_unit}
+                          {p.default_source ? <div className="text-xs font-normal text-muted-foreground">{p.default_source}</div> : null}
+                        </div>
+                      ) : <span className="text-xs text-muted-foreground">—</span>}
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {p.cost_updated_at ? new Date(p.cost_updated_at).toLocaleDateString() : "—"}
+                    </TableCell>
+                  </>
+                ) : null}
                 <TableCell className="text-right">
-                  {canWrite ? (
-                    <Button size="icon" variant="ghost" aria-label="Edit product" onClick={() => openEdit(p)}>
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
-                  ) : null}
+                  <div className="flex justify-end gap-1">
+                    {canSeeCost ? (
+                      <Button size="icon" variant="ghost" aria-label={`Prices for ${p.part_number}`} onClick={() => setPricesFor(p)}>
+                        <DollarSign className="h-3.5 w-3.5" />
+                      </Button>
+                    ) : null}
+                    {canWrite ? (
+                      <Button size="icon" variant="ghost" aria-label="Edit product" onClick={() => openEdit(p)}>
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                    ) : null}
+                  </div>
                 </TableCell>
               </TableRow>
-            )) : <TableRow><TableCell colSpan={serialsOn ? 6 : 5} className="py-6 text-center text-sm text-muted-foreground">{term ? "No matches." : "No products yet."}</TableCell></TableRow>}
+            )) : <TableRow><TableCell colSpan={serialsOn ? (canSeeCost ? 8 : 6) : (canSeeCost ? 7 : 5)} className="py-6 text-center text-sm text-muted-foreground">{term ? "No matches." : "No products yet."}</TableCell></TableRow>}
           </TableBody>
         </Table>
       </CardContent></Card>
@@ -218,6 +260,17 @@ function ProductsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {pricesFor ? (
+        <ProductPricesDialog
+          open={!!pricesFor}
+          onOpenChange={(o) => !o && setPricesFor(null)}
+          productId={pricesFor.id}
+          partNumber={pricesFor.part_number}
+          description={pricesFor.description}
+          canEdit={canWrite}
+        />
+      ) : null}
     </div>
   );
 }

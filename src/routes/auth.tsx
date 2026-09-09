@@ -79,14 +79,38 @@ function AuthPageContent() {
         data: { full_name: fullName },
       },
     });
-    submitting.current = false;
-    setLoading(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      submitting.current = false;
+      setLoading(false);
+      return toast.error(error.message);
+    }
     if (data.session) {
+      submitting.current = false;
+      setLoading(false);
       toast.success("Account created. Welcome!");
       navigate({ to: "/dashboard", replace: true });
       return;
     }
+    // Supabase returns a session-less "success" with an empty identities array
+    // (no error, to avoid leaking which emails are registered) when the email
+    // already belongs to a confirmed account. Try the password the user just
+    // entered — if it's their real password, sign them in instead of lying
+    // that we sent a confirmation email.
+    if (data.user && data.user.identities?.length === 0) {
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      submitting.current = false;
+      setLoading(false);
+      if (!signInError) {
+        toast.success("Welcome back");
+        navigate({ to: "/dashboard", replace: true });
+        return;
+      }
+      toast.error("An account with this email already exists. Sign in with your existing password.");
+      setActiveTab("signin");
+      return;
+    }
+    submitting.current = false;
+    setLoading(false);
     toast.success("Account created. Check your email to confirm before signing in.");
     setActiveTab("signin");
   }
