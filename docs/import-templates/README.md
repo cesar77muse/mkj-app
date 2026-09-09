@@ -1,5 +1,16 @@
 # Warehouse import templates — products, suppliers & pricing
 
+> **Superseded for the initial data load.** The go-live import now uses the
+> single workbook at `public/bulk-upload-template.xlsx` (the file the app's
+> Bulk Upload page serves), which covers **projects** and **opening inventory**
+> as well as the three sheets below. Two deliberate differences there:
+> `is_serialized` is omitted — everything is imported non-serialized, because
+> serials can only enter through receiving — and inventory has its own hard
+> rules, spelled out on that workbook's Instructions tab.
+>
+> These CSVs remain accurate for topping up products, suppliers and pricing
+> later on.
+
 Three CSV files in this folder. Open them in Excel, keep the header row exactly
 as-is, replace the example rows with real data, and save as CSV.
 
