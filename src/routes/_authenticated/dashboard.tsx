@@ -47,6 +47,13 @@ function Dashboard() {
         supabase.from("borrow_requests").select("*", { count: "exact", head: true }).eq("status", "pending"),
         supabase.from("purchase_orders").select("*", { count: "exact", head: true }).in("status", ["executed", "partially_received", "received"]).eq("entered_in_procore", false),
       ]);
+      // A count query can fail (e.g. a transient 401 mid token-refresh) while
+      // the others in the batch succeed. Surfacing it here — instead of
+      // falling back to 0 — keeps a real failure from being cached by React
+      // Query as a legitimate "zero open tickets" answer.
+      for (const r of [projects, pos, tickets, slips, borrow, procore]) {
+        if (r.error) throw r.error;
+      }
       return {
         activeProjects: projects.count ?? 0,
         openPOs: pos.count ?? 0,
@@ -61,11 +68,12 @@ function Dashboard() {
   const recent = useQuery({
     queryKey: ["dashboard-recent-projects"],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("projects")
         .select("id, mkj_number, name, status, updated_at")
         .order("updated_at", { ascending: false })
         .limit(6);
+      if (error) throw error;
       return data ?? [];
     },
   });

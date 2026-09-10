@@ -96,10 +96,11 @@ function NotificationsBell() {
     enabled: !!userId,
     refetchInterval: 30_000,
     queryFn: async () => {
-      const { count } = await supabase
+      const { count, error } = await supabase
         .from("notifications")
         .select("*", { count: "exact", head: true })
         .is("read_at", null);
+      if (error) throw error;
       return count ?? 0;
     },
   });
