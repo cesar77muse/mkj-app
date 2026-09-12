@@ -4,7 +4,7 @@
 
 This project is an application initially developed using Lovable.dev and synchronized through GitHub.
 
-The frontend is primarily generated and maintained through Lovable. Claude should help extend, improve, and maintain the application while preserving compatibility with Lovable's workflow.
+Lovable no longer manages any part of the app: the frontend and backend are fully owned in this repository (own Supabase project + Vercel hosting). Claude should help extend, improve, and maintain the application.
 
 The project uses Supabase as the backend platform, including database, authentication, storage, and backend services where applicable.
 
@@ -44,15 +44,12 @@ Claude should primarily assist with:
 
 # Frontend Guidelines
 
-The frontend is primarily managed through Lovable.
-
 Avoid unnecessary modifications to frontend components, styling, or layouts unless explicitly requested.
 
 When frontend changes are required:
 - Preserve existing design patterns.
 - Reuse existing components.
 - Avoid rewriting large sections of UI code.
-- Maintain compatibility with Lovable-generated code.
 
 ---
 
@@ -129,6 +126,15 @@ When working on tasks:
 
 Avoid assuming requirements that were not provided.
 Ask questions when requirements are unclear.
+
+---
+
+# Purchase Orders and PO Requests
+
+- Real POs belong to warehouse managers and admins. Project managers can view POs and receive shipments against them, but can't create, edit, delete, or change the status of one. This is enforced by RLS and `create_purchase_order`, not only by hidden buttons.
+- Receiving recomputes a PO's status through the `refresh_po_status` RPC ([src/lib/receiving.ts](src/lib/receiving.ts)), never a direct UPDATE: managers have no UPDATE rights on `purchase_orders`, so a browser-side update would be silently dropped.
+- Managers (their projects) and admins (any project) ask for POs with **Request a PO**: `po_requests` + `po_request_lines`, numbered `REQ-<project>-<seq>`. Pending → completed (warehouse/admin, optional free-text PO reference) or cancelled (reason required). A request is never linked to a PO row and never shows up in receiving, PDFs, or PO counts. Clients only SELECT these tables; every write goes through the `create/update/complete/cancel_po_request` RPCs, which also send the notifications.
+- Procore tracking was removed entirely on 2026-09-12. Don't reintroduce `entered_in_procore`.
 
 ---
 

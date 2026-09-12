@@ -5,6 +5,8 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/page-header";
 import { POStatusBadge } from "@/components/po-status-badge";
+import { PORequestStatusBadge } from "@/components/po-request-status-badge";
+import { lineLabel, usePoRequests } from "@/lib/po-requests";
 import { toast } from "sonner";
 import { openPurchaseOrderPdf } from "@/lib/po-pdf";
 import { Button } from "@/components/ui/button";
@@ -70,6 +72,8 @@ function ProjectDetail() {
       return data ?? [];
     },
   });
+
+  const poRequests = usePoRequests({ projectId: project.data?.id, enabled: !!project.data });
 
   const tickets = useQuery({
     queryKey: ["st-list", project.data?.id],
@@ -216,8 +220,36 @@ function ProjectDetail() {
         </TabsContent>
 
 
-        <TabsContent value="pos" className="pt-4">
+        <TabsContent value="pos" className="space-y-4 pt-4">
           <Card>
+            <CardHeader className="pb-2"><CardTitle className="text-base">PO requests</CardTitle></CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Request #</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Items</TableHead>
+                    <TableHead>Requested by</TableHead>
+                    <TableHead>Created</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {poRequests.data && poRequests.data.rows.length > 0 ? poRequests.data.rows.map((r) => (
+                    <TableRow key={r.id}>
+                      <TableCell><Link className="font-mono text-primary hover:underline" to="/purchase-orders" search={{ request: r.id }}>{r.request_number}</Link></TableCell>
+                      <TableCell><PORequestStatusBadge status={r.status} poReference={r.po_reference} /></TableCell>
+                      <TableCell><div className="max-w-xs truncate text-sm" title={r.lines.map(lineLabel).join(", ")}>{r.lines.map(lineLabel).join(", ")}</div></TableCell>
+                      <TableCell>{r.requester_name ?? "—"}</TableCell>
+                      <TableCell>{new Date(r.created_at).toLocaleDateString()}</TableCell>
+                    </TableRow>
+                  )) : <TableRow><TableCell colSpan={5} className="py-6 text-center text-sm text-muted-foreground">No PO requests yet.</TableCell></TableRow>}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2"><CardTitle className="text-base">Purchase orders</CardTitle></CardHeader>
             <CardContent className="p-0">
               <Table>
                 <TableHeader>

@@ -92,49 +92,15 @@ export function slipStatusFor(lines: { qty_ordered: number; qty_received: number
 /**
  * Recompute a PO's received status from every packing slip logged against it.
  *
- * Receiving never sets Approved/Executed — those stay manual. The PO's status
- * from just before its first receipt is stashed in `pre_receipt_status` so the
- * PO can fall back to it if every receipt is later removed/zeroed out.
+ * Runs in the database (refresh_po_status) rather than here: project managers
+ * receive shipments but have no UPDATE rights on purchase_orders, so a direct
+ * update from the browser would be silently dropped by RLS. Receiving never
+ * sets Approved/Executed — those stay manual. The status from just before the
+ * first receipt is kept in `pre_receipt_status` so the PO can fall back to it
+ * if every receipt is later removed/zeroed out.
  */
 export async function refreshPoStatus(poId: string) {
-  const [{ data: po }, { data: poItems }, { data: slipItems }] = await Promise.all([
-    supabase.from("purchase_orders").select("status, pre_receipt_status").eq("id", poId).maybeSingle(),
-    supabase.from("purchase_order_items").select("id, qty").eq("po_id", poId),
-    supabase
-      .from("packing_slip_items")
-      .select("po_item_id, qty_received, packing_slips!inner(po_id)")
-      .eq("packing_slips.po_id", poId),
-  ]);
-  const received = new Map<string, number>();
-  (slipItems ?? []).forEach((s) => {
-    if (!s.po_item_id) return;
-    received.set(s.po_item_id, (received.get(s.po_item_id) ?? 0) + Number(s.qty_received));
-  });
-
-  const anyReceived = [...received.values()].some((q) => q > 0);
-  if (!anyReceived) {
-    if (!po?.pre_receipt_status) {
-      // Unknown pre-receipt status (this PO's first receipt predates the
-      // column) — don't guess a status, leave it for a human to correct.
-      return;
-    }
-    // No receipts left — revert to whatever the PO was before the first one.
-    await supabase
-      .from("purchase_orders")
-      .update({ status: po.pre_receipt_status, pre_receipt_status: null })
-      .eq("id", poId);
-    return;
-  }
-
-  const anyOpen = (poItems ?? []).some((i) => (received.get(i.id) ?? 0) < Number(i.qty));
-  const isReceipt = po?.status === "received" || po?.status === "partially_received";
-  await supabase
-    .from("purchase_orders")
-    .update({
-      status: anyOpen ? "partially_received" : "received",
-      // Only capture the pre-receipt status on the first receipt.
-      ...(po && !isReceipt && !po.pre_receipt_status ? { pre_receipt_status: po.status } : {}),
-    })
-    .eq("id", poId);
+  const { error } = await supabase.rpc("refresh_po_status", { _po_id: poId });
+  if (error) throw error;
 }
 

@@ -460,6 +460,130 @@ export type Database = {
           },
         ]
       }
+      po_request_lines: {
+        Row: {
+          custom_description: string | null
+          id: string
+          line_no: number
+          product_id: string | null
+          qty: number
+          request_id: string
+          unit: string
+        }
+        Insert: {
+          custom_description?: string | null
+          id?: string
+          line_no: number
+          product_id?: string | null
+          qty: number
+          request_id: string
+          unit?: string
+        }
+        Update: {
+          custom_description?: string | null
+          id?: string
+          line_no?: number
+          product_id?: string | null
+          qty?: number
+          request_id?: string
+          unit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "po_request_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "po_request_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_products_with_cost"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "po_request_lines_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "po_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      po_requests: {
+        Row: {
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          po_reference: string | null
+          project_id: string
+          project_number: string
+          request_number: string
+          request_sequence: number
+          requested_by: string | null
+          status: Database["public"]["Enums"]["po_request_status"]
+          updated_at: string
+        }
+        Insert: {
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          po_reference?: string | null
+          project_id: string
+          project_number: string
+          request_number: string
+          request_sequence: number
+          requested_by?: string | null
+          status?: Database["public"]["Enums"]["po_request_status"]
+          updated_at?: string
+        }
+        Update: {
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          po_reference?: string | null
+          project_id?: string
+          project_number?: string
+          request_number?: string
+          request_sequence?: number
+          requested_by?: string | null
+          status?: Database["public"]["Enums"]["po_request_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "po_requests_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "po_requests_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_project_directory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           created_at: string
@@ -723,7 +847,6 @@ export type Database = {
           created_by: string | null
           delivery_date: string | null
           description: string | null
-          entered_in_procore: boolean
           id: string
           payment_terms: string | null
           po_number: string
@@ -746,7 +869,6 @@ export type Database = {
           created_by?: string | null
           delivery_date?: string | null
           description?: string | null
-          entered_in_procore?: boolean
           id?: string
           payment_terms?: string | null
           po_number: string
@@ -769,7 +891,6 @@ export type Database = {
           created_by?: string | null
           delivery_date?: string | null
           description?: string | null
-          entered_in_procore?: boolean
           id?: string
           payment_terms?: string | null
           po_number?: string
@@ -1407,6 +1528,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      can_request_po: {
+        Args: { _project_id: string; _user_id: string }
+        Returns: boolean
+      }
       can_see_project: {
         Args: { _project_id: string; _user_id: string }
         Returns: boolean
@@ -1415,6 +1540,60 @@ export type Database = {
       can_write_project: {
         Args: { _project_id: string; _user_id: string }
         Returns: boolean
+      }
+      cancel_po_request: {
+        Args: { _reason: string; _request_id: string }
+        Returns: {
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          po_reference: string | null
+          project_id: string
+          project_number: string
+          request_number: string
+          request_sequence: number
+          requested_by: string | null
+          status: Database["public"]["Enums"]["po_request_status"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "po_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      complete_po_request: {
+        Args: { _po_reference: string; _request_id: string }
+        Returns: {
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          po_reference: string | null
+          project_id: string
+          project_number: string
+          request_number: string
+          request_sequence: number
+          requested_by: string | null
+          status: Database["public"]["Enums"]["po_request_status"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "po_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       create_packing_slip: {
         Args: {
@@ -1449,6 +1628,33 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      create_po_request: {
+        Args: { _lines: Json; _notes: string; _project_id: string }
+        Returns: {
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          po_reference: string | null
+          project_id: string
+          project_number: string
+          request_number: string
+          request_sequence: number
+          requested_by: string | null
+          status: Database["public"]["Enums"]["po_request_status"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "po_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       create_purchase_order: {
         Args: {
           _additional_freight?: number
@@ -1472,7 +1678,6 @@ export type Database = {
           created_by: string | null
           delivery_date: string | null
           description: string | null
-          entered_in_procore: boolean
           id: string
           payment_terms: string | null
           po_number: string
@@ -1566,6 +1771,15 @@ export type Database = {
         Args: { _project_id: string; _user_id: string }
         Returns: boolean
       }
+      notify_po_request: {
+        Args: { _event: string; _request_id: string }
+        Returns: undefined
+      }
+      po_request_write_lines: {
+        Args: { _lines: Json; _request_id: string }
+        Returns: undefined
+      }
+      refresh_po_status: { Args: { _po_id: string }; Returns: undefined }
       return_borrowed_stock: {
         Args: {
           _note?: string
@@ -1594,6 +1808,33 @@ export type Database = {
         Args: { _slip_id: string }
         Returns: undefined
       }
+      update_po_request: {
+        Args: { _lines: Json; _notes: string; _request_id: string }
+        Returns: {
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          po_reference: string | null
+          project_id: string
+          project_number: string
+          request_number: string
+          request_sequence: number
+          requested_by: string | null
+          status: Database["public"]["Enums"]["po_request_status"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "po_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       app_role: "admin" | "warehouse_manager" | "manager" | "engineer"
@@ -1615,6 +1856,7 @@ export type Database = {
         | "borrow_return_out"
         | "borrow_return_in"
         | "initial"
+      po_request_status: "pending" | "completed" | "cancelled"
       po_status:
         | "draft"
         | "approved"
@@ -1622,7 +1864,7 @@ export type Database = {
         | "partially_received"
         | "received"
       project_status: "active" | "on_hold" | "closed"
-      ticket_status: "draft" | "ready" | "shipped" | "delivered"
+      ticket_status: "draft" | "ready" | "shipped" | "delivered" | "closed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1771,6 +2013,7 @@ export const Constants = {
         "borrow_return_in",
         "initial",
       ],
+      po_request_status: ["pending", "completed", "cancelled"],
       po_status: [
         "draft",
         "approved",
@@ -1779,7 +2022,7 @@ export const Constants = {
         "received",
       ],
       project_status: ["active", "on_hold", "closed"],
-      ticket_status: ["draft", "ready", "shipped", "delivered"],
+      ticket_status: ["draft", "ready", "shipped", "delivered", "closed"],
     },
   },
 } as const
