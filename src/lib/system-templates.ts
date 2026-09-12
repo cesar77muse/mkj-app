@@ -16,6 +16,7 @@ export const SYSTEM_CATEGORY_LABELS: Record<SystemCategory, string> = {
 export type SystemTemplatePart = {
   id: string;
   line_no: number;
+  product_id: string;
   qty_per_system: number;
   is_key_part: boolean;
   notes: string | null;
@@ -41,7 +42,7 @@ export function useSystemTemplates() {
       const { data, error } = await supabase
         .from("system_templates")
         .select(
-          "id, system_code, name, category, description, active, updated_at, system_template_parts(id, line_no, qty_per_system, is_key_part, notes, products:product_id(part_number, description, unit, is_serialized))",
+          "id, system_code, name, category, description, active, updated_at, system_template_parts(id, line_no, product_id, qty_per_system, is_key_part, notes, products:product_id(part_number, description, unit, is_serialized))",
         )
         .order("system_code");
       if (error) throw error;

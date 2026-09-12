@@ -1970,15 +1970,32 @@ export type Database = {
       }
     }
     Functions: {
+      allocate_held_stock: {
+        Args: { _product_id: string; _project_id: string }
+        Returns: undefined
+      }
       borrow_notify_recipients: {
         Args: { _project_id: string }
         Returns: string[]
+      }
+      build_request_write_lines: {
+        Args: {
+          _lines: Json
+          _qty: number
+          _request_id: string
+          _template_id: string
+        }
+        Returns: Json
       }
       can_modify_po: {
         Args: {
           _status: Database["public"]["Enums"]["po_status"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      can_request_build: {
+        Args: { _project_id: string; _user_id: string }
         Returns: boolean
       }
       can_request_po: {
@@ -2044,6 +2061,47 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "po_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      create_build_request: {
+        Args: {
+          _lines: Json
+          _notes: string
+          _project_id: string
+          _qty: number
+          _template_id: string
+        }
+        Returns: {
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          project_id: string
+          project_number: string
+          qty: number
+          reject_note: string | null
+          rejected_at: string | null
+          rejected_by: string | null
+          request_number: string
+          request_sequence: number
+          requested_by: string | null
+          started_at: string | null
+          started_by: string | null
+          status: Database["public"]["Enums"]["build_status"]
+          submitted_at: string | null
+          submitted_by: string | null
+          template_id: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "build_requests"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -2232,6 +2290,10 @@ export type Database = {
         Args: { _project_id: string; _user_id: string }
         Returns: boolean
       }
+      notify_build_request: {
+        Args: { _detail?: string; _event: string; _request_id: string }
+        Returns: undefined
+      }
       notify_po_request: {
         Args: { _event: string; _request_id: string }
         Returns: undefined
@@ -2240,7 +2302,78 @@ export type Database = {
         Args: { _lines: Json; _request_id: string }
         Returns: undefined
       }
+      pull_back_build_request: {
+        Args: { _request_id: string }
+        Returns: {
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          project_id: string
+          project_number: string
+          qty: number
+          reject_note: string | null
+          rejected_at: string | null
+          rejected_by: string | null
+          request_number: string
+          request_sequence: number
+          requested_by: string | null
+          started_at: string | null
+          started_by: string | null
+          status: Database["public"]["Enums"]["build_status"]
+          submitted_at: string | null
+          submitted_by: string | null
+          template_id: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "build_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       refresh_po_status: { Args: { _po_id: string }; Returns: undefined }
+      reject_build_request: {
+        Args: { _note: string; _request_id: string }
+        Returns: {
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          project_id: string
+          project_number: string
+          qty: number
+          reject_note: string | null
+          rejected_at: string | null
+          rejected_by: string | null
+          request_number: string
+          request_sequence: number
+          requested_by: string | null
+          started_at: string | null
+          started_by: string | null
+          status: Database["public"]["Enums"]["build_status"]
+          submitted_at: string | null
+          submitted_by: string | null
+          template_id: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "build_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      release_build_holds: { Args: { _request_id: string }; Returns: undefined }
       return_borrowed_stock: {
         Args: {
           _note?: string
@@ -2287,9 +2420,50 @@ export type Database = {
         Args: { _ticket_id: string }
         Returns: undefined
       }
+      submit_build_request: { Args: { _request_id: string }; Returns: Json }
       sync_packing_slip_inventory: {
         Args: { _slip_id: string }
         Returns: undefined
+      }
+      update_build_request: {
+        Args: {
+          _lines: Json
+          _notes: string
+          _qty: number
+          _request_id: string
+        }
+        Returns: {
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          project_id: string
+          project_number: string
+          qty: number
+          reject_note: string | null
+          rejected_at: string | null
+          rejected_by: string | null
+          request_number: string
+          request_sequence: number
+          requested_by: string | null
+          started_at: string | null
+          started_by: string | null
+          status: Database["public"]["Enums"]["build_status"]
+          submitted_at: string | null
+          submitted_by: string | null
+          template_id: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "build_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       update_po_request: {
         Args: { _lines: Json; _notes: string; _request_id: string }

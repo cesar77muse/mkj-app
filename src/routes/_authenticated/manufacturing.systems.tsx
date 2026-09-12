@@ -70,6 +70,7 @@ function SystemsPage() {
       <PageHeader
         title="Manufacturing systems"
         description="Standard systems the shop builds, with the parts for one unit of each. Download the template, fill it in, and import it here — this is separate from Bulk Upload."
+        backTo="/manufacturing"
         actions={
           <>
             <Button variant="outline" asChild>

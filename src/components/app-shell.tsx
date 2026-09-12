@@ -51,8 +51,8 @@ const NAV: NavItem[] = [
   { to: "/shipping-tickets", label: "Shipping Tickets", icon: Truck },
   { to: "/inventory", label: "Inventory", icon: Warehouse },
   { to: "/borrow-requests", label: "Borrow Requests", icon: ArrowLeftRight },
-  // Systems (templates) for now; build requests join this section in a later phase.
-  { to: "/manufacturing/systems", label: "Manufacturing", icon: Factory },
+  // Build requests; Systems (templates) is one click away from there.
+  { to: "/manufacturing", label: "Manufacturing", icon: Factory },
   { to: "/products", label: "Products", icon: Package, warehouseOnly: true },
   { to: "/suppliers", label: "Suppliers", icon: Building2, warehouseOnly: true },
   { to: "/users", label: "Users & Roles", icon: Users, adminOnly: true },

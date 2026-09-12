@@ -39,7 +39,7 @@ function Dashboard() {
   const stats = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
-      const [projects, pos, tickets, slips, borrow, poRequests, systems] = await Promise.all([
+      const [projects, pos, tickets, slips, borrow, poRequests, builds] = await Promise.all([
         supabase.from("projects").select("*", { count: "exact", head: true }).eq("status", "active"),
         supabase.from("purchase_orders").select("*", { count: "exact", head: true }).in("status", ["draft", "approved", "executed", "partially_received"]),
         supabase.from("shipping_tickets").select("*", { count: "exact", head: true }).in("status", ["draft", "ready"]),
@@ -47,14 +47,14 @@ function Dashboard() {
         supabase.from("borrow_requests").select("*", { count: "exact", head: true }).eq("status", "pending"),
         // RLS scopes this: warehouse managers/admins count every project, managers their own.
         supabase.from("po_requests").select("*", { count: "exact", head: true }).eq("status", "pending"),
-        // Manufacturing: the systems the shop can build. Switches to open build requests once those exist.
-        supabase.from("system_templates").select("*", { count: "exact", head: true }).eq("active", true),
+        // Open builds: submitted, in progress or waiting on parts (RLS scopes it to visible projects).
+        supabase.from("build_requests").select("*", { count: "exact", head: true }).in("status", ["submitted", "in_progress", "partially_built"]),
       ]);
       // A count query can fail (e.g. a transient 401 mid token-refresh) while
       // the others in the batch succeed. Surfacing it here — instead of
       // falling back to 0 — keeps a real failure from being cached by React
       // Query as a legitimate "zero open tickets" answer.
-      for (const r of [projects, pos, tickets, slips, borrow, poRequests, systems]) {
+      for (const r of [projects, pos, tickets, slips, borrow, poRequests, builds]) {
         if (r.error) throw r.error;
       }
       return {
@@ -64,7 +64,7 @@ function Dashboard() {
         slipsWeek: slips.count ?? 0,
         pendingBorrow: borrow.count ?? 0,
         pendingPoRequests: poRequests.count ?? 0,
-        activeSystems: systems.count ?? 0,
+        openBuilds: builds.count ?? 0,
       };
     },
   });
@@ -97,7 +97,7 @@ function Dashboard() {
         <StatCard label="Packing Slips (7d)" value={stats.data?.slipsWeek ?? "—"} to="/packing-slips" icon={Package} />
         <StatCard label="Tickets to Ship" value={stats.data?.openTickets ?? "—"} to="/shipping-tickets" icon={Truck} />
         <StatCard label="Pending Borrows" value={stats.data?.pendingBorrow ?? "—"} to="/borrow-requests" icon={ArrowLeftRight} />
-        <StatCard label="Manufacturing Systems" value={stats.data?.activeSystems ?? "—"} to="/manufacturing/systems" icon={Factory} />
+        <StatCard label="Open Builds" value={stats.data?.openBuilds ?? "—"} to="/manufacturing" search={{ tab: "open" }} icon={Factory} />
       </div>
 
       <Card className="mt-6">
