@@ -104,3 +104,52 @@ export async function refreshPoStatus(poId: string) {
   if (error) throw error;
 }
 
+/**
+ * Lowering a slip's received quantities takes that stock back out of the
+ * project. If manufacturing build requests hold it, the database refuses the
+ * stock update (guard_held_stock) -- but the edit dialog saves the slip lines
+ * from the browser *before* syncing stock, so a refusal there would leave the
+ * slip saved with quantities the stock doesn't match. Check first, before
+ * anything is written. Totals mirror sync_packing_slip_inventory: every line
+ * with a product and qty_received > 0, whatever its condition.
+ */
+export async function assertSlipEditKeepsHeldStock(params: {
+  projectId: string;
+  before: SlipInventoryLine[];
+  after: SlipInventoryLine[];
+}) {
+  const totals = (lines: SlipInventoryLine[]) => {
+    const m = new Map<string, number>();
+    for (const l of lines) {
+      if (l.product_id && Number(l.qty_received) > 0) m.set(l.product_id, (m.get(l.product_id) ?? 0) + Number(l.qty_received));
+    }
+    return m;
+  };
+  const before = totals(params.before);
+  const after = totals(params.after);
+  const drops = [...before]
+    .map(([productId, qty]) => ({ productId, drop: qty - (after.get(productId) ?? 0) }))
+    .filter((d) => d.drop > 0);
+  if (drops.length === 0) return;
+
+  const { data, error } = await supabase
+    .from("v_project_inventory")
+    .select("product_id, held, available, products:product_id(part_number)")
+    .eq("project_id", params.projectId)
+    .in("product_id", drops.map((d) => d.productId));
+  if (error) throw error;
+
+  for (const { productId, drop } of drops) {
+    const row = (data ?? []).find((r) => r.product_id === productId);
+    const held = Number(row?.held ?? 0);
+    const available = Number(row?.available ?? 0);
+    // Only stock held for manufacturing blocks the edit; everything else behaves as before.
+    if (held > 0 && drop > available) {
+      const part = (row?.products as { part_number: string } | null)?.part_number ?? "A part";
+      throw new Error(
+        `${part}: this change takes ${drop} out of stock, but only ${available} can be used — ${held} is held for manufacturing. Nothing was saved.`,
+      );
+    }
+  }
+}
+

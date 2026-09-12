@@ -53,12 +53,13 @@ function ProjectDetail() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("v_project_inventory")
-        .select("product_id, on_hand, products:product_id(part_number, description, unit, reorder_point)")
+        .select("product_id, on_hand, held, products:product_id(part_number, description, unit, reorder_point)")
         .eq("project_id", project.data!.id);
       if (error) throw error;
       return data as unknown as Array<{
         product_id: string;
         on_hand: number;
+        held: number;
         products: { part_number: string; description: string; unit: string; reorder_point: number } | null;
       }>;
     },
@@ -154,6 +155,7 @@ function ProjectDetail() {
                     <TableHead>Part #</TableHead>
                     <TableHead>Description</TableHead>
                     <TableHead className="text-right">On Hand</TableHead>
+                    <TableHead className="text-right" title="Reserved for manufacturing build requests">Held</TableHead>
                     <TableHead className="text-right">Reorder Point</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -193,11 +195,12 @@ function ProjectDetail() {
                                 <Badge variant="destructive" className="ml-2">Low</Badge>
                               ) : null}
                             </TableCell>
+                            <TableCell className="text-right text-muted-foreground">{Number(r.held) > 0 ? Number(r.held) : "—"}</TableCell>
                             <TableCell className="text-right text-muted-foreground">{r.products?.reorder_point ?? 0}</TableCell>
                           </TableRow>
                           {serialsOn && isOpen ? (
                             <TableRow>
-                              <TableCell colSpan={4} className="bg-muted/30">
+                              <TableCell colSpan={5} className="bg-muted/30">
                                 <div className="flex flex-wrap gap-1">
                                   {serials.map((s) => (
                                     <span key={s} className="rounded-full bg-background px-2 py-0.5 font-mono text-[10px]">{s}</span>
@@ -210,7 +213,7 @@ function ProjectDetail() {
                       );
                     })
                   ) : (
-                    <TableRow><TableCell colSpan={4} className="py-6 text-center text-sm text-muted-foreground">No inventory yet.</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={5} className="py-6 text-center text-sm text-muted-foreground">No inventory yet.</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>

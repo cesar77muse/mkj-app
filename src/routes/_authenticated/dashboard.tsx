@@ -7,7 +7,7 @@ import { useRoles } from "@/hooks/use-session";
 import { ROLE_LABELS, highestRole } from "@/lib/roles";
 import { daysAgoInBusinessTimezone } from "@/lib/date";
 import { Badge } from "@/components/ui/badge";
-import { FolderKanban, ClipboardList, Truck, Package, ArrowLeftRight, Inbox } from "lucide-react";
+import { FolderKanban, ClipboardList, Truck, Package, ArrowLeftRight, Inbox, Factory } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — MKJ Ops" }] }),
@@ -39,7 +39,7 @@ function Dashboard() {
   const stats = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
-      const [projects, pos, tickets, slips, borrow, poRequests] = await Promise.all([
+      const [projects, pos, tickets, slips, borrow, poRequests, systems] = await Promise.all([
         supabase.from("projects").select("*", { count: "exact", head: true }).eq("status", "active"),
         supabase.from("purchase_orders").select("*", { count: "exact", head: true }).in("status", ["draft", "approved", "executed", "partially_received"]),
         supabase.from("shipping_tickets").select("*", { count: "exact", head: true }).in("status", ["draft", "ready"]),
@@ -47,12 +47,14 @@ function Dashboard() {
         supabase.from("borrow_requests").select("*", { count: "exact", head: true }).eq("status", "pending"),
         // RLS scopes this: warehouse managers/admins count every project, managers their own.
         supabase.from("po_requests").select("*", { count: "exact", head: true }).eq("status", "pending"),
+        // Manufacturing: the systems the shop can build. Switches to open build requests once those exist.
+        supabase.from("system_templates").select("*", { count: "exact", head: true }).eq("active", true),
       ]);
       // A count query can fail (e.g. a transient 401 mid token-refresh) while
       // the others in the batch succeed. Surfacing it here — instead of
       // falling back to 0 — keeps a real failure from being cached by React
       // Query as a legitimate "zero open tickets" answer.
-      for (const r of [projects, pos, tickets, slips, borrow, poRequests]) {
+      for (const r of [projects, pos, tickets, slips, borrow, poRequests, systems]) {
         if (r.error) throw r.error;
       }
       return {
@@ -62,6 +64,7 @@ function Dashboard() {
         slipsWeek: slips.count ?? 0,
         pendingBorrow: borrow.count ?? 0,
         pendingPoRequests: poRequests.count ?? 0,
+        activeSystems: systems.count ?? 0,
       };
     },
   });
@@ -87,13 +90,14 @@ function Dashboard() {
         actions={top ? <Badge variant="secondary">{ROLE_LABELS[top]}</Badge> : null}
       />
 
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4 xl:grid-cols-7">
         <StatCard label="Active Projects" value={stats.data?.activeProjects ?? "—"} to="/projects" icon={FolderKanban} />
         <StatCard label="Open POs" value={stats.data?.openPOs ?? "—"} to="/purchase-orders" icon={ClipboardList} />
         <StatCard label="Pending PO Requests" value={stats.data?.pendingPoRequests ?? "—"} to="/purchase-orders" search={{ tab: "pending" }} icon={Inbox} />
         <StatCard label="Packing Slips (7d)" value={stats.data?.slipsWeek ?? "—"} to="/packing-slips" icon={Package} />
         <StatCard label="Tickets to Ship" value={stats.data?.openTickets ?? "—"} to="/shipping-tickets" icon={Truck} />
         <StatCard label="Pending Borrows" value={stats.data?.pendingBorrow ?? "—"} to="/borrow-requests" icon={ArrowLeftRight} />
+        <StatCard label="Manufacturing Systems" value={stats.data?.activeSystems ?? "—"} to="/manufacturing/systems" icon={Factory} />
       </div>
 
       <Card className="mt-6">

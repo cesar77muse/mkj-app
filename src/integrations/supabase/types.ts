@@ -178,6 +178,348 @@ export type Database = {
           },
         ]
       }
+      build_line_serials: {
+        Row: {
+          consumed_at: string
+          consumed_by: string | null
+          entered_manually: boolean
+          id: string
+          line_id: string
+          product_id: string
+          returned_at: string | null
+          returned_by: string | null
+          serial: string
+        }
+        Insert: {
+          consumed_at?: string
+          consumed_by?: string | null
+          entered_manually?: boolean
+          id?: string
+          line_id: string
+          product_id: string
+          returned_at?: string | null
+          returned_by?: string | null
+          serial: string
+        }
+        Update: {
+          consumed_at?: string
+          consumed_by?: string | null
+          entered_manually?: boolean
+          id?: string
+          line_id?: string
+          product_id?: string
+          returned_at?: string | null
+          returned_by?: string | null
+          serial?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "build_line_serials_line_id_fkey"
+            columns: ["line_id"]
+            isOneToOne: false
+            referencedRelation: "build_request_lines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "build_line_serials_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "build_line_serials_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_products_with_cost"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      build_request_events: {
+        Row: {
+          actor: string | null
+          created_at: string
+          id: string
+          kind: string
+          note: string | null
+          payload: Json | null
+          request_id: string
+        }
+        Insert: {
+          actor?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          note?: string | null
+          payload?: Json | null
+          request_id: string
+        }
+        Update: {
+          actor?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          note?: string | null
+          payload?: Json | null
+          request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "build_request_events_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "build_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      build_request_lines: {
+        Row: {
+          id: string
+          is_key_part: boolean
+          line_no: number
+          notes: string | null
+          origin: string
+          product_id: string
+          qty_consumed: number
+          qty_held: number
+          qty_per_unit: number
+          qty_required: number
+          request_id: string
+        }
+        Insert: {
+          id?: string
+          is_key_part?: boolean
+          line_no: number
+          notes?: string | null
+          origin?: string
+          product_id: string
+          qty_consumed?: number
+          qty_held?: number
+          qty_per_unit: number
+          qty_required: number
+          request_id: string
+        }
+        Update: {
+          id?: string
+          is_key_part?: boolean
+          line_no?: number
+          notes?: string | null
+          origin?: string
+          product_id?: string
+          qty_consumed?: number
+          qty_held?: number
+          qty_per_unit?: number
+          qty_required?: number
+          request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "build_request_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "build_request_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_products_with_cost"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "build_request_lines_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "build_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      build_requests: {
+        Row: {
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          project_id: string
+          project_number: string
+          qty: number
+          reject_note: string | null
+          rejected_at: string | null
+          rejected_by: string | null
+          request_number: string
+          request_sequence: number
+          requested_by: string | null
+          started_at: string | null
+          started_by: string | null
+          status: Database["public"]["Enums"]["build_status"]
+          submitted_at: string | null
+          submitted_by: string | null
+          template_id: string
+          updated_at: string
+        }
+        Insert: {
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          project_id: string
+          project_number: string
+          qty: number
+          reject_note?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          request_number: string
+          request_sequence: number
+          requested_by?: string | null
+          started_at?: string | null
+          started_by?: string | null
+          status?: Database["public"]["Enums"]["build_status"]
+          submitted_at?: string | null
+          submitted_by?: string | null
+          template_id: string
+          updated_at?: string
+        }
+        Update: {
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          project_id?: string
+          project_number?: string
+          qty?: number
+          reject_note?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          request_number?: string
+          request_sequence?: number
+          requested_by?: string | null
+          started_at?: string | null
+          started_by?: string | null
+          status?: Database["public"]["Enums"]["build_status"]
+          submitted_at?: string | null
+          submitted_by?: string | null
+          template_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "build_requests_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "build_requests_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_project_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "build_requests_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "system_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      build_units: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          product_id: string
+          project_id: string
+          request_id: string
+          seq: number
+          template_id: string
+          unit_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          product_id: string
+          project_id: string
+          request_id: string
+          seq: number
+          template_id: string
+          unit_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          product_id?: string
+          project_id?: string
+          request_id?: string
+          seq?: number
+          template_id?: string
+          unit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "build_units_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "build_units_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_products_with_cost"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "build_units_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "build_units_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_project_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "build_units_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "build_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "build_units_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "system_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventory_adjustments: {
         Row: {
           created_at: string
@@ -1320,6 +1662,115 @@ export type Database = {
         }
         Relationships: []
       }
+      system_template_parts: {
+        Row: {
+          id: string
+          is_key_part: boolean
+          line_no: number
+          notes: string | null
+          product_id: string
+          qty_per_system: number
+          template_id: string
+        }
+        Insert: {
+          id?: string
+          is_key_part?: boolean
+          line_no: number
+          notes?: string | null
+          product_id: string
+          qty_per_system: number
+          template_id: string
+        }
+        Update: {
+          id?: string
+          is_key_part?: boolean
+          line_no?: number
+          notes?: string | null
+          product_id?: string
+          qty_per_system?: number
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "system_template_parts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "system_template_parts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_products_with_cost"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "system_template_parts_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "system_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      system_templates: {
+        Row: {
+          active: boolean
+          category: Database["public"]["Enums"]["system_category"]
+          created_at: string
+          created_by: string | null
+          description: string | null
+          finished_product_id: string
+          id: string
+          name: string
+          system_code: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          active?: boolean
+          category: Database["public"]["Enums"]["system_category"]
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          finished_product_id: string
+          id?: string
+          name: string
+          system_code: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          active?: boolean
+          category?: Database["public"]["Enums"]["system_category"]
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          finished_product_id?: string
+          id?: string
+          name?: string
+          system_code?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "system_templates_finished_product_id_fkey"
+            columns: ["finished_product_id"]
+            isOneToOne: true
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "system_templates_finished_product_id_fkey"
+            columns: ["finished_product_id"]
+            isOneToOne: true
+            referencedRelation: "v_products_with_cost"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_directory: {
         Row: {
           full_name: string | null
@@ -1419,6 +1870,8 @@ export type Database = {
       }
       v_project_inventory: {
         Row: {
+          available: number | null
+          held: number | null
           on_hand: number | null
           product_id: string | null
           project_id: string | null
@@ -1765,6 +2218,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      held_stock_qty: {
+        Args: { _product_id: string; _project_id: string }
+        Returns: number
+      }
+      import_system_templates: {
+        Args: { _dry_run?: boolean; _parts: Json; _systems: Json }
+        Returns: Json
+      }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_warehouse_or_admin: { Args: { _user_id: string }; Returns: boolean }
       manages_project: {
@@ -1792,6 +2253,28 @@ export type Database = {
       reverse_shipping_ticket_inventory: {
         Args: { _ticket_id: string }
         Returns: undefined
+      }
+      set_system_template_active: {
+        Args: { _active: boolean; _template_id: string }
+        Returns: {
+          active: boolean
+          category: Database["public"]["Enums"]["system_category"]
+          created_at: string
+          created_by: string | null
+          description: string | null
+          finished_product_id: string
+          id: string
+          name: string
+          system_code: string
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "system_templates"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       set_user_role: {
         Args: {
@@ -1847,6 +2330,14 @@ export type Database = {
         | "returned"
         | "cancelled"
         | "partially_returned"
+      build_status:
+        | "draft"
+        | "submitted"
+        | "in_progress"
+        | "partially_built"
+        | "completed"
+        | "rejected"
+        | "cancelled"
       ledger_source:
         | "packing_slip"
         | "shipping_ticket"
@@ -1856,6 +2347,9 @@ export type Database = {
         | "borrow_return_out"
         | "borrow_return_in"
         | "initial"
+        | "manufacturing_consume"
+        | "manufacturing_return"
+        | "manufacturing_output"
       po_request_status: "pending" | "completed" | "cancelled"
       po_status:
         | "draft"
@@ -1864,6 +2358,12 @@ export type Database = {
         | "partially_received"
         | "received"
       project_status: "active" | "on_hold" | "closed"
+      system_category:
+        | "cctv_cabinet"
+        | "data_cabinet"
+        | "access_control"
+        | "fiber_enclosure"
+        | "other"
       ticket_status: "draft" | "ready" | "shipped" | "delivered" | "closed"
     }
     CompositeTypes: {
@@ -2003,6 +2503,15 @@ export const Constants = {
         "cancelled",
         "partially_returned",
       ],
+      build_status: [
+        "draft",
+        "submitted",
+        "in_progress",
+        "partially_built",
+        "completed",
+        "rejected",
+        "cancelled",
+      ],
       ledger_source: [
         "packing_slip",
         "shipping_ticket",
@@ -2012,6 +2521,9 @@ export const Constants = {
         "borrow_return_out",
         "borrow_return_in",
         "initial",
+        "manufacturing_consume",
+        "manufacturing_return",
+        "manufacturing_output",
       ],
       po_request_status: ["pending", "completed", "cancelled"],
       po_status: [
@@ -2022,6 +2534,13 @@ export const Constants = {
         "received",
       ],
       project_status: ["active", "on_hold", "closed"],
+      system_category: [
+        "cctv_cabinet",
+        "data_cabinet",
+        "access_control",
+        "fiber_enclosure",
+        "other",
+      ],
       ticket_status: ["draft", "ready", "shipped", "delivered", "closed"],
     },
   },
