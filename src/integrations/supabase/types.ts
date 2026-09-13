@@ -1936,22 +1936,7 @@ export type Database = {
           serial: string | null
           status: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "packing_slip_item_serials_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "packing_slip_item_serials_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "v_products_with_cost"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       v_user_roles: {
         Row: {
@@ -1978,6 +1963,23 @@ export type Database = {
         Args: { _project_id: string }
         Returns: string[]
       }
+      build_request_assert_rule: { Args: { _res: Json }; Returns: undefined }
+      build_request_audience: {
+        Args: {
+          _audience: string
+          _r: Database["public"]["Tables"]["build_requests"]["Row"]
+        }
+        Returns: string[]
+      }
+      build_request_consume: {
+        Args: { _request_id: string; _serials: Json }
+        Returns: Json
+      }
+      build_request_pending_text: {
+        Args: { _request_id: string }
+        Returns: string
+      }
+      build_request_take_holds: { Args: { _request_id: string }; Returns: Json }
       build_request_write_lines: {
         Args: {
           _lines: Json
@@ -2011,6 +2013,41 @@ export type Database = {
         Args: { _project_id: string; _user_id: string }
         Returns: boolean
       }
+      cancel_build_request: {
+        Args: { _reason: string; _request_id: string }
+        Returns: {
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          project_id: string
+          project_number: string
+          qty: number
+          reject_note: string | null
+          rejected_at: string | null
+          rejected_by: string | null
+          request_number: string
+          request_sequence: number
+          requested_by: string | null
+          started_at: string | null
+          started_by: string | null
+          status: Database["public"]["Enums"]["build_status"]
+          submitted_at: string | null
+          submitted_by: string | null
+          template_id: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "build_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       cancel_po_request: {
         Args: { _reason: string; _request_id: string }
         Returns: {
@@ -2038,6 +2075,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      complete_build_request: { Args: { _request_id: string }; Returns: Json }
       complete_po_request: {
         Args: { _po_reference: string; _request_id: string }
         Returns: {
@@ -2284,11 +2322,81 @@ export type Database = {
         Args: { _dry_run?: boolean; _parts: Json; _systems: Json }
         Returns: Json
       }
+      install_build_parts: {
+        Args: { _request_id: string; _serials?: Json }
+        Returns: {
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          project_id: string
+          project_number: string
+          qty: number
+          reject_note: string | null
+          rejected_at: string | null
+          rejected_by: string | null
+          request_number: string
+          request_sequence: number
+          requested_by: string | null
+          started_at: string | null
+          started_by: string | null
+          status: Database["public"]["Enums"]["build_status"]
+          submitted_at: string | null
+          submitted_by: string | null
+          template_id: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "build_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_warehouse_or_admin: { Args: { _user_id: string }; Returns: boolean }
       manages_project: {
         Args: { _project_id: string; _user_id: string }
         Returns: boolean
+      }
+      mark_build_partially_built: {
+        Args: { _request_id: string }
+        Returns: {
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          project_id: string
+          project_number: string
+          qty: number
+          reject_note: string | null
+          rejected_at: string | null
+          rejected_by: string | null
+          request_number: string
+          request_sequence: number
+          requested_by: string | null
+          started_at: string | null
+          started_by: string | null
+          status: Database["public"]["Enums"]["build_status"]
+          submitted_at: string | null
+          submitted_by: string | null
+          template_id: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "build_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       notify_build_request: {
         Args: { _detail?: string; _event: string; _request_id: string }
@@ -2419,6 +2527,41 @@ export type Database = {
       ship_shipping_ticket_inventory: {
         Args: { _ticket_id: string }
         Returns: undefined
+      }
+      start_build_request: {
+        Args: { _request_id: string; _serials?: Json }
+        Returns: {
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          project_id: string
+          project_number: string
+          qty: number
+          reject_note: string | null
+          rejected_at: string | null
+          rejected_by: string | null
+          request_number: string
+          request_sequence: number
+          requested_by: string | null
+          started_at: string | null
+          started_by: string | null
+          status: Database["public"]["Enums"]["build_status"]
+          submitted_at: string | null
+          submitted_by: string | null
+          template_id: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "build_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       submit_build_request: { Args: { _request_id: string }; Returns: Json }
       sync_packing_slip_inventory: {

@@ -111,7 +111,9 @@ function BuildRequestsPage() {
               ) : rows.length > 0 ? (
                 rows.map((r) => {
                   const open = OPEN_BUILD_STATUSES.includes(r.status);
-                  const fullyHeld = r.lines.filter((l) => l.qty_held >= l.qty_required).length;
+                  // Before the start: parts fully held. After: parts fully installed.
+                  const building = r.status === "in_progress" || r.status === "partially_built";
+                  const fullyHeld = r.lines.filter((l) => (building ? l.qty_consumed : l.qty_held) >= l.qty_required).length;
                   return (
                     <TableRow key={r.id}>
                       <TableCell>
@@ -130,7 +132,7 @@ function BuildRequestsPage() {
                       <TableCell className="text-right tabular-nums">{r.qty}</TableCell>
                       <TableCell><BuildStatusBadge status={r.status} /></TableCell>
                       <TableCell className="text-right tabular-nums">
-                        {open ? `${fullyHeld} / ${r.lines.length}` : <span className="text-muted-foreground">—</span>}
+                        {open ? `${fullyHeld} / ${r.lines.length}${building ? " installed" : ""}` : <span className="text-muted-foreground">—</span>}
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
                         {r.requester_name ?? "—"}

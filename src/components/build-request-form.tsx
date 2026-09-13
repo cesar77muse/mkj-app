@@ -64,6 +64,16 @@ export function BuildRequestForm({ request }: { request?: BuildRequest }) {
     },
   });
   const available = useProjectAvailable(projectId || null);
+  // The warehouse changing a submitted request: what it already holds is
+  // available to its own lines again, on top of the project's free stock.
+  const submittedEdit = request?.status === "submitted";
+  const availableForLines = useMemo(() => {
+    const base = new Map(available.data ?? []);
+    if (submittedEdit) {
+      for (const l of request!.lines) base.set(l.product_id, (base.get(l.product_id) ?? 0) + (l.qty_held - l.qty_consumed));
+    }
+    return base;
+  }, [available.data, submittedEdit, request]);
 
   const template = templates.data?.find((t) => t.id === templateId) ?? null;
   const productById = useMemo(() => new Map((products.data ?? []).map((p) => [p.id, p])), [products.data]);
@@ -116,7 +126,7 @@ export function BuildRequestForm({ request }: { request?: BuildRequest }) {
       is_key_part: l.template?.is_key_part ?? false,
       required: round2(l.qty_per_unit * qty),
     })),
-    available.data ?? new Map(),
+    availableForLines,
   );
   const pendingParts = coverage.rows.filter((r) => !r.covered).length;
   const canSave =
@@ -149,6 +159,7 @@ export function BuildRequestForm({ request }: { request?: BuildRequest }) {
     },
     onSuccess: ({ id, submitted, submitError }) => {
       if (submitError) toast.error(`Saved as a draft, but not submitted: ${submitError}`);
+      else if (submittedEdit) toast.success("Parts list updated — holds recalculated and the requester notified");
       else toast.success(submitted ? "Submitted to the shop — the available parts are now held" : "Draft saved");
       qc.invalidateQueries({ queryKey: ["build-requests"] });
       qc.invalidateQueries({ queryKey: ["build-request", id] });
@@ -335,7 +346,7 @@ export function BuildRequestForm({ request }: { request?: BuildRequest }) {
           ) : (
             <span className="inline-flex items-start gap-2 text-destructive">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-              <span>{coverage.reason} You can still save it as a draft.</span>
+              <span>{coverage.reason} {submittedEdit ? "Adjust the parts so the rule still passes." : "You can still save it as a draft."}</span>
             </span>
           )}
         </div>
@@ -346,12 +357,21 @@ export function BuildRequestForm({ request }: { request?: BuildRequest }) {
           >
             Cancel
           </Button>
-          <Button variant="outline" onClick={() => save.mutate(false)} disabled={!canSave || save.isPending}>
-            Save draft
-          </Button>
-          <Button onClick={() => save.mutate(true)} disabled={!canSave || !coverage.passes || save.isPending || available.isLoading}>
-            {save.isPending ? "Saving…" : "Submit to the shop"}
-          </Button>
+          {submittedEdit ? (
+            // Stays submitted: the database re-holds and re-checks the 80% rule on save.
+            <Button onClick={() => save.mutate(false)} disabled={!canSave || !coverage.passes || save.isPending || available.isLoading}>
+              {save.isPending ? "Saving…" : "Save changes"}
+            </Button>
+          ) : (
+            <>
+              <Button variant="outline" onClick={() => save.mutate(false)} disabled={!canSave || save.isPending}>
+                Save draft
+              </Button>
+              <Button onClick={() => save.mutate(true)} disabled={!canSave || !coverage.passes || save.isPending || available.isLoading}>
+                {save.isPending ? "Saving…" : "Submit to the shop"}
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </div>
