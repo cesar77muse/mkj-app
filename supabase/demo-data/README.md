@@ -54,6 +54,10 @@ SET encrypted_password = extensions.crypt('PICK-A-PASSWORD', extensions.gen_salt
 WHERE id::text LIKE 'd0000000-de00-4000-8000-%';
 ```
 
+**Done on 2026-09-13:** all three accounts now share one simple password.
+It's kept out of the repo on purpose, so ask Cesar for it. Running the
+snippet again replaces it.
+
 `example.com` is reserved, so no mail can be sent to these addresses. That
 rules out "forgot password" on them, but it also means nobody can take them
 over through a reset email.
